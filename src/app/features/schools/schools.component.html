@@ -1,0 +1,279 @@
+<div class="mb-4">
+  <h1 class="h3 mb-1">
+    Escuelas
+  </h1>
+
+  <p class="text-body-secondary mb-0">
+    Registra cada escuela junto con su primer administrador.
+  </p>
+</div>
+
+@if (errorMessage()) {
+  <div
+    class="alert alert-danger"
+    role="alert"
+  >
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (successMessage()) {
+  <div
+    class="alert alert-success"
+    role="alert"
+  >
+    {{ successMessage() }}
+  </div>
+}
+
+<c-row>
+  <c-col lg="5" class="mb-4">
+    <c-card>
+      <c-card-header>
+        <strong>Nueva escuela</strong>
+      </c-card-header>
+
+      <c-card-body>
+        <form
+          cForm
+          [formGroup]="schoolForm"
+          (ngSubmit)="createSchool()"
+          novalidate
+        >
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="schoolName"
+            >
+              Nombre de la escuela
+            </label>
+
+            <input
+              id="schoolName"
+              type="text"
+              cFormControl
+              formControlName="name"
+              placeholder="Ej. Colegio San Felipe"
+              autocomplete="organization"
+            />
+
+            @if (
+              schoolForm.controls.name.touched &&
+              schoolForm.controls.name.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa el nombre de la escuela.
+              </p>
+            }
+          </div>
+
+          <div class="mb-4">
+            <label
+              class="form-label"
+              for="schoolCode"
+            >
+              Código interno
+            </label>
+
+            <input
+              id="schoolCode"
+              type="text"
+              cFormControl
+              formControlName="code"
+              placeholder="Ej. CSF-001"
+              autocomplete="off"
+            />
+
+            <div class="form-text">
+              Utiliza letras, números, guiones o guion bajo.
+            </div>
+
+            @if (
+              schoolForm.controls.code.touched &&
+              schoolForm.controls.code.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa un código interno válido.
+              </p>
+            }
+          </div>
+
+          <h2 class="h6 border-bottom pb-2 mb-3">
+            Primer administrador
+          </h2>
+
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="adminFullName"
+            >
+              Nombre completo
+            </label>
+
+            <input
+              id="adminFullName"
+              type="text"
+              cFormControl
+              formControlName="adminFullName"
+              autocomplete="name"
+            />
+
+            @if (
+              schoolForm.controls.adminFullName.touched &&
+              schoolForm.controls.adminFullName.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa el nombre del administrador.
+              </p>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="adminEmail"
+            >
+              Correo electrónico
+            </label>
+
+            <input
+              id="adminEmail"
+              type="email"
+              cFormControl
+              formControlName="adminEmail"
+              autocomplete="email"
+            />
+
+            @if (
+              schoolForm.controls.adminEmail.touched &&
+              schoolForm.controls.adminEmail.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa un correo electrónico válido.
+              </p>
+            }
+          </div>
+
+          <div class="mb-4">
+            <label
+              class="form-label"
+              for="adminPassword"
+            >
+              Contraseña temporal
+            </label>
+
+            <input
+              id="adminPassword"
+              type="password"
+              cFormControl
+              formControlName="adminPassword"
+              autocomplete="new-password"
+            />
+
+            <div class="form-text">
+              Debe contener entre 8 y 72 caracteres.
+            </div>
+
+            @if (
+              schoolForm.controls.adminPassword.touched &&
+              schoolForm.controls.adminPassword.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa una contraseña de al menos 8 caracteres.
+              </p>
+            }
+          </div>
+
+          <button
+            cButton
+            color="primary"
+            type="submit"
+            class="w-100"
+            [disabled]="submitting()"
+          >
+            @if (submitting()) {
+              Registrando...
+            } @else {
+              Registrar escuela
+            }
+          </button>
+        </form>
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col lg="7">
+    <c-card>
+      <c-card-header>
+        <strong>Escuelas registradas</strong>
+      </c-card-header>
+
+      <c-card-body>
+        @if (loading()) {
+          <p class="text-body-secondary mb-0">
+            Cargando escuelas...
+          </p>
+        } @else if (schools().length === 0) {
+          <div class="text-center py-5">
+            <h2 class="h5">
+              Aún no hay escuelas
+            </h2>
+
+            <p class="text-body-secondary mb-0">
+              La primera escuela aparecerá aquí cuando tengas sus datos.
+            </p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Escuela</th>
+                  <th>Código</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (
+                  school of schools();
+                  track school.id
+                ) {
+                  <tr>
+                    <td>
+                      <strong>
+                        {{ school.name }}
+                      </strong>
+                    </td>
+
+                    <td>
+                      <code>
+                        {{ school.code }}
+                      </code>
+                    </td>
+
+                    <td>
+                      @if (school.active) {
+                        <span
+                          class="badge text-bg-success"
+                        >
+                          Activa
+                        </span>
+                      } @else {
+                        <span
+                          class="badge text-bg-secondary"
+                        >
+                          Inactiva
+                        </span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

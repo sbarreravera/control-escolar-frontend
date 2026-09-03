@@ -24,6 +24,15 @@ export const routes: Routes = [
             .then(m => m.routes)
       },
       {
+        path: 'schools',
+        loadComponent: () =>
+          import('./features/schools/schools.component')
+            .then(m => m.SchoolsComponent),
+        data: {
+          title: 'Escuelas'
+        }
+      },
+      {
         path: 'theme',
         loadChildren: () =>
           import('./views/theme/routes')
