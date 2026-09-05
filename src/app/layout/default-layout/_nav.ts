@@ -1,22 +1,50 @@
 import { INavData } from '@coreui/angular';
+import {
+  AppUserRole
+} from '../../core/auth/auth.models';
 
-export const navItems: INavData[] = [
-  {
-    name: 'Inicio',
-    url: '/dashboard',
-    iconComponent: {
-      name: 'cil-speedometer'
+export function buildNavItems(
+  role: AppUserRole
+): INavData[] {
+  const items: INavData[] = [
+    {
+      name: 'Inicio',
+      url: '/dashboard',
+      iconComponent: {
+        name: 'cil-speedometer'
+      }
     }
-  },
-  {
-    title: true,
-    name: 'Administración'
-  },
-  {
-    name: 'Escuelas',
-    url: '/schools',
-    iconComponent: {
-      name: 'cil-home'
-    }
+  ];
+
+  if (role === 'SUPER_ADMIN') {
+    return [
+      ...items,
+      {
+        title: true,
+        name: 'Administración'
+      },
+      {
+        name: 'Escuelas',
+        url: '/schools',
+        iconComponent: {
+          name: 'cil-home'
+        }
+      }
+    ];
   }
-];
+
+  return [
+    ...items,
+    {
+      title: true,
+      name: 'Control escolar'
+    },
+    {
+      name: 'Alumnos',
+      url: '/students',
+      iconComponent: {
+        name: 'cil-people'
+      }
+    }
+  ];
+}

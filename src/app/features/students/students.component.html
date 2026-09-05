@@ -1,0 +1,282 @@
+<div class="mb-4">
+  <h1 class="h3 mb-1">
+    Alumnos
+  </h1>
+
+  <p class="text-body-secondary mb-0">
+    Administra los alumnos de {{ schoolName() }}.
+  </p>
+</div>
+
+@if (errorMessage()) {
+  <div
+    class="alert alert-danger"
+    role="alert"
+  >
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (successMessage()) {
+  <div
+    class="alert alert-success"
+    role="alert"
+  >
+    {{ successMessage() }}
+  </div>
+}
+
+<c-row>
+  <c-col lg="5" class="mb-4">
+    <c-card>
+      <c-card-header>
+        <strong>Nuevo alumno</strong>
+      </c-card-header>
+
+      <c-card-body>
+        <form
+          cForm
+          [formGroup]="studentForm"
+          (ngSubmit)="createStudent()"
+          novalidate
+        >
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="enrollmentNumber"
+            >
+              Matrícula
+            </label>
+
+            <input
+              id="enrollmentNumber"
+              type="text"
+              cFormControl
+              formControlName="enrollmentNumber"
+              placeholder="Ej. CSF-2026-001"
+              autocomplete="off"
+            />
+
+            @if (
+              studentForm.controls.enrollmentNumber.touched &&
+              studentForm.controls.enrollmentNumber.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa una matrícula válida.
+              </p>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="firstName"
+            >
+              Nombre
+            </label>
+
+            <input
+              id="firstName"
+              type="text"
+              cFormControl
+              formControlName="firstName"
+              autocomplete="given-name"
+            />
+
+            @if (
+              studentForm.controls.firstName.touched &&
+              studentForm.controls.firstName.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa el nombre del alumno.
+              </p>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="lastName"
+            >
+              Apellidos
+            </label>
+
+            <input
+              id="lastName"
+              type="text"
+              cFormControl
+              formControlName="lastName"
+              autocomplete="family-name"
+            />
+
+            @if (
+              studentForm.controls.lastName.touched &&
+              studentForm.controls.lastName.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa los apellidos del alumno.
+              </p>
+            }
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label
+                class="form-label"
+                for="gradeName"
+              >
+                Grado
+              </label>
+
+              <input
+                id="gradeName"
+                type="text"
+                cFormControl
+                formControlName="gradeName"
+                placeholder="Ej. 1°"
+                autocomplete="off"
+              />
+
+              @if (
+                studentForm.controls.gradeName.touched &&
+                studentForm.controls.gradeName.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  El grado no puede exceder 50 caracteres.
+                </p>
+              }
+            </div>
+
+            <div class="col-md-6 mb-4">
+              <label
+                class="form-label"
+                for="groupName"
+              >
+                Grupo
+              </label>
+
+              <input
+                id="groupName"
+                type="text"
+                cFormControl
+                formControlName="groupName"
+                placeholder="Ej. A"
+                autocomplete="off"
+              />
+
+              @if (
+                studentForm.controls.groupName.touched &&
+                studentForm.controls.groupName.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  El grupo no puede exceder 50 caracteres.
+                </p>
+              }
+            </div>
+          </div>
+
+          <button
+            cButton
+            color="primary"
+            type="submit"
+            class="w-100"
+            [disabled]="submitting()"
+          >
+            @if (submitting()) {
+              Registrando...
+            } @else {
+              Registrar alumno
+            }
+          </button>
+        </form>
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col lg="7">
+    <c-card>
+      <c-card-header>
+        <strong>Alumnos registrados</strong>
+      </c-card-header>
+
+      <c-card-body>
+        @if (loading()) {
+          <p class="text-body-secondary mb-0">
+            Cargando alumnos...
+          </p>
+        } @else if (students().length === 0) {
+          <div class="text-center py-5">
+            <h2 class="h5">
+              Aún no hay alumnos
+            </h2>
+
+            <p class="text-body-secondary mb-0">
+              El primer alumno aparecerá aquí después de registrarlo.
+            </p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Matrícula</th>
+                  <th>Alumno</th>
+                  <th>Grado y grupo</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (
+                  student of students();
+                  track student.id
+                ) {
+                  <tr>
+                    <td>
+                      <code>
+                        {{ student.enrollmentNumber }}
+                      </code>
+                    </td>
+
+                    <td>
+                      <strong>
+                        {{ student.firstName }}
+                        {{ student.lastName }}
+                      </strong>
+                    </td>
+
+                    <td>
+                      @if (
+                        student.gradeName ||
+                        student.groupName
+                      ) {
+                        {{ student.gradeName || '—' }}
+                        {{ student.groupName || '' }}
+                      } @else {
+                        <span class="text-body-secondary">
+                          Sin asignar
+                        </span>
+                      }
+                    </td>
+
+                    <td>
+                      @if (student.active) {
+                        <span class="badge text-bg-success">
+                          Activo
+                        </span>
+                      } @else {
+                        <span class="badge text-bg-secondary">
+                          Inactivo
+                        </span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

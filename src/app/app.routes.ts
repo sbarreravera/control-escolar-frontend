@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/role.guard';
 
 export const routes: Routes = [
   {
@@ -11,8 +12,10 @@ export const routes: Routes = [
     path: '',
     loadComponent: () =>
       import('./layout')
-        .then(m => m.DefaultLayoutComponent),
-    canActivate: [authGuard],
+        .then(module => module.DefaultLayoutComponent),
+    canActivate: [
+      authGuard
+    ],
     data: {
       title: 'Inicio'
     },
@@ -21,64 +24,38 @@ export const routes: Routes = [
         path: 'dashboard',
         loadChildren: () =>
           import('./views/dashboard/routes')
-            .then(m => m.routes)
+            .then(module => module.routes)
       },
       {
         path: 'schools',
         loadComponent: () =>
           import('./features/schools/schools.component')
-            .then(m => m.SchoolsComponent),
+            .then(module => module.SchoolsComponent),
+        canActivate: [
+          roleGuard
+        ],
         data: {
-          title: 'Escuelas'
+          title: 'Escuelas',
+          roles: [
+            'SUPER_ADMIN'
+          ]
         }
       },
       {
-        path: 'theme',
-        loadChildren: () =>
-          import('./views/theme/routes')
-            .then(m => m.routes)
-      },
-      {
-        path: 'base',
-        loadChildren: () =>
-          import('./views/base/routes')
-            .then(m => m.routes)
-      },
-      {
-        path: 'buttons',
-        loadChildren: () =>
-          import('./views/buttons/routes')
-            .then(m => m.routes)
-      },
-      {
-        path: 'forms',
-        loadChildren: () =>
-          import('./views/forms/routes')
-            .then(m => m.routes)
-      },
-      {
-        path: 'icons',
-        loadChildren: () =>
-          import('./views/icons/routes')
-            .then(m => m.routes)
-      },
-      {
-        path: 'notifications',
-        loadChildren: () =>
-          import('./views/notifications/routes')
-            .then(m => m.routes)
-      },
-      {
-        path: 'widgets',
-        loadChildren: () =>
-          import('./views/widgets/routes')
-            .then(m => m.routes)
-      },
-      {
-        path: 'charts',
-        loadChildren: () =>
-          import('./views/charts/routes')
-            .then(m => m.routes)
+        path: 'students',
+        loadComponent: () =>
+          import('./features/students/students.component')
+            .then(module => module.StudentsComponent),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Alumnos',
+          roles: [
+            'ADMIN',
+            'OPERATOR'
+          ]
+        }
       }
     ]
   },
@@ -86,7 +63,7 @@ export const routes: Routes = [
     path: '404',
     loadComponent: () =>
       import('./views/pages/page404/page404.component')
-        .then(m => m.Page404Component),
+        .then(module => module.Page404Component),
     data: {
       title: 'Página no encontrada'
     }
@@ -95,7 +72,7 @@ export const routes: Routes = [
     path: '500',
     loadComponent: () =>
       import('./views/pages/page500/page500.component')
-        .then(m => m.Page500Component),
+        .then(module => module.Page500Component),
     data: {
       title: 'Error'
     }
@@ -104,7 +81,7 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () =>
       import('./views/pages/login/login.component')
-        .then(m => m.LoginComponent),
+        .then(module => module.LoginComponent),
     data: {
       title: 'Iniciar sesión'
     }
