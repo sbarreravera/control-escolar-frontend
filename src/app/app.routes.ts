@@ -1,6 +1,9 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
+import {
+  scanModeGuard
+} from './core/scan-mode/scan-mode.guard';
 
 export const routes: Routes = [
   {
@@ -15,6 +18,9 @@ export const routes: Routes = [
         .then(module => module.DefaultLayoutComponent),
     canActivate: [
       authGuard
+    ],
+    canActivateChild: [
+      scanModeGuard
     ],
     data: {
       title: 'Inicio'
@@ -83,6 +89,25 @@ export const routes: Routes = [
         ],
         data: {
           title: 'Credenciales QR',
+          roles: [
+            'ADMIN',
+            'OPERATOR'
+          ]
+        }
+      },
+      {
+        path: 'access-scanner',
+        loadComponent: () =>
+          import(
+            './features/access-events/access-scanner.component'
+          ).then(
+            module => module.AccessScannerComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Registrar acceso',
           roles: [
             'ADMIN',
             'OPERATOR'

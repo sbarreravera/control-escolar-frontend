@@ -59,6 +59,13 @@ export function buildNavItems(
       iconComponent: {
         name: 'cil-credit-card'
       }
+    },
+    {
+      name: 'Registrar acceso',
+      url: '/access-scanner',
+      iconComponent: {
+        name: 'cil-check'
+      }
     }
   ];
 }
