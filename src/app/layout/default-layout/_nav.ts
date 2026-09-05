@@ -52,6 +52,13 @@ export function buildNavItems(
       iconComponent: {
         name: 'cil-user'
       }
+    },
+    {
+      name: 'Credenciales QR',
+      url: '/credentials',
+      iconComponent: {
+        name: 'cil-credit-card'
+      }
     }
   ];
 }

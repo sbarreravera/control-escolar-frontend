@@ -72,6 +72,22 @@ export const routes: Routes = [
             'OPERATOR'
           ]
         }
+      },
+      {
+        path: 'credentials',
+        loadComponent: () =>
+          import('./features/credentials/credentials.component')
+            .then(module => module.CredentialsComponent),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Credenciales QR',
+          roles: [
+            'ADMIN',
+            'OPERATOR'
+          ]
+        }
       }
     ]
   },

@@ -40,7 +40,9 @@
               "src/scss/styles.scss"
             ],
             "scripts": [],
-            "allowedCommonJsDependencies": [],
+            "allowedCommonJsDependencies": [
+              "qrcode"
+            ],
             "stylePreprocessorOptions": {
               "sass": {
                 "silenceDeprecations": []
