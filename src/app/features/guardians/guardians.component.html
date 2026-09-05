@@ -1,0 +1,522 @@
+<div class="mb-4">
+  <h1 class="h3 mb-1">
+    Tutores
+  </h1>
+
+  <p class="text-body-secondary mb-0">
+    Administra los tutores de {{ schoolName() }}
+    y relaciónalos con sus alumnos.
+  </p>
+</div>
+
+@if (errorMessage()) {
+  <div
+    class="alert alert-danger"
+    role="alert"
+  >
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (successMessage()) {
+  <div
+    class="alert alert-success"
+    role="alert"
+  >
+    {{ successMessage() }}
+  </div>
+}
+
+@if (loading()) {
+  <c-card>
+    <c-card-body>
+      <p class="text-body-secondary mb-0">
+        Cargando alumnos y tutores...
+      </p>
+    </c-card-body>
+  </c-card>
+} @else {
+  <c-row>
+    <c-col lg="5" class="mb-4">
+      <c-card>
+        <c-card-header>
+          <strong>Nuevo tutor</strong>
+        </c-card-header>
+
+        <c-card-body>
+          <form
+            cForm
+            [formGroup]="guardianForm"
+            (ngSubmit)="createGuardian()"
+            novalidate
+          >
+            <div class="mb-3">
+              <label
+                class="form-label"
+                for="guardianFullName"
+              >
+                Nombre completo
+              </label>
+
+              <input
+                id="guardianFullName"
+                type="text"
+                cFormControl
+                formControlName="fullName"
+                autocomplete="name"
+              />
+
+              @if (
+                guardianForm.controls.fullName.touched &&
+                guardianForm.controls.fullName.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  Ingresa el nombre completo del tutor.
+                </p>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label
+                class="form-label"
+                for="guardianPhone"
+              >
+                Teléfono
+              </label>
+
+              <input
+                id="guardianPhone"
+                type="tel"
+                cFormControl
+                formControlName="phone"
+                placeholder="Ej. 773 123 4567"
+                autocomplete="tel"
+              />
+
+              @if (
+                guardianForm.controls.phone.touched &&
+                guardianForm.controls.phone.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  El teléfono no puede exceder 30 caracteres.
+                </p>
+              }
+            </div>
+
+            <div class="mb-4">
+              <label
+                class="form-label"
+                for="guardianEmail"
+              >
+                Correo electrónico
+              </label>
+
+              <input
+                id="guardianEmail"
+                type="email"
+                cFormControl
+                formControlName="email"
+                placeholder="correo@ejemplo.com"
+                autocomplete="email"
+              />
+
+              @if (
+                guardianForm.controls.email.touched &&
+                guardianForm.controls.email.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  Ingresa un correo electrónico válido.
+                </p>
+              }
+            </div>
+
+            <button
+              cButton
+              color="primary"
+              type="submit"
+              class="w-100"
+              [disabled]="submittingGuardian()"
+            >
+              @if (submittingGuardian()) {
+                Registrando...
+              } @else {
+                Registrar tutor
+              }
+            </button>
+          </form>
+        </c-card-body>
+      </c-card>
+    </c-col>
+
+    <c-col lg="7" class="mb-4">
+      <c-card>
+        <c-card-header>
+          <strong>Tutores registrados</strong>
+        </c-card-header>
+
+        <c-card-body>
+          @if (guardians().length === 0) {
+            <div class="text-center py-5">
+              <h2 class="h5">
+                Aún no hay tutores
+              </h2>
+
+              <p class="text-body-secondary mb-0">
+                Registra el primer tutor para poder
+                vincularlo con un alumno.
+              </p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Tutor</th>
+                    <th>Contacto</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  @for (
+                    guardian of guardians();
+                    track guardian.id
+                  ) {
+                    <tr>
+                      <td>
+                        <strong>
+                          {{ guardian.fullName }}
+                        </strong>
+                      </td>
+
+                      <td>
+                        @if (guardian.phone) {
+                          <div>
+                            {{ guardian.phone }}
+                          </div>
+                        }
+
+                        @if (guardian.email) {
+                          <div class="small text-body-secondary">
+                            {{ guardian.email }}
+                          </div>
+                        }
+
+                        @if (
+                          !guardian.phone &&
+                          !guardian.email
+                        ) {
+                          <span class="text-body-secondary">
+                            Sin información
+                          </span>
+                        }
+                      </td>
+
+                      <td>
+                        @if (guardian.active) {
+                          <span class="badge text-bg-success">
+                            Activo
+                          </span>
+                        } @else {
+                          <span class="badge text-bg-secondary">
+                            Inactivo
+                          </span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+
+  <c-card>
+    <c-card-header>
+      <strong>Asignar tutor a un alumno</strong>
+    </c-card-header>
+
+    <c-card-body>
+      @if (students().length === 0) {
+        <div class="alert alert-warning mb-0">
+          Primero debes registrar al menos un alumno.
+        </div>
+      } @else if (guardians().length === 0) {
+        <div class="alert alert-warning mb-0">
+          Primero debes registrar al menos un tutor.
+        </div>
+      } @else {
+        <form
+          cForm
+          [formGroup]="relationshipForm"
+          (ngSubmit)="createRelationship()"
+          novalidate
+        >
+          <div class="row">
+            <div class="col-lg-4 mb-3">
+              <label
+                class="form-label"
+                for="relationshipStudent"
+              >
+                Alumno
+              </label>
+
+              <select
+                id="relationshipStudent"
+                class="form-select"
+                formControlName="studentId"
+                (change)="loadStudentGuardians()"
+              >
+                <option [ngValue]="null">
+                  Selecciona un alumno
+                </option>
+
+                @for (
+                  student of students();
+                  track student.id
+                ) {
+                  <option [ngValue]="student.id">
+                    {{ student.firstName }}
+                    {{ student.lastName }}
+                    — {{ student.enrollmentNumber }}
+                  </option>
+                }
+              </select>
+
+              @if (
+                relationshipForm.controls.studentId.touched &&
+                relationshipForm.controls.studentId.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  Selecciona un alumno.
+                </p>
+              }
+            </div>
+
+            <div class="col-lg-4 mb-3">
+              <label
+                class="form-label"
+                for="relationshipGuardian"
+              >
+                Tutor
+              </label>
+
+              <select
+                id="relationshipGuardian"
+                class="form-select"
+                formControlName="guardianId"
+              >
+                <option [ngValue]="null">
+                  Selecciona un tutor
+                </option>
+
+                @for (
+                  guardian of guardians();
+                  track guardian.id
+                ) {
+                  <option [ngValue]="guardian.id">
+                    {{ guardian.fullName }}
+                  </option>
+                }
+              </select>
+
+              @if (
+                relationshipForm.controls.guardianId.touched &&
+                relationshipForm.controls.guardianId.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  Selecciona un tutor.
+                </p>
+              }
+            </div>
+
+            <div class="col-lg-4 mb-3">
+              <label
+                class="form-label"
+                for="relationshipName"
+              >
+                Parentesco
+              </label>
+
+              <input
+                id="relationshipName"
+                type="text"
+                cFormControl
+                formControlName="relationship"
+                placeholder="Ej. Madre, padre o tutor"
+                autocomplete="off"
+              />
+
+              @if (
+                relationshipForm.controls.relationship.touched &&
+                relationshipForm.controls.relationship.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  El parentesco no puede exceder
+                  50 caracteres.
+                </p>
+              }
+            </div>
+          </div>
+
+          <div class="row align-items-end">
+            <div class="col-lg-8 mb-3">
+              <div class="form-check mb-2">
+                <input
+                  id="primaryContact"
+                  type="checkbox"
+                  class="form-check-input"
+                  formControlName="primaryContact"
+                />
+
+                <label
+                  class="form-check-label"
+                  for="primaryContact"
+                >
+                  Es el contacto principal
+                </label>
+              </div>
+
+              <div class="form-check">
+                <input
+                  id="receivesNotifications"
+                  type="checkbox"
+                  class="form-check-input"
+                  formControlName="receivesNotifications"
+                />
+
+                <label
+                  class="form-check-label"
+                  for="receivesNotifications"
+                >
+                  Recibirá notificaciones de entrada y salida
+                </label>
+              </div>
+            </div>
+
+            <div class="col-lg-4 mb-3">
+              <button
+                cButton
+                color="primary"
+                type="submit"
+                class="w-100"
+                [disabled]="submittingRelationship()"
+              >
+                @if (submittingRelationship()) {
+                  Vinculando...
+                } @else {
+                  Vincular tutor
+                }
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <hr class="my-4" />
+
+        <h2 class="h5 mb-3">
+          Tutores del alumno seleccionado
+        </h2>
+
+        @if (
+          relationshipForm.controls.studentId.value === null
+        ) {
+          <p class="text-body-secondary mb-0">
+            Selecciona un alumno para consultar sus tutores.
+          </p>
+        } @else if (loadingRelationships()) {
+          <p class="text-body-secondary mb-0">
+            Cargando relaciones...
+          </p>
+        } @else if (studentGuardians().length === 0) {
+          <p class="text-body-secondary mb-0">
+            El alumno todavía no tiene tutores vinculados.
+          </p>
+        } @else {
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Tutor</th>
+                  <th>Parentesco</th>
+                  <th>Contacto principal</th>
+                  <th>Notificaciones</th>
+                  <th class="text-end">Acciones</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (
+                  relationship of studentGuardians();
+                  track relationship.guardianId
+                ) {
+                  <tr>
+                    <td>
+                      <strong>
+                        {{ relationship.guardianName }}
+                      </strong>
+                    </td>
+
+                    <td>
+                      {{ relationship.relationship || 'Sin especificar' }}
+                    </td>
+
+                    <td>
+                      @if (relationship.primaryContact) {
+                        <span class="badge text-bg-primary">
+                          Sí
+                        </span>
+                      } @else {
+                        <span class="text-body-secondary">
+                          No
+                        </span>
+                      }
+                    </td>
+
+                    <td>
+                      @if (relationship.receivesNotifications) {
+                        <span class="badge text-bg-success">
+                          Activadas
+                        </span>
+                      } @else {
+                        <span class="badge text-bg-secondary">
+                          Desactivadas
+                        </span>
+                      }
+                    </td>
+
+                    <td class="text-end">
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger btn-sm"
+                        [disabled]="
+                          removingGuardianId() ===
+                          relationship.guardianId
+                        "
+                        (click)="
+                          removeRelationship(relationship)
+                        "
+                      >
+                        @if (
+                          removingGuardianId() ===
+                          relationship.guardianId
+                        ) {
+                          Eliminando...
+                        } @else {
+                          Desvincular
+                        }
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    </c-card-body>
+  </c-card>
+}

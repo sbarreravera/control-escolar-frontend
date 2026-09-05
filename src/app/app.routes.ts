@@ -56,6 +56,22 @@ export const routes: Routes = [
             'OPERATOR'
           ]
         }
+      },
+      {
+        path: 'guardians',
+        loadComponent: () =>
+          import('./features/guardians/guardians.component')
+            .then(module => module.GuardiansComponent),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Tutores',
+          roles: [
+            'ADMIN',
+            'OPERATOR'
+          ]
+        }
       }
     ]
   },

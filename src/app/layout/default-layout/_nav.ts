@@ -45,6 +45,13 @@ export function buildNavItems(
       iconComponent: {
         name: 'cil-people'
       }
+    },
+    {
+      name: 'Tutores',
+      url: '/guardians',
+      iconComponent: {
+        name: 'cil-user'
+      }
     }
   ];
 }
