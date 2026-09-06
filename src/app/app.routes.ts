@@ -12,6 +12,19 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'activate-notifications',
+    loadComponent: () =>
+      import(
+        './features/guardian-device-enrollment/guardian-device-enrollment.component'
+      ).then(
+        module =>
+          module.GuardianDeviceEnrollmentComponent
+      ),
+    data: {
+      title: 'Activar notificaciones'
+    }
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./layout')

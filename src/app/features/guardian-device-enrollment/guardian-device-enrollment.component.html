@@ -1,0 +1,100 @@
+<div
+  class="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary p-3"
+>
+  <main class="w-100" style="max-width: 620px">
+    <div class="card shadow-sm">
+      <div class="card-body p-4 p-md-5">
+        <div class="text-center mb-4">
+          <div class="fs-1 mb-3" aria-hidden="true">
+            🔔
+          </div>
+
+          <div class="text-uppercase text-body-secondary small fw-semibold mb-2">
+            Control Escolar
+          </div>
+
+          @if (completed()) {
+            <h1 class="h3 mb-3">
+              Notificaciones activadas
+            </h1>
+
+            <p class="text-body-secondary mb-0">
+              Este dispositivo quedó vinculado correctamente.
+              Recibirás avisos cuando se registre una entrada
+              o salida del alumno.
+            </p>
+          } @else {
+            <h1 class="h3 mb-3">
+              Activa los avisos escolares
+            </h1>
+
+            <p class="text-body-secondary mb-0">
+              Vincula este dispositivo para recibir las
+              notificaciones enviadas por la escuela.
+            </p>
+          }
+        </div>
+
+        @if (completed()) {
+          <div
+            class="alert alert-success text-center mb-0"
+            role="status"
+          >
+            <strong>El proceso terminó correctamente.</strong>
+            <div class="mt-1">
+              Ya puedes cerrar esta ventana.
+            </div>
+          </div>
+        } @else {
+          <ol class="mb-4">
+            <li class="mb-2">
+              Presiona el botón de activación.
+            </li>
+            <li class="mb-2">
+              Cuando el navegador pregunte, selecciona
+              <strong>Permitir</strong>.
+            </li>
+            <li>
+              Espera la confirmación antes de cerrar
+              esta ventana.
+            </li>
+          </ol>
+
+          @if (errorMessage(); as message) {
+            <div
+              class="alert alert-danger"
+              role="alert"
+            >
+              {{ message }}
+            </div>
+          }
+
+          <button
+            class="btn btn-primary btn-lg w-100"
+            type="button"
+            [disabled]="
+              processing() ||
+              !enrollmentToken
+            "
+            (click)="activateNotifications()"
+          >
+            @if (processing()) {
+              <span
+                class="spinner-border spinner-border-sm me-2"
+                aria-hidden="true"
+              ></span>
+              Vinculando dispositivo...
+            } @else {
+              Activar notificaciones
+            }
+          </button>
+
+          <p class="text-body-secondary text-center small mt-4 mb-0">
+            La escuela no tendrá acceso a tus fotografías,
+            contactos ni archivos personales.
+          </p>
+        }
+      </div>
+    </div>
+  </main>
+</div>
