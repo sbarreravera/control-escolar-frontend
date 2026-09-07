@@ -61,6 +61,42 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'academic-cycles',
+        loadComponent: () =>
+          import(
+            './features/academic-cycles/academic-cycles.component'
+          ).then(
+            module => module.AcademicCyclesComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Ciclos escolares',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
+        path: 'school-groups',
+        loadComponent: () =>
+          import(
+            './features/school-groups/school-groups.component'
+          ).then(
+            module => module.SchoolGroupsComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Grados y grupos',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
         path: 'students',
         loadComponent: () =>
           import('./features/students/students.component')
