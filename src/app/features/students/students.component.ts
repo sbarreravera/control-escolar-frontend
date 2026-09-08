@@ -24,6 +24,18 @@ import {
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import {
+  AcademicCycle
+} from '../academic-cycles/academic-cycle.models';
+import {
+  AcademicCycleService
+} from '../academic-cycles/academic-cycle.service';
+import {
+  SchoolGroup
+} from '../school-groups/school-group.models';
+import {
+  SchoolGroupService
+} from '../school-groups/school-group.service';
+import {
   CreateStudentRequest,
   Student
 } from './student.models';
@@ -49,10 +61,20 @@ export class StudentsComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly studentService = inject(StudentService);
+  private readonly academicCycleService =
+    inject(AcademicCycleService);
+  private readonly schoolGroupService =
+    inject(SchoolGroupService);
 
   readonly students = signal<Student[]>([]);
+  readonly academicCycles = signal<AcademicCycle[]>([]);
+  readonly schoolGroups = signal<SchoolGroup[]>([]);
+
   readonly loading = signal(true);
+  readonly loadingCycles = signal(true);
+  readonly loadingGroups = signal(false);
   readonly submitting = signal(false);
+
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
 
@@ -84,6 +106,23 @@ export class StudentsComponent implements OnInit {
         Validators.maxLength(150)
       ]
     ],
+    academicCycleId: [
+      0,
+      [
+        Validators.required,
+        Validators.min(1)
+      ]
+    ],
+    schoolGroupId: [
+      0,
+      [
+        Validators.required,
+        Validators.min(1)
+      ]
+    ],
+
+    // Se conservan temporalmente hasta sustituir
+    // los campos anteriores en el template.
     gradeName: [
       '',
       [
@@ -100,6 +139,7 @@ export class StudentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadStudents();
+    this.loadAcademicCycles();
   }
 
   loadStudents(): void {
@@ -125,6 +165,92 @@ export class StudentsComponent implements OnInit {
       .subscribe({
         next: students => {
           this.students.set(students);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage.set(
+            this.resolveErrorMessage(error)
+          );
+        }
+      });
+  }
+
+  loadAcademicCycles(): void {
+    const schoolId =
+      this.authService.currentUser()?.schoolId;
+
+    if (schoolId === null || schoolId === undefined) {
+      this.loadingCycles.set(false);
+      return;
+    }
+
+    this.loadingCycles.set(true);
+
+    this.academicCycleService
+      .findAllBySchool(schoolId)
+      .pipe(
+        finalize(() => this.loadingCycles.set(false))
+      )
+      .subscribe({
+        next: academicCycles => {
+          const activeCycles =
+            academicCycles.filter(cycle => cycle.active);
+
+          this.academicCycles.set(activeCycles);
+
+          if (activeCycles.length === 0) {
+            this.schoolGroups.set([]);
+            return;
+          }
+
+          const selectedCycle = activeCycles[0];
+
+          this.studentForm.controls
+            .academicCycleId
+            .setValue(selectedCycle.id);
+
+          this.loadSchoolGroups(selectedCycle.id);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage.set(
+            this.resolveErrorMessage(error)
+          );
+        }
+      });
+  }
+
+  onAcademicCycleChange(): void {
+    const academicCycleId =
+      this.studentForm.controls
+        .academicCycleId.value;
+
+    this.studentForm.controls
+      .schoolGroupId
+      .setValue(0);
+
+    this.schoolGroups.set([]);
+
+    if (academicCycleId <= 0) {
+      return;
+    }
+
+    this.loadSchoolGroups(academicCycleId);
+  }
+
+  loadSchoolGroups(
+    academicCycleId: number
+  ): void {
+    this.loadingGroups.set(true);
+
+    this.schoolGroupService
+      .findAllByAcademicCycle(academicCycleId)
+      .pipe(
+        finalize(() => this.loadingGroups.set(false))
+      )
+      .subscribe({
+        next: schoolGroups => {
+          this.schoolGroups.set(
+            schoolGroups.filter(group => group.active)
+          );
         },
         error: (error: HttpErrorResponse) => {
           this.errorMessage.set(
@@ -165,14 +291,9 @@ export class StudentsComponent implements OnInit {
         formValue.firstName.trim(),
       lastName:
         formValue.lastName.trim(),
-      gradeName:
-        this.normalizeOptionalText(
-          formValue.gradeName
-        ),
-      groupName:
-        this.normalizeOptionalText(
-          formValue.groupName
-        )
+      gradeName: null,
+      groupName: null,
+      schoolGroupId: formValue.schoolGroupId
     };
 
     this.studentService
@@ -187,10 +308,16 @@ export class StudentsComponent implements OnInit {
             student
           ]);
 
+          // Conservamos ciclo y grupo para facilitar
+          // la captura consecutiva de alumnos del mismo salón.
           this.studentForm.reset({
             enrollmentNumber: '',
             firstName: '',
             lastName: '',
+            academicCycleId:
+              formValue.academicCycleId,
+            schoolGroupId:
+              formValue.schoolGroupId,
             gradeName: '',
             groupName: ''
           });
@@ -207,21 +334,19 @@ export class StudentsComponent implements OnInit {
       });
   }
 
-  private normalizeOptionalText(
-    value: string
-  ): string | null {
-    const normalizedValue = value.trim();
-
-    return normalizedValue.length > 0
-      ? normalizedValue
-      : null;
-  }
-
   private resolveErrorMessage(
     error: HttpErrorResponse
   ): string {
     if (error.status === 409) {
-      return 'La matrícula ya está registrada en esta escuela.';
+      return 'La matrícula ya está registrada o el grupo seleccionado ya no está activo.';
+    }
+
+    if (error.status === 404) {
+      return 'No fue posible encontrar el ciclo o grupo seleccionado.';
+    }
+
+    if (error.status === 400) {
+      return 'El grupo seleccionado no corresponde a esta escuela.';
     }
 
     if (error.status === 403) {
