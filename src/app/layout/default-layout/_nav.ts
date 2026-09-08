@@ -1,4 +1,4 @@
-import { INavData } from '@coreui/angular';
+﻿import { INavData } from '@coreui/angular';
 import {
   AppUserRole
 } from '../../core/auth/auth.models';
@@ -33,12 +33,33 @@ export function buildNavItems(
     ];
   }
 
+  const academicItems: INavData[] =
+    role === 'ADMIN'
+      ? [
+          {
+            name: 'Ciclos escolares',
+            url: '/academic-cycles',
+            iconComponent: {
+              name: 'cil-calendar'
+            }
+          },
+          {
+            name: 'Grados y grupos',
+            url: '/school-groups',
+            iconComponent: {
+              name: 'cil-list'
+            }
+          }
+        ]
+      : [];
+
   return [
     ...items,
     {
       title: true,
       name: 'Control escolar'
     },
+    ...academicItems,
     {
       name: 'Alumnos',
       url: '/students',

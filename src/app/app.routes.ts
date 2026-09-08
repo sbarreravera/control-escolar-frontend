@@ -12,6 +12,19 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'activate-notifications',
+    loadComponent: () =>
+      import(
+        './features/guardian-device-enrollment/guardian-device-enrollment.component'
+      ).then(
+        module =>
+          module.GuardianDeviceEnrollmentComponent
+      ),
+    data: {
+      title: 'Activar notificaciones'
+    }
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./layout')
@@ -44,6 +57,42 @@ export const routes: Routes = [
           title: 'Escuelas',
           roles: [
             'SUPER_ADMIN'
+          ]
+        }
+      },
+      {
+        path: 'academic-cycles',
+        loadComponent: () =>
+          import(
+            './features/academic-cycles/academic-cycles.component'
+          ).then(
+            module => module.AcademicCyclesComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Ciclos escolares',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
+        path: 'school-groups',
+        loadComponent: () =>
+          import(
+            './features/school-groups/school-groups.component'
+          ).then(
+            module => module.SchoolGroupsComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Grados y grupos',
+          roles: [
+            'ADMIN'
           ]
         }
       },

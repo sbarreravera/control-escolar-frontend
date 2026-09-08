@@ -1,0 +1,156 @@
+<section class="card mb-4">
+  <div class="card-header">
+    <strong>
+      Activar notificaciones en un dispositivo
+    </strong>
+  </div>
+
+  <div class="card-body">
+    <p class="text-body-secondary">
+      Genera una invitación temporal para vincular el
+      teléfono del tutor. La invitación vence en 15 minutos
+      y solamente puede utilizarse una vez.
+    </p>
+
+    @if (activeGuardians().length === 0) {
+      <div class="alert alert-warning mb-0">
+        Primero debes registrar al menos un tutor activo.
+      </div>
+    } @else {
+      <div class="row align-items-end">
+        <div class="col-lg-8 mb-3">
+          <label
+            class="form-label"
+            for="notificationGuardian"
+          >
+            Tutor
+          </label>
+
+          <select
+            id="notificationGuardian"
+            class="form-select"
+            [value]="selectedGuardianId() ?? ''"
+            (change)="selectGuardian($event)"
+          >
+            <option value="">
+              Selecciona un tutor
+            </option>
+
+            @for (
+              guardian of activeGuardians();
+              track guardian.id
+            ) {
+              <option [value]="guardian.id">
+                {{ guardian.fullName }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="col-lg-4 mb-3">
+          <button
+            class="btn btn-primary w-100"
+            type="button"
+            [disabled]="
+              selectedGuardianId() === null ||
+              creatingInvitation()
+            "
+            (click)="createInvitation()"
+          >
+            @if (creatingInvitation()) {
+              Generando...
+            } @else {
+              Generar invitación
+            }
+          </button>
+        </div>
+      </div>
+
+      @if (errorMessage(); as message) {
+        <div
+          class="alert alert-danger mt-2"
+          role="alert"
+        >
+          {{ message }}
+        </div>
+      }
+
+      @if (invitation(); as currentInvitation) {
+        <div class="border rounded p-3 mt-3">
+          <div class="row align-items-center">
+            <div class="col-md-5 text-center mb-3 mb-md-0">
+              @if (invitationQrDataUrl(); as qrDataUrl) {
+                <img
+                  class="img-fluid bg-white rounded p-2"
+                  style="max-width: 300px"
+                  [src]="qrDataUrl"
+                  alt="Código QR para activar notificaciones"
+                />
+              }
+            </div>
+
+            <div class="col-md-7">
+              <h2 class="h5">
+                Invitación para
+                {{ currentInvitation.guardianName }}
+              </h2>
+
+              <p class="text-body-secondary small">
+                {{ currentInvitation.schoolName }}<br />
+                Vence:
+                {{
+                  formatExpiration(
+                    currentInvitation.expiresAt
+                  )
+                }}
+              </p>
+
+              <label
+                class="form-label"
+                for="notificationInvitationUrl"
+              >
+                Enlace de activación
+              </label>
+
+              <input
+                id="notificationInvitationUrl"
+                class="form-control"
+                type="text"
+                readonly
+                autocomplete="off"
+                [value]="invitationUrl()"
+              />
+
+              <div class="d-grid gap-2 mt-3">
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  (click)="copyInvitationLink()"
+                >
+                  @if (copied()) {
+                    Enlace copiado
+                  } @else {
+                    Copiar enlace
+                  }
+                </button>
+
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  (click)="closeInvitation()"
+                >
+                  Cerrar invitación
+                </button>
+              </div>
+
+              <p class="text-body-secondary small mt-3 mb-0">
+                El tutor puede escanear el QR o recibir
+                el enlace por un medio seguro.
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</section>

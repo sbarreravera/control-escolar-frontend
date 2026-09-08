@@ -43,12 +43,16 @@ import {
 import {
   GuardianService
 } from './guardian.service';
+import {
+  GuardianNotificationInvitationComponent
+} from './guardian-notification-invitation.component';
 
 @Component({
   selector: 'app-guardians',
   templateUrl: './guardians.component.html',
   imports: [
     ReactiveFormsModule,
+    GuardianNotificationInvitationComponent,
     RowComponent,
     ColComponent,
     CardComponent,

@@ -1,0 +1,215 @@
+﻿<div class="mb-4">
+  <h1 class="h3 mb-1">
+    Ciclos escolares
+  </h1>
+
+  <p class="text-body-secondary mb-0">
+    Administra los ciclos escolares de {{ schoolName() }}.
+  </p>
+</div>
+
+@if (errorMessage()) {
+  <div
+    class="alert alert-danger"
+    role="alert"
+  >
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (successMessage()) {
+  <div
+    class="alert alert-success"
+    role="alert"
+  >
+    {{ successMessage() }}
+  </div>
+}
+
+<c-row>
+  <c-col lg="5" class="mb-4">
+    <c-card>
+      <c-card-header>
+        <strong>Nuevo ciclo escolar</strong>
+      </c-card-header>
+
+      <c-card-body>
+        <form
+          cForm
+          [formGroup]="academicCycleForm"
+          (ngSubmit)="createAcademicCycle()"
+          novalidate
+        >
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="academicCycleName"
+            >
+              Nombre
+            </label>
+
+            <input
+              id="academicCycleName"
+              type="text"
+              cFormControl
+              formControlName="name"
+              placeholder="Ej. 2026 - 2027"
+              autocomplete="off"
+            />
+
+            @if (
+              academicCycleForm.controls.name.touched &&
+              academicCycleForm.controls.name.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa el nombre del ciclo escolar.
+              </p>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="academicCycleStartDate"
+            >
+              Fecha de inicio
+            </label>
+
+            <input
+              id="academicCycleStartDate"
+              type="date"
+              cFormControl
+              formControlName="startDate"
+            />
+
+            @if (
+              academicCycleForm.controls.startDate.touched &&
+              academicCycleForm.controls.startDate.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Selecciona la fecha de inicio.
+              </p>
+            }
+          </div>
+
+          <div class="mb-4">
+            <label
+              class="form-label"
+              for="academicCycleEndDate"
+            >
+              Fecha de término
+            </label>
+
+            <input
+              id="academicCycleEndDate"
+              type="date"
+              cFormControl
+              formControlName="endDate"
+            />
+
+            @if (
+              academicCycleForm.controls.endDate.touched &&
+              academicCycleForm.controls.endDate.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Selecciona la fecha de término.
+              </p>
+            }
+          </div>
+
+          <button
+            cButton
+            color="primary"
+            type="submit"
+            class="w-100"
+            [disabled]="submitting()"
+          >
+            @if (submitting()) {
+              Registrando...
+            } @else {
+              Registrar ciclo escolar
+            }
+          </button>
+        </form>
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col lg="7">
+    <c-card>
+      <c-card-header>
+        <strong>Ciclos escolares registrados</strong>
+      </c-card-header>
+
+      <c-card-body>
+        @if (loading()) {
+          <p class="text-body-secondary mb-0">
+            Cargando ciclos escolares...
+          </p>
+        } @else if (academicCycles().length === 0) {
+          <div class="text-center py-5">
+            <h2 class="h5">
+              Aún no hay ciclos escolares
+            </h2>
+
+            <p class="text-body-secondary mb-0">
+              Registra el primer ciclo escolar para comenzar a crear grupos.
+            </p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Ciclo escolar</th>
+                  <th>Inicio</th>
+                  <th>Término</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (
+                  academicCycle of academicCycles();
+                  track academicCycle.id
+                ) {
+                  <tr>
+                    <td>
+                      <strong>
+                        {{ academicCycle.name }}
+                      </strong>
+                    </td>
+
+                    <td>
+                      {{ academicCycle.startDate }}
+                    </td>
+
+                    <td>
+                      {{ academicCycle.endDate }}
+                    </td>
+
+                    <td>
+                      @if (academicCycle.active) {
+                        <span
+                          class="badge text-bg-success"
+                        >
+                          Activo
+                        </span>
+                      } @else {
+                        <span
+                          class="badge text-bg-secondary"
+                        >
+                          Inactivo
+                        </span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

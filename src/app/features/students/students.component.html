@@ -30,14 +30,16 @@
   <c-col lg="5" class="mb-4">
     <c-card>
       <c-card-header>
-        <strong>Nuevo alumno</strong>
+        <strong>
+          {{ isEditing() ? 'Editar alumno' : 'Nuevo alumno' }}
+        </strong>
       </c-card-header>
 
       <c-card-body>
         <form
           cForm
           [formGroup]="studentForm"
-          (ngSubmit)="createStudent()"
+          (ngSubmit)="saveStudent()"
           novalidate
         >
           <div class="mb-3">
@@ -119,75 +121,141 @@
             }
           </div>
 
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label
-                class="form-label"
-                for="gradeName"
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="academicCycleId"
+            >
+              Ciclo escolar
+            </label>
+
+            <select
+              id="academicCycleId"
+              class="form-select"
+              formControlName="academicCycleId"
+              (change)="onAcademicCycleChange()"
+            >
+              <option
+                [ngValue]="0"
+                disabled
               >
-                Grado
-              </label>
+                Selecciona un ciclo escolar
+              </option>
 
-              <input
-                id="gradeName"
-                type="text"
-                cFormControl
-                formControlName="gradeName"
-                placeholder="Ej. 1°"
-                autocomplete="off"
-              />
-
-              @if (
-                studentForm.controls.gradeName.touched &&
-                studentForm.controls.gradeName.invalid
+              @for (
+                academicCycle of academicCycles();
+                track academicCycle.id
               ) {
-                <p class="text-danger small mt-1 mb-0">
-                  El grado no puede exceder 50 caracteres.
-                </p>
+                <option
+                  [ngValue]="academicCycle.id"
+                >
+                  {{ academicCycle.name }}
+                </option>
               }
-            </div>
+            </select>
 
-            <div class="col-md-6 mb-4">
-              <label
-                class="form-label"
-                for="groupName"
-              >
-                Grupo
-              </label>
+            @if (loadingCycles()) {
+              <div class="form-text">
+                Cargando ciclos escolares...
+              </div>
+            }
 
-              <input
-                id="groupName"
-                type="text"
-                cFormControl
-                formControlName="groupName"
-                placeholder="Ej. A"
-                autocomplete="off"
-              />
-
-              @if (
-                studentForm.controls.groupName.touched &&
-                studentForm.controls.groupName.invalid
-              ) {
-                <p class="text-danger small mt-1 mb-0">
-                  El grupo no puede exceder 50 caracteres.
-                </p>
-              }
-            </div>
+            @if (
+              studentForm.controls.academicCycleId.touched &&
+              studentForm.controls.academicCycleId.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Selecciona un ciclo escolar.
+              </p>
+            }
           </div>
 
-          <button
-            cButton
-            color="primary"
-            type="submit"
-            class="w-100"
-            [disabled]="submitting()"
-          >
-            @if (submitting()) {
-              Registrando...
-            } @else {
-              Registrar alumno
+          <div class="mb-4">
+            <label
+              class="form-label"
+              for="schoolGroupId"
+            >
+              Grado y grupo
+            </label>
+
+            <select
+              id="schoolGroupId"
+              class="form-select"
+              formControlName="schoolGroupId"
+            >
+              <option
+                [ngValue]="0"
+                disabled
+              >
+                @if (loadingGroups()) {
+                  Cargando grupos...
+                } @else {
+                  Selecciona un grado y grupo
+                }
+              </option>
+
+              @for (
+                schoolGroup of schoolGroups();
+                track schoolGroup.id
+              ) {
+                <option
+                  [ngValue]="schoolGroup.id"
+                >
+                  {{ schoolGroup.gradeName }}
+                  {{ schoolGroup.groupName }}
+                </option>
+              }
+            </select>
+
+            @if (
+              !loadingGroups() &&
+              studentForm.controls.academicCycleId.value > 0 &&
+              schoolGroups().length === 0
+            ) {
+              <div class="form-text text-warning">
+                Este ciclo escolar aún no tiene grupos registrados.
+              </div>
             }
-          </button>
+
+            @if (
+              studentForm.controls.schoolGroupId.touched &&
+              studentForm.controls.schoolGroupId.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Selecciona el grado y grupo del alumno.
+              </p>
+            }
+          </div>
+
+          <div class="d-grid gap-2">
+            <button
+              cButton
+              color="primary"
+              type="submit"
+              [disabled]="submitting()"
+            >
+              @if (submitting()) {
+                Guardando...
+              } @else if (isEditing()) {
+                Guardar cambios
+              } @else {
+                Registrar alumno
+              }
+            </button>
+
+            @if (isEditing()) {
+              <button
+                cButton
+                color="secondary"
+                variant="outline"
+                type="button"
+                [disabled]="submitting()"
+                (click)="cancelEditing()"
+              >
+                Cancelar edición
+              </button>
+            }
+          </div>
         </form>
       </c-card-body>
     </c-card>
@@ -221,8 +289,10 @@
                 <tr>
                   <th>Matrícula</th>
                   <th>Alumno</th>
+                  <th>Ciclo escolar</th>
                   <th>Grado y grupo</th>
                   <th>Estado</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
 
@@ -243,6 +313,16 @@
                         {{ student.firstName }}
                         {{ student.lastName }}
                       </strong>
+                    </td>
+
+                    <td>
+                      @if (student.academicCycleName) {
+                        {{ student.academicCycleName }}
+                      } @else {
+                        <span class="text-body-secondary">
+                          —
+                        </span>
+                      }
                     </td>
 
                     <td>
@@ -269,6 +349,19 @@
                           Inactivo
                         </span>
                       }
+                    </td>
+
+                    <td>
+                      <button
+                        cButton
+                        color="primary"
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        (click)="startEditing(student)"
+                      >
+                        Editar
+                      </button>
                     </td>
                   </tr>
                 }
