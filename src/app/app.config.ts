@@ -1,3 +1,4 @@
+import { provideHttpClient, withXsrfConfiguration } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import {
@@ -13,7 +14,8 @@ import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes,
+    provideRouter(
+      routes,
       withRouterConfig({
         onSameUrlNavigation: 'reload'
       }),
@@ -25,8 +27,13 @@ export const appConfig: ApplicationConfig = {
       withViewTransitions(),
       withHashLocation()
     ),
+    provideHttpClient(
+      withXsrfConfiguration({
+        cookieName: 'XSRF-TOKEN',
+        headerName: 'X-XSRF-TOKEN'
+      })
+    ),
     IconSetService,
     provideAnimationsAsync()
   ]
 };
-

@@ -1,0 +1,254 @@
+﻿<div class="mb-4">
+  <h1 class="h3 mb-1">
+    Grados y grupos
+  </h1>
+
+  <p class="text-body-secondary mb-0">
+    Administra la estructura académica de {{ schoolName() }}.
+  </p>
+</div>
+
+@if (errorMessage()) {
+  <div
+    class="alert alert-danger"
+    role="alert"
+  >
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (successMessage()) {
+  <div
+    class="alert alert-success"
+    role="alert"
+  >
+    {{ successMessage() }}
+  </div>
+}
+
+@if (loadingCycles()) {
+  <c-card>
+    <c-card-body>
+      <p class="text-body-secondary mb-0">
+        Cargando ciclos escolares...
+      </p>
+    </c-card-body>
+  </c-card>
+} @else if (academicCycles().length === 0) {
+  <div
+    class="alert alert-warning"
+    role="alert"
+  >
+    Primero debes registrar un ciclo escolar antes
+    de crear grados y grupos.
+  </div>
+} @else {
+  <c-row>
+    <c-col lg="5" class="mb-4">
+      <c-card>
+        <c-card-header>
+          <strong>Nuevo grado y grupo</strong>
+        </c-card-header>
+
+        <c-card-body>
+          <form
+            cForm
+            [formGroup]="schoolGroupForm"
+            (ngSubmit)="createSchoolGroup()"
+            novalidate
+          >
+            <div class="mb-3">
+              <label
+                class="form-label"
+                for="academicCycleId"
+              >
+                Ciclo escolar
+              </label>
+
+              <select
+                id="academicCycleId"
+                class="form-select"
+                formControlName="academicCycleId"
+                (change)="onAcademicCycleChange()"
+              >
+                <option
+                  [ngValue]="0"
+                  disabled
+                >
+                  Selecciona un ciclo escolar
+                </option>
+
+                @for (
+                  academicCycle of academicCycles();
+                  track academicCycle.id
+                ) {
+                  <option
+                    [ngValue]="academicCycle.id"
+                  >
+                    {{ academicCycle.name }}
+                  </option>
+                }
+              </select>
+
+              @if (
+                schoolGroupForm.controls.academicCycleId.touched &&
+                schoolGroupForm.controls.academicCycleId.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  Selecciona un ciclo escolar.
+                </p>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label
+                class="form-label"
+                for="gradeName"
+              >
+                Grado
+              </label>
+
+              <input
+                id="gradeName"
+                type="text"
+                cFormControl
+                formControlName="gradeName"
+                placeholder="Ej. 1°, 2°, Preescolar 3"
+                autocomplete="off"
+              />
+
+              @if (
+                schoolGroupForm.controls.gradeName.touched &&
+                schoolGroupForm.controls.gradeName.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  Ingresa el grado.
+                </p>
+              }
+            </div>
+
+            <div class="mb-4">
+              <label
+                class="form-label"
+                for="groupName"
+              >
+                Grupo
+              </label>
+
+              <input
+                id="groupName"
+                type="text"
+                cFormControl
+                formControlName="groupName"
+                placeholder="Ej. A"
+                autocomplete="off"
+              />
+
+              @if (
+                schoolGroupForm.controls.groupName.touched &&
+                schoolGroupForm.controls.groupName.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  Ingresa el grupo.
+                </p>
+              }
+            </div>
+
+            <button
+              cButton
+              color="primary"
+              type="submit"
+              class="w-100"
+              [disabled]="submitting()"
+            >
+              @if (submitting()) {
+                Registrando...
+              } @else {
+                Registrar grupo
+              }
+            </button>
+          </form>
+        </c-card-body>
+      </c-card>
+    </c-col>
+
+    <c-col lg="7">
+      <c-card>
+        <c-card-header>
+          <strong>Grados y grupos registrados</strong>
+        </c-card-header>
+
+        <c-card-body>
+          @if (loadingGroups()) {
+            <p class="text-body-secondary mb-0">
+              Cargando grupos...
+            </p>
+          } @else if (schoolGroups().length === 0) {
+            <div class="text-center py-5">
+              <h2 class="h5">
+                Aún no hay grupos
+              </h2>
+
+              <p class="text-body-secondary mb-0">
+                Registra el primer grado y grupo
+                del ciclo escolar seleccionado.
+              </p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Grado</th>
+                    <th>Grupo</th>
+                    <th>Ciclo escolar</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  @for (
+                    schoolGroup of schoolGroups();
+                    track schoolGroup.id
+                  ) {
+                    <tr>
+                      <td>
+                        <strong>
+                          {{ schoolGroup.gradeName }}
+                        </strong>
+                      </td>
+
+                      <td>
+                        {{ schoolGroup.groupName }}
+                      </td>
+
+                      <td>
+                        {{ schoolGroup.academicCycleName }}
+                      </td>
+
+                      <td>
+                        @if (schoolGroup.active) {
+                          <span
+                            class="badge text-bg-success"
+                          >
+                            Activo
+                          </span>
+                        } @else {
+                          <span
+                            class="badge text-bg-secondary"
+                          >
+                            Inactivo
+                          </span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+}

@@ -1,0 +1,980 @@
+@if (!secureModeActive()) {
+  <div
+    class="container-fluid px-0 mx-auto"
+    style="max-width: 1200px"
+  >
+    <header class="mb-4">
+      <h1 class="h2 mb-1">Registrar acceso</h1>
+      <p class="text-body-secondary mb-0">
+        Configura el movimiento y el tipo de lector antes de iniciar.
+      </p>
+    </header>
+
+    @if (successMessage(); as message) {
+      <div class="alert alert-success" role="alert">
+        {{ message }}
+      </div>
+    }
+
+    @if (errorMessage(); as message) {
+      <div class="alert alert-danger" role="alert">
+        {{ message }}
+      </div>
+    }
+
+    <section
+      class="card mb-4"
+      [formGroup]="scanForm"
+    >
+      <div class="card-header">
+        <strong>1. Selecciona el movimiento</strong>
+      </div>
+
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <input
+              id="eventTypeEntry"
+              class="btn-check"
+              type="radio"
+              value="ENTRY"
+              formControlName="eventType"
+            />
+
+            <label
+              class="btn btn-outline-success w-100 py-3"
+              for="eventTypeEntry"
+            >
+              <span class="d-block fs-5 fw-semibold">
+                Registrar entrada
+              </span>
+              <small>
+                El alumno está ingresando a la escuela
+              </small>
+            </label>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <input
+              id="eventTypeExit"
+              class="btn-check"
+              type="radio"
+              value="EXIT"
+              formControlName="eventType"
+            />
+
+            <label
+              class="btn btn-outline-warning w-100 py-3"
+              for="eventTypeExit"
+            >
+              <span class="d-block fs-5 fw-semibold">
+                Registrar salida
+              </span>
+              <small>
+                El alumno está saliendo de la escuela
+              </small>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card mb-4">
+      <div class="card-header p-0">
+        <div class="px-3 pt-3">
+          <strong>2. Selecciona cómo escanear</strong>
+        </div>
+
+        <ul
+          class="nav nav-tabs nav-fill mt-3 px-3"
+          role="tablist"
+        >
+          <li
+            class="nav-item"
+            role="presentation"
+          >
+            <button
+              id="usb-tab"
+              class="nav-link w-100"
+              type="button"
+              role="tab"
+              aria-controls="usb-description"
+              [class.active]="
+                activeCaptureMethod() === 'QR_USB'
+              "
+              [attr.aria-selected]="
+                activeCaptureMethod() === 'QR_USB'
+              "
+              (click)="selectCaptureMethod('QR_USB')"
+            >
+              <span class="d-block fw-semibold">
+                Lector USB
+              </span>
+              <small>Equipo de recepción</small>
+            </button>
+          </li>
+
+          <li
+            class="nav-item"
+            role="presentation"
+          >
+            <button
+              id="camera-tab"
+              class="nav-link w-100"
+              type="button"
+              role="tab"
+              aria-controls="camera-description"
+              [class.active]="
+                activeCaptureMethod() === 'QR_CAMERA'
+              "
+              [attr.aria-selected]="
+                activeCaptureMethod() === 'QR_CAMERA'
+              "
+              (click)="selectCaptureMethod('QR_CAMERA')"
+            >
+              <span class="d-block fw-semibold">
+                Cámara
+              </span>
+              <small>Teléfono, tableta o webcam</small>
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card-body py-4">
+        @if (activeCaptureMethod() === 'QR_USB') {
+          <div
+            id="usb-description"
+            class="mx-auto text-center"
+            style="max-width: 700px"
+            role="tabpanel"
+            aria-labelledby="usb-tab"
+          >
+            <div
+              class="fs-1 mb-2"
+              aria-hidden="true"
+            >
+              ▣
+            </div>
+
+            <h2 class="h4">
+              Lector QR conectado por USB
+            </h2>
+
+            <p class="text-body-secondary mb-0">
+              Al iniciar, la pantalla quedará protegida y el
+              lector estará listo para registrar credenciales
+              consecutivamente.
+            </p>
+          </div>
+        } @else {
+          <div
+            id="camera-description"
+            class="mx-auto text-center"
+            style="max-width: 700px"
+            role="tabpanel"
+            aria-labelledby="camera-tab"
+          >
+            <div
+              class="fs-1 mb-2"
+              aria-hidden="true"
+            >
+              ▣
+            </div>
+
+            <h2 class="h4">
+              Cámara del dispositivo
+            </h2>
+
+            <p class="text-body-secondary mb-0">
+              Al iniciar se solicitará permiso para la cámara.
+              Después de cada lectura quedará preparada
+              automáticamente para la siguiente.
+            </p>
+          </div>
+        }
+      </div>
+    </section>
+
+    <details class="card mb-4">
+      <summary
+        class="card-header fw-semibold"
+        style="cursor: pointer"
+      >
+        Opciones adicionales
+      </summary>
+
+      <div
+        class="card-body"
+        [formGroup]="scanForm"
+      >
+        <div class="row g-4">
+          <div class="col-12 col-lg-5">
+            <label
+              class="form-label"
+              for="deviceName"
+            >
+              Nombre del dispositivo
+            </label>
+
+            <input
+              id="deviceName"
+              class="form-control"
+              type="text"
+              maxlength="100"
+              formControlName="deviceName"
+              placeholder="Ej. Recepción principal"
+            />
+
+            <div class="form-text">
+              Permite identificar desde dónde se realizó
+              el registro.
+            </div>
+
+            @if (
+              scanForm.controls.deviceName.touched &&
+              scanForm.controls.deviceName.hasError(
+                'maxlength'
+              )
+            ) {
+              <div class="text-danger small mt-1">
+                El nombre no puede superar 100 caracteres.
+              </div>
+            }
+          </div>
+
+          <div class="col-12 col-lg-7">
+            <label
+              class="form-label"
+              for="accessNotes"
+            >
+              Notas
+              <span class="text-body-secondary">
+                (opcional)
+              </span>
+            </label>
+
+            <textarea
+              id="accessNotes"
+              class="form-control"
+              rows="3"
+              maxlength="500"
+              formControlName="notes"
+              placeholder="Agrega alguna observación sobre el acceso"
+            ></textarea>
+
+            <div class="form-text text-end">
+              {{ scanForm.controls.notes.value.length }}/500
+            </div>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <section class="card border-primary mb-4">
+      <div class="card-body p-4 text-center">
+        <span class="badge text-bg-primary mb-3">
+          Configuración lista
+        </span>
+
+        <h2 class="h4 mb-2">
+          {{
+            eventTypeLabel(
+              scanForm.controls.eventType.value
+            )
+          }}
+          ·
+          {{
+            captureMethodLabel(
+              activeCaptureMethod()
+            )
+          }}
+        </h2>
+
+        <p class="text-body-secondary mb-4">
+          Durante el registro se ocultarán el menú y las
+          opciones del sistema. Para salir será necesario
+          confirmar nuevamente la contraseña.
+        </p>
+
+        <button
+          class="btn btn-primary btn-lg px-5"
+          type="button"
+          [disabled]="
+            processing() ||
+            startingCamera()
+          "
+          (click)="activateSecureMode()"
+        >
+          Iniciar modo de registro
+        </button>
+      </div>
+    </section>
+
+    @if (lastEvent(); as event) {
+      <section class="card border-success mb-4">
+        <div
+          class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2"
+        >
+          <strong>Último registro realizado</strong>
+
+          <span
+            class="badge"
+            [ngClass]="
+              event.eventType === 'ENTRY'
+                ? 'text-bg-success'
+                : 'text-bg-warning'
+            "
+          >
+            {{ eventTypeLabel(event.eventType) }}
+          </span>
+        </div>
+
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-12 col-md-6 col-xl-3">
+              <div class="text-body-secondary small">
+                Alumno
+              </div>
+              <div class="fw-semibold fs-5">
+                {{ event.studentName }}
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3">
+              <div class="text-body-secondary small">
+                Matrícula
+              </div>
+              <div class="fw-semibold">
+                {{ event.enrollmentNumber }}
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-2">
+              <div class="text-body-secondary small">
+                Método
+              </div>
+              <div class="fw-semibold">
+                {{
+                  captureMethodLabel(
+                    event.captureMethod
+                  )
+                }}
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-2">
+              <div class="text-body-secondary small">
+                Fecha y hora
+              </div>
+              <div class="fw-semibold">
+                {{
+                  event.occurredAt
+                    | date: 'dd/MM/yyyy HH:mm:ss'
+                }}
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-2">
+              <div class="text-body-secondary small">
+                Notificaciones
+              </div>
+              <div class="fw-semibold">
+                {{ event.notificationsQueued }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    @if (recentEvents().length > 0) {
+      <section class="card">
+        <div class="card-header">
+          <strong>Registros de esta sesión</strong>
+        </div>
+
+        <div class="card-body">
+          <div class="table-responsive">
+            <table
+              class="table table-hover align-middle mb-0"
+            >
+              <thead>
+                <tr>
+                  <th>Alumno</th>
+                  <th>Matrícula</th>
+                  <th>Movimiento</th>
+                  <th>Método</th>
+                  <th>Hora</th>
+                  <th class="text-center">
+                    Notificaciones
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (
+                  event of recentEvents();
+                  track event.id
+                ) {
+                  <tr>
+                    <td class="fw-semibold">
+                      {{ event.studentName }}
+                    </td>
+
+                    <td>
+                      {{ event.enrollmentNumber }}
+                    </td>
+
+                    <td>
+                      <span
+                        class="badge"
+                        [ngClass]="
+                          event.eventType === 'ENTRY'
+                            ? 'text-bg-success'
+                            : 'text-bg-warning'
+                        "
+                      >
+                        {{
+                          eventTypeLabel(
+                            event.eventType
+                          )
+                        }}
+                      </span>
+                    </td>
+
+                    <td>
+                      {{
+                        captureMethodLabel(
+                          event.captureMethod
+                        )
+                      }}
+                    </td>
+
+                    <td>
+                      {{
+                        event.occurredAt
+                          | date: 'HH:mm:ss'
+                      }}
+                    </td>
+
+                    <td class="text-center">
+                      {{ event.notificationsQueued }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    }
+  </div>
+} @else {
+  <div
+    class="position-fixed top-0 start-0 w-100 h-100 bg-body"
+    style="z-index: 2000; overflow-y: auto"
+  >
+    <div class="container-fluid min-vh-100 py-3 py-md-4">
+      <div
+        class="mx-auto"
+        style="max-width: 1050px"
+      >
+        <header
+          class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4"
+        >
+          <div>
+            <div
+              class="d-flex flex-wrap align-items-center gap-2 mb-1"
+            >
+              <span class="badge text-bg-success">
+                Modo seguro activo
+              </span>
+
+              <span
+                class="badge"
+                [ngClass]="
+                  scanForm.controls.eventType.value ===
+                  'ENTRY'
+                    ? 'text-bg-success'
+                    : 'text-bg-warning'
+                "
+              >
+                {{
+                  eventTypeLabel(
+                    scanForm.controls.eventType.value
+                  )
+                }}
+              </span>
+
+              <span class="badge text-bg-secondary">
+                {{
+                  captureMethodLabel(
+                    activeCaptureMethod()
+                  )
+                }}
+              </span>
+            </div>
+
+            <h1 class="h3 mb-0">
+              Registro de accesos
+            </h1>
+          </div>
+
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            [disabled]="unlocking()"
+            (click)="requestUnlock()"
+          >
+            Desbloquear pantalla
+          </button>
+        </header>
+
+        @if (unlockRequested()) {
+          <section
+            class="card shadow-lg mx-auto"
+            style="max-width: 520px"
+          >
+            <div class="card-body p-4 p-md-5">
+              <div class="text-center mb-4">
+                <div
+                  class="fs-1 mb-2"
+                  aria-hidden="true"
+                >
+                  🔒
+                </div>
+
+                <h2 class="h4">
+                  Desbloquear modo de registro
+                </h2>
+
+                <p class="text-body-secondary mb-0">
+                  Confirma la contraseña del usuario que
+                  inició la sesión.
+                </p>
+              </div>
+
+              @if (
+                unlockErrorMessage();
+                as message
+              ) {
+                <div
+                  class="alert alert-danger"
+                  role="alert"
+                >
+                  {{ message }}
+                </div>
+              }
+
+              <form
+                [formGroup]="unlockForm"
+                autocomplete="off"
+                (ngSubmit)="unlockSecureMode()"
+              >
+                <label
+                  class="form-label fw-semibold"
+                  for="unlockPassword"
+                >
+                  Contraseña
+                </label>
+
+                <input
+                  #unlockPasswordInput
+                  id="unlockPassword"
+                  name="secureModeCode"
+                  class="form-control form-control-lg"
+                  type="password"
+                  autocomplete="one-time-code"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-bwignore="true"
+                  formControlName="password"
+                  [readonly]="unlocking()"
+                />
+
+                @if (
+                  unlockForm.controls.password.touched &&
+                  unlockForm.controls.password.invalid
+                ) {
+                  <div class="text-danger small mt-2">
+                    Escribe tu contraseña.
+                  </div>
+                }
+
+                <div
+                  class="d-grid d-sm-flex gap-2 mt-4"
+                >
+                  <button
+                    class="btn btn-outline-secondary btn-lg flex-fill"
+                    type="button"
+                    [disabled]="unlocking()"
+                    (click)="cancelUnlock()"
+                  >
+                    Volver al lector
+                  </button>
+
+                  <button
+                    class="btn btn-primary btn-lg flex-fill"
+                    type="submit"
+                    [disabled]="unlocking()"
+                  >
+                    @if (unlocking()) {
+                      <span
+                        class="spinner-border spinner-border-sm me-2"
+                        aria-hidden="true"
+                      ></span>
+                      Validando...
+                    } @else {
+                      Desbloquear
+                    }
+                  </button>
+                </div>
+              </form>
+            </div>
+          </section>
+        } @else {
+          @if (successMessage(); as message) {
+            <div
+              class="alert alert-success border-success shadow-sm text-center py-3"
+              role="status"
+              aria-live="polite"
+            >
+              <strong class="fs-5">
+                {{ message }}
+              </strong>
+            </div>
+          }
+
+          @if (errorMessage(); as message) {
+            <div
+              class="alert alert-danger border-danger shadow-sm text-center py-3"
+              role="alert"
+              aria-live="assertive"
+            >
+              <strong class="fs-5">
+                {{ message }}
+              </strong>
+            </div>
+          }
+
+          <section class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+              @if (
+                activeCaptureMethod() === 'QR_USB'
+              ) {
+                <div
+                  class="mx-auto text-center"
+                  style="max-width: 720px"
+                >
+                  <span
+                    class="badge text-bg-success mb-3"
+                  >
+                    Lector listo
+                  </span>
+
+                  <h2 class="h3">
+                    Presenta la credencial al lector
+                  </h2>
+
+                  <p class="text-body-secondary mb-4">
+                    Retira la credencial después del
+                    primer sonido.
+                  </p>
+
+                  <form
+                    [formGroup]="usbForm"
+                    autocomplete="off"
+                    (ngSubmit)="submitUsbToken()"
+                  >
+                    <label
+                      class="form-label fw-semibold"
+                      for="usbToken"
+                    >
+                      Lectura de la credencial
+                    </label>
+
+                    <input
+                      #usbTokenInput
+                      id="usbToken"
+                      name="credentialScanData"
+                      class="form-control form-control-lg text-center"
+                      type="text"
+                      inputmode="none"
+                      autocomplete="off"
+                      autocapitalize="none"
+                      spellcheck="false"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
+                      maxlength="100"
+                      formControlName="qrToken"
+                      placeholder="Haz clic aquí y escanea el QR"
+                      aria-describedby="usbHelp"
+                      [readonly]="processing()"
+                      style="-webkit-text-security: disc"
+                      autofocus
+                    />
+
+                    <div
+                      id="usbHelp"
+                      class="form-text"
+                    >
+                      El contenido de la credencial
+                      permanece oculto.
+                    </div>
+
+                    @if (
+                      usbForm.controls.qrToken.touched &&
+                      usbForm.controls.qrToken.invalid
+                    ) {
+                      <div class="text-danger small mt-2">
+                        Escanea una credencial QR válida.
+                      </div>
+                    }
+
+                    <button
+                      class="btn btn-primary btn-lg w-100 mt-4"
+                      type="submit"
+                      [disabled]="processing()"
+                    >
+                      @if (processing()) {
+                        <span
+                          class="spinner-border spinner-border-sm me-2"
+                          aria-hidden="true"
+                        ></span>
+                        Registrando acceso...
+                      } @else {
+                        Registrar acceso
+                      }
+                    </button>
+                  </form>
+
+                  <div
+                    class="alert alert-info text-start mt-4 mb-0"
+                  >
+                    No necesitas escribir ni pegar ningún
+                    dato. El lector enviará la información
+                    automáticamente.
+                  </div>
+                </div>
+              } @else {
+                <div
+                  class="mx-auto"
+                  style="max-width: 760px"
+                >
+                  <div class="text-center mb-3">
+                    @if (cameraActive()) {
+                      <span
+                        class="badge text-bg-success"
+                      >
+                        Cámara activa
+                      </span>
+                    } @else {
+                      <span
+                        class="badge text-bg-secondary"
+                      >
+                        Cámara en espera
+                      </span>
+                    }
+                  </div>
+
+                  <div
+                    class="bg-dark border rounded overflow-hidden"
+                    style="min-height: 330px"
+                  >
+                    <video
+                      #scannerVideo
+                      class="w-100"
+                      [class.d-none]="!cameraActive()"
+                      style="
+                        display: block;
+                        min-height: 330px;
+                        max-height: 500px;
+                        object-fit: cover;
+                      "
+                      autoplay
+                      muted
+                      playsinline
+                    ></video>
+
+                    @if (!cameraActive()) {
+                      <div
+                        class="d-flex flex-column align-items-center justify-content-center text-center text-white p-4"
+                        style="min-height: 330px"
+                      >
+                        @if (startingCamera()) {
+                          <div
+                            class="spinner-border mb-3"
+                            role="status"
+                            aria-label="Iniciando cámara"
+                          ></div>
+                          <span>
+                            Preparando la cámara...
+                          </span>
+                        } @else if (processing()) {
+                          <div
+                            class="spinner-border mb-3"
+                            role="status"
+                            aria-label="Registrando acceso"
+                          ></div>
+                          <span>
+                            Registrando acceso...
+                          </span>
+                        } @else {
+                          <div
+                            class="fs-1 mb-3"
+                            aria-hidden="true"
+                          >
+                            ▣
+                          </div>
+                          <strong class="fs-5">
+                            Cámara en espera
+                          </strong>
+                          <small
+                            class="text-white-50 mt-2"
+                          >
+                            Se reactivará automáticamente
+                            después de cada lectura.
+                          </small>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  @if (cameraActive()) {
+                    <button
+                      class="btn btn-outline-danger btn-lg w-100 mt-3"
+                      type="button"
+                      [disabled]="processing()"
+                      (click)="stopCamera()"
+                    >
+                      Detener cámara
+                    </button>
+                  } @else {
+                    <button
+                      class="btn btn-primary btn-lg w-100 mt-3"
+                      type="button"
+                      [disabled]="
+                        startingCamera() ||
+                        processing()
+                      "
+                      (click)="startCamera(true)"
+                    >
+                      @if (startingCamera()) {
+                        Iniciando cámara...
+                      } @else {
+                        Iniciar cámara
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+
+          @if (lastEvent(); as event) {
+            <section
+              class="card border-success shadow-sm"
+            >
+              <div
+                class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2"
+              >
+                <strong>
+                  Último registro realizado
+                </strong>
+
+                <span
+                  class="badge"
+                  [ngClass]="
+                    event.eventType === 'ENTRY'
+                      ? 'text-bg-success'
+                      : 'text-bg-warning'
+                  "
+                >
+                  {{
+                    eventTypeLabel(
+                      event.eventType
+                    )
+                  }}
+                </span>
+              </div>
+
+              <div class="card-body py-4">
+                <div
+                  class="row g-3 text-center text-md-start"
+                >
+                  <div class="col-12 col-md-4">
+                    <div
+                      class="text-body-secondary small"
+                    >
+                      Alumno
+                    </div>
+                    <div class="fw-bold fs-4">
+                      {{ event.studentName }}
+                    </div>
+                  </div>
+
+                  <div class="col-6 col-md-2">
+                    <div
+                      class="text-body-secondary small"
+                    >
+                      Matrícula
+                    </div>
+                    <div class="fw-semibold">
+                      {{ event.enrollmentNumber }}
+                    </div>
+                  </div>
+
+                  <div class="col-6 col-md-2">
+                    <div
+                      class="text-body-secondary small"
+                    >
+                      Movimiento
+                    </div>
+                    <div class="fw-semibold">
+                      {{
+                        eventTypeLabel(
+                          event.eventType
+                        )
+                      }}
+                    </div>
+                  </div>
+
+                  <div class="col-6 col-md-2">
+                    <div
+                      class="text-body-secondary small"
+                    >
+                      Hora
+                    </div>
+                    <div class="fw-semibold fs-5">
+                      {{
+                        event.occurredAt
+                          | date: 'HH:mm:ss'
+                      }}
+                    </div>
+                  </div>
+
+                  <div class="col-6 col-md-2">
+                    <div
+                      class="text-body-secondary small"
+                    >
+                      Notificaciones
+                    </div>
+                    <div class="fw-semibold">
+                      {{ event.notificationsQueued }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          } @else {
+            <div class="alert alert-secondary text-center">
+              Esperando la primera lectura de esta sesión.
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+}

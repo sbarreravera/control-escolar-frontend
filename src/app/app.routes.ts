@@ -1,4 +1,9 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/role.guard';
+import {
+  scanModeGuard
+} from './core/scan-mode/scan-mode.guard';
 
 export const routes: Routes = [
   {
@@ -7,81 +12,188 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: '',
-    loadComponent: () => import('./layout').then(m => m.DefaultLayoutComponent),
+    path: 'activate-notifications',
+    loadComponent: () =>
+      import(
+        './features/guardian-device-enrollment/guardian-device-enrollment.component'
+      ).then(
+        module =>
+          module.GuardianDeviceEnrollmentComponent
+      ),
     data: {
-      title: 'Home'
+      title: 'Activar notificaciones'
+    }
+  },
+  {
+    path: '',
+    loadComponent: () =>
+      import('./layout')
+        .then(module => module.DefaultLayoutComponent),
+    canActivate: [
+      authGuard
+    ],
+    canActivateChild: [
+      scanModeGuard
+    ],
+    data: {
+      title: 'Inicio'
     },
     children: [
       {
         path: 'dashboard',
-        loadChildren: () => import('./views/dashboard/routes').then((m) => m.routes)
+        loadChildren: () =>
+          import('./views/dashboard/routes')
+            .then(module => module.routes)
       },
       {
-        path: 'theme',
-        loadChildren: () => import('./views/theme/routes').then((m) => m.routes)
+        path: 'schools',
+        loadComponent: () =>
+          import('./features/schools/schools.component')
+            .then(module => module.SchoolsComponent),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Escuelas',
+          roles: [
+            'SUPER_ADMIN'
+          ]
+        }
       },
       {
-        path: 'base',
-        loadChildren: () => import('./views/base/routes').then((m) => m.routes)
+        path: 'academic-cycles',
+        loadComponent: () =>
+          import(
+            './features/academic-cycles/academic-cycles.component'
+          ).then(
+            module => module.AcademicCyclesComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Ciclos escolares',
+          roles: [
+            'ADMIN'
+          ]
+        }
       },
       {
-        path: 'buttons',
-        loadChildren: () => import('./views/buttons/routes').then((m) => m.routes)
+        path: 'school-groups',
+        loadComponent: () =>
+          import(
+            './features/school-groups/school-groups.component'
+          ).then(
+            module => module.SchoolGroupsComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Grados y grupos',
+          roles: [
+            'ADMIN'
+          ]
+        }
       },
       {
-        path: 'forms',
-        loadChildren: () => import('./views/forms/routes').then((m) => m.routes)
+        path: 'students',
+        loadComponent: () =>
+          import('./features/students/students.component')
+            .then(module => module.StudentsComponent),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Alumnos',
+          roles: [
+            'ADMIN',
+            'OPERATOR'
+          ]
+        }
       },
       {
-        path: 'icons',
-        loadChildren: () => import('./views/icons/routes').then((m) => m.routes)
+        path: 'guardians',
+        loadComponent: () =>
+          import('./features/guardians/guardians.component')
+            .then(module => module.GuardiansComponent),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Tutores',
+          roles: [
+            'ADMIN',
+            'OPERATOR'
+          ]
+        }
       },
       {
-        path: 'notifications',
-        loadChildren: () => import('./views/notifications/routes').then((m) => m.routes)
+        path: 'credentials',
+        loadComponent: () =>
+          import('./features/credentials/credentials.component')
+            .then(module => module.CredentialsComponent),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Credenciales QR',
+          roles: [
+            'ADMIN',
+            'OPERATOR'
+          ]
+        }
       },
       {
-        path: 'widgets',
-        loadChildren: () => import('./views/widgets/routes').then((m) => m.routes)
-      },
-      {
-        path: 'charts',
-        loadChildren: () => import('./views/charts/routes').then((m) => m.routes)
-      },
-      {
-        path: 'pages',
-        loadChildren: () => import('./views/pages/routes').then((m) => m.routes)
+        path: 'access-scanner',
+        loadComponent: () =>
+          import(
+            './features/access-events/access-scanner.component'
+          ).then(
+            module => module.AccessScannerComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Registrar acceso',
+          roles: [
+            'ADMIN',
+            'OPERATOR'
+          ]
+        }
       }
     ]
   },
   {
     path: '404',
-    loadComponent: () => import('./views/pages/page404/page404.component').then(m => m.Page404Component),
+    loadComponent: () =>
+      import('./views/pages/page404/page404.component')
+        .then(module => module.Page404Component),
     data: {
-      title: 'Page 404'
+      title: 'Página no encontrada'
     }
   },
   {
     path: '500',
-    loadComponent: () => import('./views/pages/page500/page500.component').then(m => m.Page500Component),
+    loadComponent: () =>
+      import('./views/pages/page500/page500.component')
+        .then(module => module.Page500Component),
     data: {
-      title: 'Page 500'
+      title: 'Error'
     }
   },
   {
     path: 'login',
-    loadComponent: () => import('./views/pages/login/login.component').then(m => m.LoginComponent),
+    loadComponent: () =>
+      import('./views/pages/login/login.component')
+        .then(module => module.LoginComponent),
     data: {
-      title: 'Login Page'
+      title: 'Iniciar sesión'
     }
   },
   {
-    path: 'register',
-    loadComponent: () => import('./views/pages/register/register.component').then(m => m.RegisterComponent),
-    data: {
-      title: 'Register Page'
-    }
-  },
-  { path: '**', redirectTo: 'dashboard' }
+    path: '**',
+    redirectTo: 'dashboard'
+  }
 ];

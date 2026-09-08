@@ -1,0 +1,375 @@
+<div class="mb-4">
+  <h1 class="h3 mb-1">
+    Alumnos
+  </h1>
+
+  <p class="text-body-secondary mb-0">
+    Administra los alumnos de {{ schoolName() }}.
+  </p>
+</div>
+
+@if (errorMessage()) {
+  <div
+    class="alert alert-danger"
+    role="alert"
+  >
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (successMessage()) {
+  <div
+    class="alert alert-success"
+    role="alert"
+  >
+    {{ successMessage() }}
+  </div>
+}
+
+<c-row>
+  <c-col lg="5" class="mb-4">
+    <c-card>
+      <c-card-header>
+        <strong>
+          {{ isEditing() ? 'Editar alumno' : 'Nuevo alumno' }}
+        </strong>
+      </c-card-header>
+
+      <c-card-body>
+        <form
+          cForm
+          [formGroup]="studentForm"
+          (ngSubmit)="saveStudent()"
+          novalidate
+        >
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="enrollmentNumber"
+            >
+              Matrícula
+            </label>
+
+            <input
+              id="enrollmentNumber"
+              type="text"
+              cFormControl
+              formControlName="enrollmentNumber"
+              placeholder="Ej. CSF-2026-001"
+              autocomplete="off"
+            />
+
+            @if (
+              studentForm.controls.enrollmentNumber.touched &&
+              studentForm.controls.enrollmentNumber.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa una matrícula válida.
+              </p>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="firstName"
+            >
+              Nombre
+            </label>
+
+            <input
+              id="firstName"
+              type="text"
+              cFormControl
+              formControlName="firstName"
+              autocomplete="given-name"
+            />
+
+            @if (
+              studentForm.controls.firstName.touched &&
+              studentForm.controls.firstName.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa el nombre del alumno.
+              </p>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="lastName"
+            >
+              Apellidos
+            </label>
+
+            <input
+              id="lastName"
+              type="text"
+              cFormControl
+              formControlName="lastName"
+              autocomplete="family-name"
+            />
+
+            @if (
+              studentForm.controls.lastName.touched &&
+              studentForm.controls.lastName.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Ingresa los apellidos del alumno.
+              </p>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="academicCycleId"
+            >
+              Ciclo escolar
+            </label>
+
+            <select
+              id="academicCycleId"
+              class="form-select"
+              formControlName="academicCycleId"
+              (change)="onAcademicCycleChange()"
+            >
+              <option
+                [ngValue]="0"
+                disabled
+              >
+                Selecciona un ciclo escolar
+              </option>
+
+              @for (
+                academicCycle of academicCycles();
+                track academicCycle.id
+              ) {
+                <option
+                  [ngValue]="academicCycle.id"
+                >
+                  {{ academicCycle.name }}
+                </option>
+              }
+            </select>
+
+            @if (loadingCycles()) {
+              <div class="form-text">
+                Cargando ciclos escolares...
+              </div>
+            }
+
+            @if (
+              studentForm.controls.academicCycleId.touched &&
+              studentForm.controls.academicCycleId.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Selecciona un ciclo escolar.
+              </p>
+            }
+          </div>
+
+          <div class="mb-4">
+            <label
+              class="form-label"
+              for="schoolGroupId"
+            >
+              Grado y grupo
+            </label>
+
+            <select
+              id="schoolGroupId"
+              class="form-select"
+              formControlName="schoolGroupId"
+            >
+              <option
+                [ngValue]="0"
+                disabled
+              >
+                @if (loadingGroups()) {
+                  Cargando grupos...
+                } @else {
+                  Selecciona un grado y grupo
+                }
+              </option>
+
+              @for (
+                schoolGroup of schoolGroups();
+                track schoolGroup.id
+              ) {
+                <option
+                  [ngValue]="schoolGroup.id"
+                >
+                  {{ schoolGroup.gradeName }}
+                  {{ schoolGroup.groupName }}
+                </option>
+              }
+            </select>
+
+            @if (
+              !loadingGroups() &&
+              studentForm.controls.academicCycleId.value > 0 &&
+              schoolGroups().length === 0
+            ) {
+              <div class="form-text text-warning">
+                Este ciclo escolar aún no tiene grupos registrados.
+              </div>
+            }
+
+            @if (
+              studentForm.controls.schoolGroupId.touched &&
+              studentForm.controls.schoolGroupId.invalid
+            ) {
+              <p class="text-danger small mt-1 mb-0">
+                Selecciona el grado y grupo del alumno.
+              </p>
+            }
+          </div>
+
+          <div class="d-grid gap-2">
+            <button
+              cButton
+              color="primary"
+              type="submit"
+              [disabled]="submitting()"
+            >
+              @if (submitting()) {
+                Guardando...
+              } @else if (isEditing()) {
+                Guardar cambios
+              } @else {
+                Registrar alumno
+              }
+            </button>
+
+            @if (isEditing()) {
+              <button
+                cButton
+                color="secondary"
+                variant="outline"
+                type="button"
+                [disabled]="submitting()"
+                (click)="cancelEditing()"
+              >
+                Cancelar edición
+              </button>
+            }
+          </div>
+        </form>
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col lg="7">
+    <c-card>
+      <c-card-header>
+        <strong>Alumnos registrados</strong>
+      </c-card-header>
+
+      <c-card-body>
+        @if (loading()) {
+          <p class="text-body-secondary mb-0">
+            Cargando alumnos...
+          </p>
+        } @else if (students().length === 0) {
+          <div class="text-center py-5">
+            <h2 class="h5">
+              Aún no hay alumnos
+            </h2>
+
+            <p class="text-body-secondary mb-0">
+              El primer alumno aparecerá aquí después de registrarlo.
+            </p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Matrícula</th>
+                  <th>Alumno</th>
+                  <th>Ciclo escolar</th>
+                  <th>Grado y grupo</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (
+                  student of students();
+                  track student.id
+                ) {
+                  <tr>
+                    <td>
+                      <code>
+                        {{ student.enrollmentNumber }}
+                      </code>
+                    </td>
+
+                    <td>
+                      <strong>
+                        {{ student.firstName }}
+                        {{ student.lastName }}
+                      </strong>
+                    </td>
+
+                    <td>
+                      @if (student.academicCycleName) {
+                        {{ student.academicCycleName }}
+                      } @else {
+                        <span class="text-body-secondary">
+                          —
+                        </span>
+                      }
+                    </td>
+
+                    <td>
+                      @if (
+                        student.gradeName ||
+                        student.groupName
+                      ) {
+                        {{ student.gradeName || '—' }}
+                        {{ student.groupName || '' }}
+                      } @else {
+                        <span class="text-body-secondary">
+                          Sin asignar
+                        </span>
+                      }
+                    </td>
+
+                    <td>
+                      @if (student.active) {
+                        <span class="badge text-bg-success">
+                          Activo
+                        </span>
+                      } @else {
+                        <span class="badge text-bg-secondary">
+                          Inactivo
+                        </span>
+                      }
+                    </td>
+
+                    <td>
+                      <button
+                        cButton
+                        color="primary"
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        (click)="startEditing(student)"
+                      >
+                        Editar
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

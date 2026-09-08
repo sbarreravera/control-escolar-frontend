@@ -7,10 +7,18 @@
   visible
 >
   <c-sidebar-header class="border-bottom">
-    <c-sidebar-brand [routerLink]="[]">
-      <svg [class]="{icon: false}" cIcon class="sidebar-brand-full" height="32" name="logo" title="CoreUI Logo"></svg>
-      <svg cIcon class="sidebar-brand-narrow" height="32" name="signet" title="CoreUI Logo"></svg>
-    </c-sidebar-brand>
+  <c-sidebar-brand
+    [routerLink]="['/dashboard']"
+    class="text-decoration-none"
+  >
+    <span class="sidebar-brand-full text-white fw-semibold">
+      Control Escolar
+    </span>
+
+    <span class="sidebar-brand-narrow text-white fw-bold">
+      CE
+    </span>
+  </c-sidebar-brand>
   </c-sidebar-header>
 
   <ng-scrollbar pointerEventsMethod="scrollbar" visibility="hover">
