@@ -24,3 +24,10 @@ export interface CreateStudentRequest {
   groupName: string | null;
   schoolGroupId: number | null;
 }
+
+export interface UpdateStudentRequest {
+  enrollmentNumber: string;
+  firstName: string;
+  lastName: string;
+  schoolGroupId: number;
+}

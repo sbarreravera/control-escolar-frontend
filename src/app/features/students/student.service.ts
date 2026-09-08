@@ -6,7 +6,8 @@ import {
 import { Observable } from 'rxjs';
 import {
   CreateStudentRequest,
-  Student
+  Student,
+  UpdateStudentRequest
 } from './student.models';
 
 @Injectable({
@@ -42,6 +43,16 @@ export class StudentService {
   ): Observable<Student> {
     return this.http.post<Student>(
       '/api/v1/students',
+      request
+    );
+  }
+
+  update(
+    studentId: number,
+    request: UpdateStudentRequest
+  ): Observable<Student> {
+    return this.http.put<Student>(
+      `/api/v1/students/${studentId}`,
       request
     );
   }

@@ -37,7 +37,8 @@ import {
 } from '../school-groups/school-group.service';
 import {
   CreateStudentRequest,
-  Student
+  Student,
+  UpdateStudentRequest
 } from './student.models';
 import { StudentService } from './student.service';
 
@@ -74,6 +75,7 @@ export class StudentsComponent implements OnInit {
   readonly loadingCycles = signal(true);
   readonly loadingGroups = signal(false);
   readonly submitting = signal(false);
+  readonly editingStudentId = signal<number | null>(null);
 
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
@@ -82,6 +84,10 @@ export class StudentsComponent implements OnInit {
     () =>
       this.authService.currentUser()?.schoolName ??
       'Tu escuela'
+  );
+
+  readonly isEditing = computed(
+    () => this.editingStudentId() !== null
   );
 
   readonly studentForm = this.formBuilder.nonNullable.group({
@@ -202,6 +208,10 @@ export class StudentsComponent implements OnInit {
             return;
           }
 
+          if (this.isEditing()) {
+            return;
+          }
+
           const selectedCycle = activeCycles[0];
 
           this.studentForm.controls
@@ -260,7 +270,7 @@ export class StudentsComponent implements OnInit {
       });
   }
 
-  createStudent(): void {
+  saveStudent(): void {
     if (this.studentForm.invalid) {
       this.studentForm.markAllAsTouched();
       return;
@@ -283,30 +293,60 @@ export class StudentsComponent implements OnInit {
     const formValue =
       this.studentForm.getRawValue();
 
-    const request: CreateStudentRequest = {
-      schoolId,
-      enrollmentNumber:
-        formValue.enrollmentNumber.trim(),
-      firstName:
-        formValue.firstName.trim(),
-      lastName:
-        formValue.lastName.trim(),
-      gradeName: null,
-      groupName: null,
-      schoolGroupId: formValue.schoolGroupId
-    };
+    const editingStudentId =
+      this.editingStudentId();
 
-    this.studentService
-      .create(request)
+    const studentRequest = editingStudentId === null
+      ? this.studentService.create({
+          schoolId,
+          enrollmentNumber:
+            formValue.enrollmentNumber.trim(),
+          firstName:
+            formValue.firstName.trim(),
+          lastName:
+            formValue.lastName.trim(),
+          gradeName: null,
+          groupName: null,
+          schoolGroupId: formValue.schoolGroupId
+        } satisfies CreateStudentRequest)
+      : this.studentService.update(
+          editingStudentId,
+          {
+            enrollmentNumber:
+              formValue.enrollmentNumber.trim(),
+            firstName:
+              formValue.firstName.trim(),
+            lastName:
+              formValue.lastName.trim(),
+            schoolGroupId:
+              formValue.schoolGroupId
+          } satisfies UpdateStudentRequest
+        );
+
+    studentRequest
       .pipe(
         finalize(() => this.submitting.set(false))
       )
       .subscribe({
         next: student => {
-          this.students.update(current => [
-            ...current,
-            student
-          ]);
+          this.students.update(current => {
+            const studentExists = current.some(
+              currentStudent => currentStudent.id === student.id
+            );
+
+            if (!studentExists) {
+              return [...current, student];
+            }
+
+            return current.map(currentStudent =>
+              currentStudent.id === student.id
+                ? student
+                : currentStudent
+            );
+          });
+
+          const wasEditing = editingStudentId !== null;
+          this.editingStudentId.set(null);
 
           // Conservamos ciclo y grupo para facilitar
           // la captura consecutiva de alumnos del mismo salón.
@@ -323,7 +363,9 @@ export class StudentsComponent implements OnInit {
           });
 
           this.successMessage.set(
-            `El alumno ${student.firstName} ${student.lastName} fue registrado correctamente.`
+            wasEditing
+              ? `El alumno ${student.firstName} ${student.lastName} fue actualizado correctamente.`
+              : `El alumno ${student.firstName} ${student.lastName} fue registrado correctamente.`
           );
         },
         error: (error: HttpErrorResponse) => {
@@ -332,6 +374,58 @@ export class StudentsComponent implements OnInit {
           );
         }
       });
+  }
+
+  startEditing(student: Student): void {
+    this.editingStudentId.set(student.id);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    const academicCycleId =
+      student.academicCycleId ?? 0;
+    const schoolGroupId =
+      student.schoolGroupId ?? 0;
+
+    this.studentForm.reset({
+      enrollmentNumber: student.enrollmentNumber,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      academicCycleId,
+      schoolGroupId,
+      gradeName: '',
+      groupName: ''
+    });
+
+    this.schoolGroups.set([]);
+
+    if (academicCycleId > 0) {
+      this.loadSchoolGroups(academicCycleId);
+    }
+  }
+
+  cancelEditing(): void {
+    this.editingStudentId.set(null);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    const academicCycleId =
+      this.academicCycles()[0]?.id ?? 0;
+
+    this.studentForm.reset({
+      enrollmentNumber: '',
+      firstName: '',
+      lastName: '',
+      academicCycleId,
+      schoolGroupId: 0,
+      gradeName: '',
+      groupName: ''
+    });
+
+    this.schoolGroups.set([]);
+
+    if (academicCycleId > 0) {
+      this.loadSchoolGroups(academicCycleId);
+    }
   }
 
   private resolveErrorMessage(

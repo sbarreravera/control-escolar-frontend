@@ -30,14 +30,16 @@
   <c-col lg="5" class="mb-4">
     <c-card>
       <c-card-header>
-        <strong>Nuevo alumno</strong>
+        <strong>
+          {{ isEditing() ? 'Editar alumno' : 'Nuevo alumno' }}
+        </strong>
       </c-card-header>
 
       <c-card-body>
         <form
           cForm
           [formGroup]="studentForm"
-          (ngSubmit)="createStudent()"
+          (ngSubmit)="saveStudent()"
           novalidate
         >
           <div class="mb-3">
@@ -225,19 +227,35 @@
             }
           </div>
 
-          <button
-            cButton
-            color="primary"
-            type="submit"
-            class="w-100"
-            [disabled]="submitting()"
-          >
-            @if (submitting()) {
-              Registrando...
-            } @else {
-              Registrar alumno
+          <div class="d-grid gap-2">
+            <button
+              cButton
+              color="primary"
+              type="submit"
+              [disabled]="submitting()"
+            >
+              @if (submitting()) {
+                Guardando...
+              } @else if (isEditing()) {
+                Guardar cambios
+              } @else {
+                Registrar alumno
+              }
+            </button>
+
+            @if (isEditing()) {
+              <button
+                cButton
+                color="secondary"
+                variant="outline"
+                type="button"
+                [disabled]="submitting()"
+                (click)="cancelEditing()"
+              >
+                Cancelar edición
+              </button>
             }
-          </button>
+          </div>
         </form>
       </c-card-body>
     </c-card>
@@ -274,6 +292,7 @@
                   <th>Ciclo escolar</th>
                   <th>Grado y grupo</th>
                   <th>Estado</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
 
@@ -330,6 +349,19 @@
                           Inactivo
                         </span>
                       }
+                    </td>
+
+                    <td>
+                      <button
+                        cButton
+                        color="primary"
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        (click)="startEditing(student)"
+                      >
+                        Editar
+                      </button>
                     </td>
                   </tr>
                 }
