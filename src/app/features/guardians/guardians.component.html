@@ -53,6 +53,37 @@
             <div class="mb-3">
               <label
                 class="form-label"
+                for="guardianExternalReference"
+              >
+                Clave del tutor
+              </label>
+
+              <input
+                id="guardianExternalReference"
+                type="text"
+                cFormControl
+                formControlName="externalReference"
+                placeholder="Ej. TUT-001"
+                autocomplete="off"
+              />
+
+              <div class="form-text">
+                Opcional en el alta manual; permite reutilizar al tutor en cargas masivas.
+              </div>
+
+              @if (
+                guardianForm.controls.externalReference.touched &&
+                guardianForm.controls.externalReference.invalid
+              ) {
+                <p class="text-danger small mt-1 mb-0">
+                  La clave no puede exceder 50 caracteres.
+                </p>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label
+                class="form-label"
                 for="guardianFullName"
               >
                 Nombre completo
@@ -187,6 +218,12 @@
                         <strong>
                           {{ guardian.fullName }}
                         </strong>
+
+                        @if (guardian.externalReference) {
+                          <div class="small text-body-secondary">
+                            Clave: {{ guardian.externalReference }}
+                          </div>
+                        }
                       </td>
 
                       <td>

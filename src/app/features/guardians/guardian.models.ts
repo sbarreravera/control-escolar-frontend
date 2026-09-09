@@ -2,6 +2,7 @@ export interface Guardian {
   id: number;
   schoolId: number;
   schoolName: string;
+  externalReference: string | null;
   fullName: string;
   phone: string | null;
   email: string | null;
@@ -12,6 +13,7 @@ export interface Guardian {
 
 export interface CreateGuardianRequest {
   schoolId: number;
+  externalReference: string | null;
   fullName: string;
   phone: string | null;
   email: string | null;

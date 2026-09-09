@@ -1,0 +1,219 @@
+<div class="mb-4">
+  <h1 class="h3 mb-1">
+    Carga de tutores y relaciones
+  </h1>
+
+  <p class="text-body-secondary mb-0">
+    Registra los tutores de {{ schoolName() }} y relaciónalos con sus alumnos mediante el formato oficial.
+  </p>
+</div>
+
+@if (errorMessage()) {
+  <div class="alert alert-danger" role="alert">
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (successMessage()) {
+  <div class="alert alert-success" role="alert">
+    {{ successMessage() }}
+  </div>
+}
+
+<div class="alert alert-info" role="status">
+  Una clave identifica al mismo tutor dentro de la escuela. Repite esa clave cuando el tutor tenga varios alumnos; el sistema no deduce identidades por nombre.
+</div>
+
+<c-row>
+  <c-col lg="5" class="mb-4">
+    <c-card class="mb-4">
+      <c-card-header>
+        <strong>1. Descargar formato</strong>
+      </c-card-header>
+
+      <c-card-body>
+        <p class="text-body-secondary">
+          El formato incluye las matrículas activas de la escuela y los valores permitidos para las relaciones.
+        </p>
+
+        <button
+          cButton
+          color="primary"
+          variant="outline"
+          type="button"
+          class="w-100"
+          [disabled]="busy()"
+          (click)="downloadTemplate()"
+        >
+          @if (downloading()) {
+            Preparando formato...
+          } @else {
+            Descargar formato Excel
+          }
+        </button>
+      </c-card-body>
+    </c-card>
+
+    <c-card>
+      <c-card-header>
+        <strong>2. Validar archivo</strong>
+      </c-card-header>
+
+      <c-card-body>
+        <div class="mb-3">
+          <label class="form-label" for="guardianImportFile">
+            Archivo completado
+          </label>
+
+          <input
+            #fileInput
+            id="guardianImportFile"
+            type="file"
+            cFormControl
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            [disabled]="busy()"
+            (change)="onFileSelected($event)"
+          />
+
+          <div class="form-text">
+            Máximo 2,000 relaciones y 5 MB. Usa el formato descargado desde esta pantalla.
+          </div>
+        </div>
+
+        <button
+          cButton
+          color="primary"
+          type="button"
+          class="w-100"
+          [disabled]="selectedFile() === null || busy()"
+          (click)="validateFile()"
+        >
+          @if (validating()) {
+            Validando archivo...
+          } @else {
+            Revisar antes de cargar
+          }
+        </button>
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col lg="7">
+    <c-card>
+      <c-card-header>
+        <strong>3. Resultado de validación</strong>
+      </c-card-header>
+
+      <c-card-body>
+        @if (validation(); as result) {
+          <c-row class="g-3 mb-4">
+            <c-col sm="4">
+              <div class="border rounded p-3 h-100">
+                <div class="text-body-secondary small">
+                  Filas encontradas
+                </div>
+                <div class="fs-4 fw-semibold">
+                  {{ result.totalRows }}
+                </div>
+              </div>
+            </c-col>
+
+            <c-col sm="4">
+              <div class="border rounded p-3 h-100">
+                <div class="text-body-secondary small">
+                  Filas correctas
+                </div>
+                <div class="fs-4 fw-semibold text-success">
+                  {{ result.validRows }}
+                </div>
+              </div>
+            </c-col>
+
+            <c-col sm="4">
+              <div class="border rounded p-3 h-100">
+                <div class="text-body-secondary small">
+                  Filas con error
+                </div>
+                <div class="fs-4 fw-semibold text-danger">
+                  {{ result.invalidRows }}
+                </div>
+              </div>
+            </c-col>
+          </c-row>
+
+          @if (result.canImport) {
+            <div class="alert alert-success" role="status">
+              <div class="fw-semibold mb-2">
+                El archivo está listo para importarse.
+              </div>
+              <div>
+                {{ result.guardiansToCreate }} tutores nuevos,
+                {{ result.guardiansToReuse }} tutores existentes y
+                {{ result.relationshipsToCreate }} relaciones por registrar.
+              </div>
+            </div>
+
+            <button
+              cButton
+              color="success"
+              type="button"
+              class="w-100"
+              [disabled]="!canImport()"
+              (click)="importGuardians()"
+            >
+              @if (importing()) {
+                Registrando tutores y relaciones...
+              } @else {
+                Confirmar carga completa
+              }
+            </button>
+          } @else {
+            <div class="alert alert-warning" role="alert">
+              Corrige todas las filas señaladas y vuelve a validar. No se guardó ningún tutor ni relación.
+            </div>
+
+            @if (result.errors.length > 0) {
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Fila</th>
+                      <th>Clave del tutor</th>
+                      <th>Matrícula</th>
+                      <th>Problema</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    @for (rowError of result.errors; track $index) {
+                      <tr>
+                        <td>{{ rowError.rowNumber ?? 'Archivo' }}</td>
+                        <td>{{ rowError.externalReference ?? '—' }}</td>
+                        <td>{{ rowError.enrollmentNumber ?? '—' }}</td>
+                        <td>
+                          @for (message of rowError.messages; track $index) {
+                            <div>{{ message }}</div>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+        } @else {
+          <div class="text-center py-5">
+            <h2 class="h5">
+              Aún no hay un archivo validado
+            </h2>
+
+            <p class="text-body-secondary mb-0">
+              Descarga el formato, complétalo y selecciónalo para revisar todos los datos antes de guardar.
+            </p>
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

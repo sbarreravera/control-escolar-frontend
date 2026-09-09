@@ -56,6 +56,13 @@ export function buildNavItems(
             iconComponent: {
               name: 'cil-spreadsheet'
             }
+          },
+          {
+            name: 'Carga de tutores',
+            url: '/guardian-import',
+            iconComponent: {
+              name: 'cil-user-follow'
+            }
           }
         ]
       : [];
