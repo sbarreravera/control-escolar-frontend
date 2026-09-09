@@ -42,6 +42,10 @@ export class GuardianActivationComponent implements OnInit {
   readonly search = signal('');
   readonly filter = signal<ActivationFilter>('NOT_ACTIVE');
   readonly selectedIds = signal<ReadonlySet<number>>(new Set());
+  readonly page = signal(0);
+  readonly pageSize = signal(25);
+  readonly totalElements = signal(0);
+  readonly totalPages = signal(0);
   readonly generatedBatch =
     signal<GuardianInvitationBatch | null>(null);
   readonly generatedInvitations =
@@ -59,37 +63,23 @@ export class GuardianActivationComponent implements OnInit {
     () => this.authService.currentUser()?.schoolName ?? 'Tu escuela'
   );
 
-  readonly filteredStatuses = computed(() => {
-    const search = this.search().trim().toLocaleLowerCase('es-MX');
-    const filter = this.filter();
+  readonly filteredStatuses = computed(() => this.statuses());
 
-    return this.statuses().filter(status => {
-      const matchesSearch = !search || [
-        status.guardianName,
-        status.externalReference ?? '',
-        status.phone ?? '',
-        status.email ?? ''
-      ].some(value => value.toLocaleLowerCase('es-MX').includes(search));
-
-      if (!matchesSearch) {
-        return false;
-      }
-
-      if (filter === 'ACTIVE') {
-        return status.activationState === 'ACTIVE';
-      }
-
-      if (filter === 'PENDING') {
-        return status.activationState === 'PENDING';
-      }
-
-      if (filter === 'NOT_ACTIVE') {
-        return status.guardianActive &&
-          status.activationState !== 'ACTIVE';
-      }
-
-      return true;
-    });
+  readonly firstVisible = computed(() => this.totalElements() === 0
+    ? 0
+    : this.page() * this.pageSize() + 1);
+  readonly lastVisible = computed(() => Math.min(
+    (this.page() + 1) * this.pageSize(),
+    this.totalElements()
+  ));
+  readonly visiblePages = computed(() => {
+    const total = this.totalPages();
+    const current = this.page();
+    const start = Math.max(0, Math.min(current - 2, total - 5));
+    return Array.from(
+      { length: Math.min(5, total) },
+      (_, index) => Math.max(0, start) + index
+    );
   });
 
   readonly selectedCount = computed(
@@ -122,10 +112,22 @@ export class GuardianActivationComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.activationService.findAll(schoolId)
+    this.activationService.findPage(
+      schoolId,
+      this.page(),
+      this.pageSize(),
+      this.search().trim(),
+      this.filter()
+    )
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: statuses => this.statuses.set(statuses),
+        next: result => {
+          this.statuses.set(result.content);
+          this.page.set(result.page);
+          this.pageSize.set(result.size);
+          this.totalElements.set(result.totalElements);
+          this.totalPages.set(result.totalPages);
+        },
         error: error => this.errorMessage.set(
           this.resolveErrorMessage(error)
         )
@@ -134,12 +136,34 @@ export class GuardianActivationComponent implements OnInit {
 
   updateSearch(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
+    this.page.set(0);
+    this.selectedIds.set(new Set());
+    this.loadStatuses();
   }
 
   updateFilter(event: Event): void {
     this.filter.set(
       (event.target as HTMLSelectElement).value as ActivationFilter
     );
+    this.page.set(0);
+    this.selectedIds.set(new Set());
+    this.loadStatuses();
+  }
+
+  goToPage(page: number): void {
+    if (page < 0 || page >= this.totalPages() || page === this.page()) {
+      return;
+    }
+    this.page.set(page);
+    this.selectedIds.set(new Set());
+    this.loadStatuses();
+  }
+
+  updatePageSize(event: Event): void {
+    this.pageSize.set(Number((event.target as HTMLSelectElement).value));
+    this.page.set(0);
+    this.selectedIds.set(new Set());
+    this.loadStatuses();
   }
 
   toggleGuardian(guardianId: number): void {
