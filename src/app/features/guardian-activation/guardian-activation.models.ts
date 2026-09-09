@@ -2,6 +2,7 @@ export type GuardianActivationState =
   | 'NOT_INVITED'
   | 'PENDING'
   | 'ACTIVE'
+  | 'ACCOUNT_READY'
   | 'EXPIRED'
   | 'REVOKED'
   | 'ACCESS_REVOKED'
@@ -13,6 +14,8 @@ export interface GuardianActivationStatus {
   guardianName: string;
   phone: string | null;
   email: string | null;
+  username: string | null;
+  accountActivated: boolean;
   guardianActive: boolean;
   activationState: GuardianActivationState;
   invitationCreatedAt: string | null;
@@ -76,6 +79,9 @@ export interface GuardianInvitation {
   phone: string | null;
   email: string | null;
   schoolName: string;
+  schoolCode: string;
+  username: string;
+  purpose: 'ACTIVATION' | 'PASSWORD_RESET';
   enrollmentToken: string;
   expiresAt: string;
 }
@@ -97,4 +103,13 @@ export interface GuardianAccessRevocation {
 export interface GuardianInvitationWithUrl
   extends GuardianInvitation {
   activationUrl: string;
+}
+
+export interface GuardianSessionAccess {
+  sessionId: number;
+  deviceName: string | null;
+  notificationsEnabled: boolean;
+  createdAt: string;
+  lastUsedAt: string;
+  expiresAt: string;
 }

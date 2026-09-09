@@ -11,7 +11,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Unsubscribe } from 'firebase/messaging';
-import { finalize } from 'rxjs';
+import { finalize, firstValueFrom } from 'rxjs';
 import {
   FirebaseMessagingService
 } from '../../core/firebase/firebase-messaging.service';
@@ -61,11 +61,14 @@ export class GuardianHomeComponent implements OnInit, OnDestroy {
   readonly loadingHistory = signal(false);
   readonly loadingHighlightedEvent = signal(false);
   readonly loggingOut = signal(false);
+  readonly enablingNotifications = signal(false);
 
   readonly errorMessage = signal<string | null>(null);
   readonly historyErrorMessage = signal<string | null>(null);
   readonly highlightedErrorMessage = signal<string | null>(null);
   readonly liveMessage = signal<string | null>(null);
+  readonly notificationMessage = signal<string | null>(null);
+  readonly notificationMessageIsError = signal(false);
 
   readonly selectedStudentId = signal<number | null>(null);
   readonly selectedEventType = signal<GuardianAccessEventType | null>(null);
@@ -148,7 +151,9 @@ export class GuardianHomeComponent implements OnInit, OnDestroy {
         next: identity => {
           this.identity.set(identity);
           this.loadPortalData();
-          this.startForegroundNotifications();
+          if (identity.notificationsEnabled) {
+            this.startForegroundNotifications();
+          }
 
           const eventId = this.requestedEventId();
           if (eventId !== null) {
@@ -157,6 +162,10 @@ export class GuardianHomeComponent implements OnInit, OnDestroy {
         },
         error: error => {
           this.identity.set(null);
+          if (this.isAuthenticationError(error)) {
+            this.openLogin();
+            return;
+          }
           this.errorMessage.set(this.resolveErrorMessage(error));
         }
       });
@@ -325,6 +334,7 @@ export class GuardianHomeComponent implements OnInit, OnDestroy {
     this.loggingOut.set(true);
     this.errorMessage.set(null);
 
+    const currentIdentity = this.identity();
     this.enrollmentService.logoutGuardian()
       .pipe(finalize(() => this.loggingOut.set(false)))
       .subscribe({
@@ -335,11 +345,64 @@ export class GuardianHomeComponent implements OnInit, OnDestroy {
           this.clearHighlightedState();
           this.foregroundUnsubscribe?.();
           this.foregroundUnsubscribe = undefined;
+          void this.router.navigate(['/guardian/login'], {
+            queryParams: {
+              schoolCode: currentIdentity?.schoolCode ?? null,
+              username: currentIdentity?.username ?? null,
+              returnUrl: '/guardian'
+            },
+            replaceUrl: true
+          });
         },
         error: error => this.errorMessage.set(
           this.resolveErrorMessage(error)
         )
       });
+  }
+
+  async enableNotificationsOnThisDevice(): Promise<void> {
+    if (this.enablingNotifications()) {
+      return;
+    }
+
+    this.enablingNotifications.set(true);
+    this.notificationMessage.set(null);
+    this.notificationMessageIsError.set(false);
+    try {
+      const fcmToken = await this.firebaseMessagingService
+        .requestPermissionAndGetToken();
+      await firstValueFrom(this.enrollmentService.registerCurrentDevice({
+        fcmToken,
+        deviceName: this.resolveDeviceName()
+      }));
+      this.identity.update(current => current === null
+        ? null
+        : { ...current, notificationsEnabled: true });
+      this.notificationMessage.set(
+        'Los avisos quedaron activados en este dispositivo.'
+      );
+      this.notificationMessageIsError.set(false);
+      this.startForegroundNotifications();
+    } catch (error: unknown) {
+      this.notificationMessageIsError.set(true);
+      this.notificationMessage.set(this.resolveNotificationError(error));
+    } finally {
+      this.enablingNotifications.set(false);
+    }
+  }
+
+  openLogin(): void {
+    const currentIdentity = this.identity();
+    void this.router.navigate(['/guardian/login'], {
+      queryParams: {
+        schoolCode: currentIdentity?.schoolCode ?? null,
+        username: currentIdentity?.username ?? null,
+        returnUrl: this.router.url.startsWith('/guardian')
+          ? this.router.url
+          : '/guardian'
+      },
+      replaceUrl: true
+    });
   }
 
   formatDateTime(value: string): string {
@@ -440,13 +503,57 @@ export class GuardianHomeComponent implements OnInit, OnDestroy {
       })
       .then(unsubscribe => {
         this.foregroundUnsubscribe = unsubscribe;
+      })
+      .catch(() => {
+        this.notificationMessageIsError.set(true);
+        this.notificationMessage.set(
+          'Los avisos están registrados, pero no fue posible escucharlos en esta pestaña.'
+        );
       });
+  }
+
+  private resolveNotificationError(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 409) {
+        return 'Este navegador ya está vinculado a otra cuenta de tutor.';
+      }
+      if (error.status === 401 || error.status === 403) {
+        this.openLogin();
+        return 'Tu sesión terminó. Inicia sesión y vuelve a intentarlo.';
+      }
+      if (error.status === 0) {
+        return 'No fue posible conectarse con el servidor.';
+      }
+    }
+    if (error instanceof Error && error.message.trim()) {
+      return error.message;
+    }
+    return 'No fue posible activar los avisos en este dispositivo.';
+  }
+
+  private resolveDeviceName(): string {
+    const userAgent = navigator.userAgent;
+    if (/Android/i.test(userAgent)) {
+      return 'Teléfono Android';
+    }
+    if (/iPhone|iPad|iPod/i.test(userAgent)) {
+      return 'Dispositivo Apple';
+    }
+    if (/Windows/i.test(userAgent)) {
+      return 'Equipo Windows';
+    }
+    return 'Navegador web';
+  }
+
+  private isAuthenticationError(error: unknown): boolean {
+    return error instanceof HttpErrorResponse &&
+      (error.status === 401 || error.status === 403);
   }
 
   private resolveErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 401 || error.status === 403) {
-        return 'Este dispositivo no tiene una sesión de tutor activa. Solicita una nueva invitación a la escuela.';
+        return 'Tu sesión terminó. Inicia sesión nuevamente.';
       }
       if (error.status === 0) {
         return 'No fue posible conectarse con el servidor.';
@@ -458,7 +565,8 @@ export class GuardianHomeComponent implements OnInit, OnDestroy {
   private resolveDataErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 401 || error.status === 403) {
-        return 'Tu sesión ya no está activa. Solicita una nueva invitación a la escuela.';
+        this.openLogin();
+        return 'Tu sesión terminó. Inicia sesión nuevamente.';
       }
       if (error.status === 0) {
         return 'No fue posible conectarse con el servidor.';

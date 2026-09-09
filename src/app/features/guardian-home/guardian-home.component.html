@@ -45,20 +45,45 @@
           </p>
         </div>
 
-        <button
-          class="btn btn-primary refresh-button"
-          type="button"
-          [disabled]="loadingStudents() || loadingHistory()"
-          (click)="loadPortalData()"
-        >
-          Actualizar movimientos
-        </button>
+        <div class="welcome-actions">
+          @if (!currentIdentity.notificationsEnabled) {
+            <button
+              class="btn btn-outline-primary"
+              type="button"
+              [disabled]="enablingNotifications()"
+              (click)="enableNotificationsOnThisDevice()"
+            >
+              {{ enablingNotifications()
+                ? 'Activando avisos...'
+                : 'Activar avisos' }}
+            </button>
+          }
+          <button
+            class="btn btn-primary refresh-button"
+            type="button"
+            [disabled]="loadingStudents() || loadingHistory()"
+            (click)="loadPortalData()"
+          >
+            Actualizar movimientos
+          </button>
+        </div>
       </section>
 
       <p class="session-expiration">
-        Acceso protegido en este dispositivo · Sesión vigente hasta el
+        Usuario {{ currentIdentity.username }} · Sesión vigente hasta el
         {{ formatExpiration(currentIdentity.sessionExpiresAt) }}
       </p>
+
+      @if (notificationMessage(); as message) {
+        <div
+          class="alert"
+          [class.alert-success]="!notificationMessageIsError()"
+          [class.alert-warning]="notificationMessageIsError()"
+          role="status"
+        >
+          {{ message }}
+        </div>
+      }
 
       @if (liveMessage()) {
         <div class="alert alert-success" role="status">
@@ -434,8 +459,16 @@
           {{ errorMessage() }}
         </p>
         <p class="small text-body-secondary mb-0">
-          Abre el enlace o escanea el QR que te proporcionó la escuela.
+          Puedes recuperar el acceso con tu código de escuela,
+          usuario y contraseña.
         </p>
+        <button
+          class="btn btn-primary mt-3"
+          type="button"
+          (click)="openLogin()"
+        >
+          Iniciar sesión
+        </button>
       </section>
     }
   </main>

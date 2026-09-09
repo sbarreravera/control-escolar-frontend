@@ -6,7 +6,8 @@ import {
   GuardianActivationPage,
   GuardianActivationQuery,
   GuardianActivationSelection,
-  GuardianInvitationBatch
+  GuardianInvitationBatch,
+  GuardianSessionAccess
 } from './guardian-activation.models';
 
 @Injectable({
@@ -44,6 +45,37 @@ export class GuardianActivationService {
         schoolId,
         guardianIds
       }
+    );
+  }
+
+  createPasswordResetInvitation(
+    schoolId: number,
+    guardianId: number
+  ): Observable<GuardianInvitationBatch> {
+    return this.http.post<GuardianInvitationBatch>(
+      '/api/v1/guardian-activations/password-reset-invitations',
+      {
+        schoolId,
+        guardianIds: [guardianId]
+      }
+    );
+  }
+
+  findActiveSessions(
+    guardianId: number
+  ): Observable<GuardianSessionAccess[]> {
+    return this.http.get<GuardianSessionAccess[]>(
+      `/api/v1/guardian-activations/${guardianId}/sessions`
+    );
+  }
+
+  revokeSession(
+    guardianId: number,
+    sessionId: number
+  ): Observable<GuardianAccessRevocation> {
+    return this.http.post<GuardianAccessRevocation>(
+      `/api/v1/guardian-activations/${guardianId}/sessions/${sessionId}/revoke`,
+      null
     );
   }
 

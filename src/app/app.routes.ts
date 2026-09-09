@@ -37,6 +37,16 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'guardian/login',
+    loadComponent: () =>
+      import(
+        './features/guardian-login/guardian-login.component'
+      ).then(module => module.GuardianLoginComponent),
+    data: {
+      title: 'Iniciar sesión como tutor'
+    }
+  },
+  {
     path: 'guardian',
     loadComponent: () =>
       import(

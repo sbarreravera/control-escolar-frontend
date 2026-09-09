@@ -2,17 +2,21 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
+  computed,
   inject,
+  OnInit,
   signal
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import {
   FirebaseMessagingService
 } from '../../core/firebase/firebase-messaging.service';
 import {
-  CompleteGuardianDeviceEnrollmentResponse
+  CompleteGuardianDeviceEnrollmentResponse,
+  GuardianIdentity,
+  GuardianInvitationStatus
 } from './guardian-device-enrollment.models';
 import {
   GuardianDeviceEnrollmentService
@@ -21,116 +25,246 @@ import {
 @Component({
   selector: 'app-guardian-device-enrollment',
   standalone: true,
-  imports: [
-    CommonModule
-  ],
-  templateUrl:
-    './guardian-device-enrollment.component.html'
+  imports: [CommonModule],
+  templateUrl: './guardian-device-enrollment.component.html'
 })
-export class GuardianDeviceEnrollmentComponent {
+export class GuardianDeviceEnrollmentComponent implements OnInit {
 
   private readonly route = inject(ActivatedRoute);
-
+  private readonly router = inject(Router);
   private readonly firebaseMessagingService =
     inject(FirebaseMessagingService);
-
   private readonly enrollmentService =
     inject(GuardianDeviceEnrollmentService);
 
-  readonly enrollmentToken =
-    this.route.snapshot.queryParamMap
-      .get('token')
-      ?.trim() ?? '';
+  readonly enrollmentToken = this.route.snapshot.queryParamMap
+    .get('token')
+    ?.trim() ?? '';
 
+  readonly loading = signal(true);
   readonly processing = signal(false);
   readonly completed = signal(false);
+  readonly invitation = signal<GuardianInvitationStatus | null>(null);
   readonly activation =
     signal<CompleteGuardianDeviceEnrollmentResponse | null>(null);
+  readonly password = signal('');
+  readonly passwordConfirmation = signal('');
+  readonly enableNotifications = signal(true);
+  readonly notificationWarning = signal<string | null>(null);
+  readonly errorMessage = signal<string | null>(null);
 
-  readonly errorMessage = signal<string | null>(
-    this.enrollmentToken
-      ? null
-      : 'El enlace de vinculación está incompleto.'
+  readonly requiresPassword = computed(() => {
+    const invitation = this.invitation();
+    return invitation !== null && (
+      invitation.purpose === 'PASSWORD_RESET' ||
+      !invitation.accountActivated
+    );
+  });
+
+  readonly isValid = computed(() =>
+    this.invitation()?.status === 'VALID'
   );
 
-  async activateNotifications(): Promise<void> {
-    if (!this.enrollmentToken || this.processing()) {
+  async ngOnInit(): Promise<void> {
+    if (!this.enrollmentToken) {
+      this.errorMessage.set('El enlace de acceso está incompleto.');
+      this.loading.set(false);
+      return;
+    }
+
+    try {
+      const invitation = await firstValueFrom(
+        this.enrollmentService.loadInvitationStatus(this.enrollmentToken)
+      );
+      this.invitation.set(invitation);
+
+      const identity = await this.loadCurrentIdentity();
+      const alreadyOpen = identity?.guardianId === invitation.guardianId;
+      const shouldOpenPortal = alreadyOpen && (
+        invitation.status === 'USED' ||
+        invitation.purpose === 'ACTIVATION'
+      );
+
+      if (shouldOpenPortal) {
+        await this.router.navigate(['/guardian'], { replaceUrl: true });
+      }
+    } catch (error: unknown) {
+      this.errorMessage.set(this.resolveStatusErrorMessage(error));
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  updatePassword(event: Event): void {
+    this.password.set((event.target as HTMLInputElement).value);
+  }
+
+  updatePasswordConfirmation(event: Event): void {
+    this.passwordConfirmation.set(
+      (event.target as HTMLInputElement).value
+    );
+  }
+
+  updateNotificationPreference(event: Event): void {
+    this.enableNotifications.set(
+      (event.target as HTMLInputElement).checked
+    );
+    this.notificationWarning.set(null);
+  }
+
+  async completeAccess(): Promise<void> {
+    if (!this.enrollmentToken || !this.isValid() || this.processing()) {
+      return;
+    }
+
+    if (this.requiresPassword() && !this.validatePassword()) {
       return;
     }
 
     this.processing.set(true);
     this.errorMessage.set(null);
+    this.notificationWarning.set(null);
 
     try {
-      const fcmToken =
-        await this.firebaseMessagingService
-          .requestPermissionAndGetToken();
-
+      const fcmToken = await this.resolveOptionalNotificationToken();
       const activation = await firstValueFrom(
         this.enrollmentService.completeEnrollment({
           enrollmentToken: this.enrollmentToken,
           fcmToken,
-          deviceName: this.resolveDeviceName()
+          deviceName: this.resolveDeviceName(),
+          password: this.requiresPassword() ? this.password() : null
         })
       );
 
       this.activation.set(activation);
       this.completed.set(true);
     } catch (error: unknown) {
-      this.errorMessage.set(
-        this.resolveErrorMessage(error)
-      );
+      if (error instanceof HttpErrorResponse && error.status === 409) {
+        this.invitation.update(current => current === null
+          ? null
+          : { ...current, status: 'USED' });
+      }
+      this.errorMessage.set(this.resolveCompletionErrorMessage(error));
     } finally {
       this.processing.set(false);
     }
   }
 
+  openLogin(): void {
+    const invitation = this.invitation();
+    void this.router.navigate(['/guardian/login'], {
+      queryParams: {
+        schoolCode: invitation?.schoolCode ?? null,
+        username: invitation?.username ?? null,
+        returnUrl: '/guardian'
+      }
+    });
+  }
+
+  openPortal(): void {
+    void this.router.navigate(['/guardian']);
+  }
+
+  purposeTitle(invitation: GuardianInvitationStatus): string {
+    if (invitation.purpose === 'PASSWORD_RESET') {
+      return 'Crea una contraseña nueva';
+    }
+    return invitation.accountActivated
+      ? 'Abre tu portal en este dispositivo'
+      : 'Crea tu acceso de tutor';
+  }
+
+  private async loadCurrentIdentity(): Promise<GuardianIdentity | null> {
+    try {
+      return await firstValueFrom(
+        this.enrollmentService.loadGuardianIdentity()
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  private validatePassword(): boolean {
+    if (this.password().length < 8 || this.password().length > 72) {
+      this.errorMessage.set(
+        'La contraseña debe tener entre 8 y 72 caracteres.'
+      );
+      return false;
+    }
+    if (this.password() !== this.passwordConfirmation()) {
+      this.errorMessage.set('Las contraseñas no coinciden.');
+      return false;
+    }
+    return true;
+  }
+
+  private async resolveOptionalNotificationToken(): Promise<string | null> {
+    if (!this.enableNotifications()) {
+      return null;
+    }
+
+    try {
+      return await this.firebaseMessagingService
+        .requestPermissionAndGetToken();
+    } catch (error: unknown) {
+      this.notificationWarning.set(
+        this.notificationPermissionMessage(error)
+      );
+      return null;
+    }
+  }
+
   private resolveDeviceName(): string {
     const userAgent = navigator.userAgent;
-
     if (/Android/i.test(userAgent)) {
       return 'Teléfono Android';
     }
-
     if (/iPhone|iPad|iPod/i.test(userAgent)) {
       return 'Dispositivo Apple';
     }
-
     if (/Windows/i.test(userAgent)) {
       return 'Equipo Windows';
     }
-
     return 'Navegador web';
   }
 
-  private resolveErrorMessage(error: unknown): string {
+  private notificationPermissionMessage(error: unknown): string {
+    if (error instanceof Error && error.message.trim()) {
+      return `${error.message} El acceso al portal continuará sin avisos.`;
+    }
+    return 'No se pudieron activar los avisos. El acceso al portal continuará.';
+  }
+
+  private resolveStatusErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 404) {
+        return 'La invitación no existe o el enlace está incompleto.';
+      }
+      if (error.status === 0) {
+        return 'No fue posible conectarse con el servidor.';
+      }
+    }
+    return 'No fue posible comprobar esta invitación.';
+  }
+
+  private resolveCompletionErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 404) {
         return 'La invitación no existe o no es válida.';
       }
-
       if (error.status === 409) {
-        return 'La invitación ya fue utilizada o el dispositivo no puede vincularse.';
+        return 'Este enlace ya fue utilizado. Inicia sesión con tu cuenta.';
       }
-
       if (error.status === 410) {
         return 'La invitación venció o fue reemplazada. Solicita una nueva.';
       }
-
+      if (error.status === 400) {
+        return 'Revisa la contraseña y vuelve a intentarlo.';
+      }
       if (error.status === 0) {
         return 'No fue posible conectarse con el servidor.';
       }
-
-      return 'No fue posible vincular el dispositivo.';
     }
-
-    if (
-      error instanceof Error &&
-      error.message.trim()
-    ) {
-      return error.message;
-    }
-
-    return 'No fue posible activar las notificaciones.';
+    return 'No fue posible completar el acceso.';
   }
 }

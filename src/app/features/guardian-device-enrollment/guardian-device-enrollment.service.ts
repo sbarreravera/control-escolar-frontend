@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import {
   inject,
   Injectable
@@ -15,7 +15,12 @@ import {
   CompleteGuardianDeviceEnrollmentRequest,
   CompleteGuardianDeviceEnrollmentResponse,
   GuardianDeviceEnrollmentInvitation,
-  GuardianIdentity
+  GuardianDevice,
+  GuardianIdentity,
+  GuardianInvitationStatus,
+  GuardianLoginRequest,
+  GuardianLoginResponse,
+  RegisterCurrentGuardianDeviceRequest
 } from './guardian-device-enrollment.models';
 
 @Injectable({
@@ -47,6 +52,28 @@ export class GuardianDeviceEnrollmentService {
     );
   }
 
+  loadInvitationStatus(
+    enrollmentToken: string
+  ): Observable<GuardianInvitationStatus> {
+    return this.http.get<GuardianInvitationStatus>(
+      '/api/v1/guardian-device-enrollments/status',
+      {
+        params: new HttpParams().set('token', enrollmentToken)
+      }
+    );
+  }
+
+  loginGuardian(
+    request: GuardianLoginRequest
+  ): Observable<GuardianLoginResponse> {
+    return this.requestCsrfToken().pipe(
+      switchMap(() => this.http.post<GuardianLoginResponse>(
+        '/api/v1/guardian-auth/login',
+        request
+      ))
+    );
+  }
+
   loadGuardianIdentity(): Observable<GuardianIdentity> {
     return this.http.get<GuardianIdentity>(
       '/api/v1/guardian/me'
@@ -58,6 +85,17 @@ export class GuardianDeviceEnrollmentService {
       switchMap(() => this.http.post<void>(
         '/api/v1/guardian/auth/logout',
         null
+      ))
+    );
+  }
+
+  registerCurrentDevice(
+    request: RegisterCurrentGuardianDeviceRequest
+  ): Observable<GuardianDevice> {
+    return this.requestCsrfToken().pipe(
+      switchMap(() => this.http.post<GuardianDevice>(
+        '/api/v1/guardian/devices',
+        request
       ))
     );
   }

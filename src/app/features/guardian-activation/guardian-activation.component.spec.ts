@@ -19,9 +19,9 @@ describe('GuardianActivationComponent', () => {
   const currentUser = signal<AuthenticatedUser | null>({
     id: 2,
     schoolId: 10,
-    schoolName: 'Colegio San Felipe de Jesús',
-    fullName: 'Laura Cruz Reyes',
-    email: 'prefectura@colegio.test',
+    schoolName: 'Escuela de Prueba',
+    fullName: 'Persona de Prueba 2',
+    email: 'guardian.1@example.test',
     role: 'ADMIN'
   });
 
@@ -60,7 +60,7 @@ describe('GuardianActivationComponent', () => {
     expect(component.statuses()).toHaveLength(1);
     expect(component.academicCycleId()).toBe(30);
     expect(component.filteredStatuses()[0].guardianName)
-      .toBe('María Pérez');
+      .toBe('Persona de Prueba 1');
   });
 
   it('generates one-time links for the selected guardians', () => {
@@ -87,11 +87,14 @@ describe('GuardianActivationComponent', () => {
       invitationsCreated: 1,
       invitations: [{
         guardianId: 20,
-        externalReference: 'TUT-020',
-        guardianName: 'María Pérez',
-        phone: '7710000000',
+        externalReference: 'tutor.test.1',
+        guardianName: 'Persona de Prueba 1',
+        phone: '5550000501',
         email: null,
-        schoolName: 'Colegio San Felipe de Jesús',
+        schoolName: 'Escuela de Prueba',
+        schoolCode: 'ESC-TEST-1',
+        username: 'tutor.test.1',
+        purpose: 'ACTIVATION',
         enrollmentToken: 'secure-token',
         expiresAt: '2026-09-16T10:00:00-06:00'
       }]
@@ -145,12 +148,62 @@ describe('GuardianActivationComponent', () => {
     expect(component.allMatchingSelected()).toBe(true);
   });
 
+  it('generates an individual password recovery link', () => {
+    const activatedStatus = {
+      ...statusResponse,
+      accountActivated: true,
+      activationState: 'ACCOUNT_READY' as const
+    };
+    flushInitialLoad();
+    httpTestingController
+      .expectOne(request => request.url === '/api/v1/guardian-activations')
+      .flush(pageResponse([activatedStatus]));
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    component.createPasswordReset(activatedStatus);
+
+    const resetRequest = httpTestingController.expectOne(
+      '/api/v1/guardian-activations/password-reset-invitations'
+    );
+    expect(resetRequest.request.body).toEqual({
+      schoolId: 10,
+      guardianIds: [20]
+    });
+    resetRequest.flush({
+      batchId: 'reset-batch',
+      expiresAt: '2026-09-16T10:00:00-06:00',
+      invitationsCreated: 1,
+      invitations: [{
+        guardianId: 20,
+        externalReference: 'tutor.test.1',
+        guardianName: 'Persona de Prueba 1',
+        phone: '5550000501',
+        email: null,
+        schoolName: 'Escuela de Prueba',
+        schoolCode: 'ESC-TEST-1',
+        username: 'tutor.test.1',
+        purpose: 'PASSWORD_RESET',
+        enrollmentToken: 'reset-token',
+        expiresAt: '2026-09-16T10:00:00-06:00'
+      }]
+    });
+    httpTestingController
+      .expectOne(request => request.url === '/api/v1/guardian-activations')
+      .flush(pageResponse([activatedStatus]));
+
+    expect(component.generatedPurpose()).toBe('PASSWORD_RESET');
+    expect(component.generatedInvitations()[0].activationUrl)
+      .toContain('token=reset-token');
+  });
+
   const statusResponse = {
     guardianId: 20,
-    externalReference: 'TUT-020',
-    guardianName: 'María Pérez',
-    phone: '7710000000',
+    externalReference: 'tutor.test.1',
+    guardianName: 'Persona de Prueba 1',
+    phone: '5550000501',
     email: null,
+    username: 'tutor.test.1',
+    accountActivated: false,
     guardianActive: true,
     activationState: 'NOT_INVITED',
     invitationCreatedAt: null,
@@ -160,8 +213,8 @@ describe('GuardianActivationComponent', () => {
     activeSessions: 0,
     students: [{
       studentId: 40,
-      enrollmentNumber: 'A-040',
-      fullName: 'Alumno Ejemplo',
+      enrollmentNumber: 'MAT-TEST-001',
+      fullName: 'Persona de Prueba 3',
       schoolGroupId: 50,
       gradeName: '1.er semestre',
       groupName: 'Grupo 1'
@@ -171,7 +224,7 @@ describe('GuardianActivationComponent', () => {
   const cycleResponse = {
     id: 30,
     schoolId: 10,
-    schoolName: 'Colegio San Felipe de Jesús',
+    schoolName: 'Escuela de Prueba',
     name: '2026 - 2027',
     startDate: '2026-08-01',
     endDate: '2027-07-31',
