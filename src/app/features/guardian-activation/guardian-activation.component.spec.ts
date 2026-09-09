@@ -51,9 +51,12 @@ describe('GuardianActivationComponent', () => {
   it('loads activation states for the authenticated school', () => {
     const request = httpTestingController.expectOne(
       item => item.url === '/api/v1/guardian-activations' &&
-        item.params.get('schoolId') === '10'
+        item.params.get('schoolId') === '10' &&
+        item.params.get('page') === '0' &&
+        item.params.get('size') === '25' &&
+        item.params.get('state') === 'NOT_ACTIVE'
     );
-    request.flush([statusResponse]);
+    request.flush(pageResponse([statusResponse]));
 
     expect(component.statuses()).toHaveLength(1);
     expect(component.filteredStatuses()[0].guardianName)
@@ -62,8 +65,8 @@ describe('GuardianActivationComponent', () => {
 
   it('generates one-time links for the selected guardians', () => {
     httpTestingController
-      .expectOne('/api/v1/guardian-activations?schoolId=10')
-      .flush([statusResponse]);
+      .expectOne(request => request.url === '/api/v1/guardian-activations')
+      .flush(pageResponse([statusResponse]));
 
     component.toggleGuardian(20);
     component.createInvitations();
@@ -93,13 +96,31 @@ describe('GuardianActivationComponent', () => {
     });
 
     httpTestingController
-      .expectOne('/api/v1/guardian-activations?schoolId=10')
-      .flush([]);
+      .expectOne(request => request.url === '/api/v1/guardian-activations')
+      .flush(pageResponse([]));
 
     expect(component.generatedInvitations()).toHaveLength(1);
     expect(component.generatedInvitations()[0].activationUrl)
       .toContain('#/guardian/activate?token=secure-token');
     expect(component.selectedCount()).toBe(0);
+  });
+
+  it('requests a new page without keeping selections from another page', () => {
+    httpTestingController
+      .expectOne(request => request.url === '/api/v1/guardian-activations')
+      .flush(pageResponse([statusResponse], 0, 2, 26));
+
+    component.toggleGuardian(20);
+    component.goToPage(1);
+
+    const request = httpTestingController.expectOne(
+      item => item.url === '/api/v1/guardian-activations' &&
+        item.params.get('page') === '1'
+    );
+    request.flush(pageResponse([], 1, 2, 26));
+
+    expect(component.selectedCount()).toBe(0);
+    expect(component.page()).toBe(1);
   });
 
   const statusResponse = {
@@ -116,4 +137,21 @@ describe('GuardianActivationComponent', () => {
     activeDevices: 0,
     activeSessions: 0
   };
+
+  function pageResponse(
+    content: object[],
+    page = 0,
+    totalPages = content.length === 0 ? 0 : 1,
+    totalElements = content.length
+  ): object {
+    return {
+      content,
+      page,
+      size: 25,
+      totalElements,
+      totalPages,
+      first: page === 0,
+      last: page >= totalPages - 1
+    };
+  }
 });
