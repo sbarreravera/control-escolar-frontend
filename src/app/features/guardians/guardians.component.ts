@@ -94,6 +94,12 @@ export class GuardiansComponent implements OnInit {
 
   readonly guardianForm =
     this.formBuilder.nonNullable.group({
+      externalReference: [
+        '',
+        [
+          Validators.maxLength(50)
+        ]
+      ],
       fullName: [
         '',
         [
@@ -214,6 +220,10 @@ export class GuardiansComponent implements OnInit {
 
     const request: CreateGuardianRequest = {
       schoolId,
+      externalReference:
+        this.normalizeOptionalText(
+          formValue.externalReference
+        )?.toUpperCase() ?? null,
       fullName: formValue.fullName.trim(),
       phone:
         this.normalizeOptionalText(
@@ -240,6 +250,7 @@ export class GuardiansComponent implements OnInit {
           ]);
 
           this.guardianForm.reset({
+            externalReference: '',
             fullName: '',
             phone: '',
             email: ''
@@ -250,6 +261,13 @@ export class GuardiansComponent implements OnInit {
           );
         },
         error: (error: HttpErrorResponse) => {
+          if (error.status === 409) {
+            this.errorMessage.set(
+              'Ya existe un tutor con esa clave en la escuela.'
+            );
+            return;
+          }
+
           this.errorMessage.set(
             this.resolveErrorMessage(error)
           );

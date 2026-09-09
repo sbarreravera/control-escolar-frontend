@@ -147,6 +147,24 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'guardian-import',
+        loadComponent: () =>
+          import(
+            './features/guardian-import/guardian-import.component'
+          ).then(
+            module => module.GuardianImportComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Carga de tutores',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
         path: 'credentials',
         loadComponent: () =>
           import('./features/credentials/credentials.component')
