@@ -113,6 +113,24 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'student-import',
+        loadComponent: () =>
+          import(
+            './features/student-import/student-import.component'
+          ).then(
+            module => module.StudentImportComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Carga inicial',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
         path: 'guardians',
         loadComponent: () =>
           import('./features/guardians/guardians.component')

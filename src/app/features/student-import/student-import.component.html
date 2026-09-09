@@ -1,0 +1,276 @@
+<div class="mb-4">
+  <h1 class="h3 mb-1">
+    Carga inicial de alumnos
+  </h1>
+
+  <p class="text-body-secondary mb-0">
+    Registra varios alumnos de {{ schoolName() }} mediante el formato oficial.
+  </p>
+</div>
+
+@if (errorMessage()) {
+  <div
+    class="alert alert-danger"
+    role="alert"
+  >
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (successMessage()) {
+  <div
+    class="alert alert-success"
+    role="alert"
+  >
+    {{ successMessage() }}
+  </div>
+}
+
+<div
+  class="alert alert-info"
+  role="status"
+>
+  Esta carga registra alumnos nuevos. No crea tutores ni credenciales QR y no modifica alumnos existentes.
+</div>
+
+<c-row>
+  <c-col lg="5" class="mb-4">
+    <c-card class="mb-4">
+      <c-card-header>
+        <strong>1. Descargar formato</strong>
+      </c-card-header>
+
+      <c-card-body>
+        <div class="mb-3">
+          <label
+            class="form-label"
+            for="importAcademicCycleId"
+          >
+            Ciclo escolar
+          </label>
+
+          <select
+            id="importAcademicCycleId"
+            class="form-select"
+            [formControl]="academicCycleId"
+            (change)="onCycleChange()"
+          >
+            <option
+              [ngValue]="0"
+              disabled
+            >
+              Selecciona un ciclo escolar
+            </option>
+
+            @for (
+              cycle of academicCycles();
+              track cycle.id
+            ) {
+              <option [ngValue]="cycle.id">
+                {{ cycle.name }}
+              </option>
+            }
+          </select>
+
+          @if (loadingCycles()) {
+            <div class="form-text">
+              Cargando ciclos escolares...
+            </div>
+          } @else if (academicCycles().length === 0) {
+            <div class="form-text text-warning">
+              Primero registra un ciclo escolar activo.
+            </div>
+          }
+        </div>
+
+        <button
+          cButton
+          color="primary"
+          variant="outline"
+          type="button"
+          class="w-100"
+          [disabled]="academicCycleId.invalid || busy()"
+          (click)="downloadTemplate()"
+        >
+          @if (downloading()) {
+            Preparando formato...
+          } @else {
+            Descargar formato Excel
+          }
+        </button>
+      </c-card-body>
+    </c-card>
+
+    <c-card>
+      <c-card-header>
+        <strong>2. Validar archivo</strong>
+      </c-card-header>
+
+      <c-card-body>
+        <div class="mb-3">
+          <label
+            class="form-label"
+            for="studentImportFile"
+          >
+            Archivo completado
+          </label>
+
+          <input
+            #fileInput
+            id="studentImportFile"
+            type="file"
+            cFormControl
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            [disabled]="busy()"
+            (change)="onFileSelected($event)"
+          />
+
+          <div class="form-text">
+            Máximo 2,000 alumnos y 5 MB. Usa el formato descargado para este ciclo.
+          </div>
+        </div>
+
+        <button
+          cButton
+          color="primary"
+          type="button"
+          class="w-100"
+          [disabled]="selectedFile() === null || busy()"
+          (click)="validateFile()"
+        >
+          @if (validating()) {
+            Validando archivo...
+          } @else {
+            Revisar antes de cargar
+          }
+        </button>
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col lg="7">
+    <c-card>
+      <c-card-header>
+        <strong>3. Resultado de validación</strong>
+      </c-card-header>
+
+      <c-card-body>
+        @if (validation(); as result) {
+          <c-row class="g-3 mb-4">
+            <c-col sm="4">
+              <div class="border rounded p-3 h-100">
+                <div class="text-body-secondary small">
+                  Filas encontradas
+                </div>
+                <div class="fs-4 fw-semibold">
+                  {{ result.totalRows }}
+                </div>
+              </div>
+            </c-col>
+
+            <c-col sm="4">
+              <div class="border rounded p-3 h-100">
+                <div class="text-body-secondary small">
+                  Filas correctas
+                </div>
+                <div class="fs-4 fw-semibold text-success">
+                  {{ result.validRows }}
+                </div>
+              </div>
+            </c-col>
+
+            <c-col sm="4">
+              <div class="border rounded p-3 h-100">
+                <div class="text-body-secondary small">
+                  Filas con error
+                </div>
+                <div class="fs-4 fw-semibold text-danger">
+                  {{ result.invalidRows }}
+                </div>
+              </div>
+            </c-col>
+          </c-row>
+
+          @if (result.canImport) {
+            <div
+              class="alert alert-success"
+              role="status"
+            >
+              El archivo está listo. Al confirmar se registrarán todos los alumnos en una sola operación.
+            </div>
+
+            <button
+              cButton
+              color="success"
+              type="button"
+              class="w-100"
+              [disabled]="!canImport()"
+              (click)="importStudents()"
+            >
+              @if (importing()) {
+                Registrando alumnos...
+              } @else {
+                Confirmar carga de {{ result.validRows }} alumnos
+              }
+            </button>
+          } @else {
+            <div
+              class="alert alert-warning"
+              role="alert"
+            >
+              Corrige todas las filas señaladas y vuelve a validar. No se guardó ningún alumno.
+            </div>
+
+            @if (result.errors.length > 0) {
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Fila</th>
+                      <th>Matrícula</th>
+                      <th>Problema</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    @for (
+                      rowError of result.errors;
+                      track $index
+                    ) {
+                      <tr>
+                        <td>
+                          {{ rowError.rowNumber ?? 'Archivo' }}
+                        </td>
+                        <td>
+                          {{ rowError.enrollmentNumber ?? '—' }}
+                        </td>
+                        <td>
+                          @for (
+                            message of rowError.messages;
+                            track $index
+                          ) {
+                            <div>{{ message }}</div>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+        } @else {
+          <div class="text-center py-5">
+            <h2 class="h5">
+              Aún no hay un archivo validado
+            </h2>
+
+            <p class="text-body-secondary mb-0">
+              Descarga el formato, complétalo y selecciónalo para revisar los datos.
+            </p>
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

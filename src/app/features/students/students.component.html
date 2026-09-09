@@ -1,375 +1,625 @@
-<div class="mb-4">
-  <h1 class="h3 mb-1">
-    Alumnos
-  </h1>
+<div class="page-heading">
+  <div>
+    <h1 class="h3 mb-1">Alumnos</h1>
+    <p class="text-body-secondary mb-0">
+      Consulta y administra los alumnos de {{ schoolName() }}.
+    </p>
+  </div>
 
-  <p class="text-body-secondary mb-0">
-    Administra los alumnos de {{ schoolName() }}.
-  </p>
+  <button
+    cButton
+    color="primary"
+    type="button"
+    [disabled]="loadingCycles() || activeAcademicCycles().length === 0"
+    (click)="openCreateModal()"
+  >
+    + Nuevo alumno
+  </button>
 </div>
 
 @if (errorMessage()) {
-  <div
-    class="alert alert-danger"
-    role="alert"
-  >
+  <div class="alert alert-danger" role="alert">
     {{ errorMessage() }}
   </div>
 }
 
 @if (successMessage()) {
-  <div
-    class="alert alert-success"
-    role="alert"
-  >
+  <div class="alert alert-success" role="alert">
     {{ successMessage() }}
   </div>
 }
 
-<c-row>
-  <c-col lg="5" class="mb-4">
-    <c-card>
-      <c-card-header>
-        <strong>
-          {{ isEditing() ? 'Editar alumno' : 'Nuevo alumno' }}
-        </strong>
-      </c-card-header>
+<c-card class="student-directory">
+  <c-card-header class="directory-header">
+    <div>
+      <strong>Directorio de alumnos</strong>
+      <span class="student-count">
+        {{ totalElements() }}
+        {{ totalElements() === 1 ? 'alumno' : 'alumnos' }}
+      </span>
+    </div>
 
-      <c-card-body>
-        <form
-          cForm
-          [formGroup]="studentForm"
-          (ngSubmit)="saveStudent()"
-          novalidate
-        >
-          <div class="mb-3">
-            <label
-              class="form-label"
-              for="enrollmentNumber"
-            >
-              Matrícula
-            </label>
+    <span class="text-body-secondary small">
+      La lista se carga por páginas para mantenerla ágil.
+    </span>
+  </c-card-header>
 
-            <input
-              id="enrollmentNumber"
-              type="text"
-              cFormControl
-              formControlName="enrollmentNumber"
-              placeholder="Ej. CSF-2026-001"
-              autocomplete="off"
-            />
+  <c-card-body>
+    <div class="filters" [formGroup]="filterForm">
+      <div class="filter-field search-field">
+        <label for="studentSearch" class="form-label">
+          Buscar
+        </label>
 
-            @if (
-              studentForm.controls.enrollmentNumber.touched &&
-              studentForm.controls.enrollmentNumber.invalid
-            ) {
-              <p class="text-danger small mt-1 mb-0">
-                Ingresa una matrícula válida.
-              </p>
-            }
-          </div>
+        <div class="input-group">
+          <input
+            id="studentSearch"
+            type="search"
+            class="form-control"
+            formControlName="search"
+            placeholder="Nombre, apellidos o matrícula"
+            autocomplete="off"
+            (input)="onSearchInput()"
+          />
 
-          <div class="mb-3">
-            <label
-              class="form-label"
-              for="firstName"
-            >
-              Nombre
-            </label>
-
-            <input
-              id="firstName"
-              type="text"
-              cFormControl
-              formControlName="firstName"
-              autocomplete="given-name"
-            />
-
-            @if (
-              studentForm.controls.firstName.touched &&
-              studentForm.controls.firstName.invalid
-            ) {
-              <p class="text-danger small mt-1 mb-0">
-                Ingresa el nombre del alumno.
-              </p>
-            }
-          </div>
-
-          <div class="mb-3">
-            <label
-              class="form-label"
-              for="lastName"
-            >
-              Apellidos
-            </label>
-
-            <input
-              id="lastName"
-              type="text"
-              cFormControl
-              formControlName="lastName"
-              autocomplete="family-name"
-            />
-
-            @if (
-              studentForm.controls.lastName.touched &&
-              studentForm.controls.lastName.invalid
-            ) {
-              <p class="text-danger small mt-1 mb-0">
-                Ingresa los apellidos del alumno.
-              </p>
-            }
-          </div>
-
-          <div class="mb-3">
-            <label
-              class="form-label"
-              for="academicCycleId"
-            >
-              Ciclo escolar
-            </label>
-
-            <select
-              id="academicCycleId"
-              class="form-select"
-              formControlName="academicCycleId"
-              (change)="onAcademicCycleChange()"
-            >
-              <option
-                [ngValue]="0"
-                disabled
-              >
-                Selecciona un ciclo escolar
-              </option>
-
-              @for (
-                academicCycle of academicCycles();
-                track academicCycle.id
-              ) {
-                <option
-                  [ngValue]="academicCycle.id"
-                >
-                  {{ academicCycle.name }}
-                </option>
-              }
-            </select>
-
-            @if (loadingCycles()) {
-              <div class="form-text">
-                Cargando ciclos escolares...
-              </div>
-            }
-
-            @if (
-              studentForm.controls.academicCycleId.touched &&
-              studentForm.controls.academicCycleId.invalid
-            ) {
-              <p class="text-danger small mt-1 mb-0">
-                Selecciona un ciclo escolar.
-              </p>
-            }
-          </div>
-
-          <div class="mb-4">
-            <label
-              class="form-label"
-              for="schoolGroupId"
-            >
-              Grado y grupo
-            </label>
-
-            <select
-              id="schoolGroupId"
-              class="form-select"
-              formControlName="schoolGroupId"
-            >
-              <option
-                [ngValue]="0"
-                disabled
-              >
-                @if (loadingGroups()) {
-                  Cargando grupos...
-                } @else {
-                  Selecciona un grado y grupo
-                }
-              </option>
-
-              @for (
-                schoolGroup of schoolGroups();
-                track schoolGroup.id
-              ) {
-                <option
-                  [ngValue]="schoolGroup.id"
-                >
-                  {{ schoolGroup.gradeName }}
-                  {{ schoolGroup.groupName }}
-                </option>
-              }
-            </select>
-
-            @if (
-              !loadingGroups() &&
-              studentForm.controls.academicCycleId.value > 0 &&
-              schoolGroups().length === 0
-            ) {
-              <div class="form-text text-warning">
-                Este ciclo escolar aún no tiene grupos registrados.
-              </div>
-            }
-
-            @if (
-              studentForm.controls.schoolGroupId.touched &&
-              studentForm.controls.schoolGroupId.invalid
-            ) {
-              <p class="text-danger small mt-1 mb-0">
-                Selecciona el grado y grupo del alumno.
-              </p>
-            }
-          </div>
-
-          <div class="d-grid gap-2">
+          @if (filterForm.controls.search.value) {
             <button
-              cButton
-              color="primary"
-              type="submit"
-              [disabled]="submitting()"
+              class="btn btn-outline-secondary"
+              type="button"
+              aria-label="Limpiar búsqueda"
+              (click)="clearSearch()"
             >
-              @if (submitting()) {
-                Guardando...
-              } @else if (isEditing()) {
-                Guardar cambios
-              } @else {
-                Registrar alumno
-              }
+              Limpiar
             </button>
+          }
+        </div>
+      </div>
 
-            @if (isEditing()) {
-              <button
-                cButton
-                color="secondary"
-                variant="outline"
-                type="button"
-                [disabled]="submitting()"
-                (click)="cancelEditing()"
-              >
-                Cancelar edición
-              </button>
+      <div class="filter-field">
+        <label for="cycleFilter" class="form-label">
+          Ciclo escolar
+        </label>
+
+        <select
+          id="cycleFilter"
+          class="form-select"
+          formControlName="academicCycleId"
+          [disabled]="loadingCycles()"
+          (change)="onFilterCycleChange()"
+        >
+          <option [ngValue]="0">Todos los ciclos</option>
+
+          @for (cycle of academicCycles(); track cycle.id) {
+            <option [ngValue]="cycle.id">
+              {{ cycle.name }}{{ cycle.active ? '' : ' (inactivo)' }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="groupFilter" class="form-label">
+          Grado y grupo
+        </label>
+
+        <select
+          id="groupFilter"
+          class="form-select"
+          formControlName="schoolGroupId"
+          [disabled]="
+            filterForm.controls.academicCycleId.value <= 0 ||
+            loadingFilterGroups()
+          "
+          (change)="onFilterGroupChange()"
+        >
+          <option [ngValue]="0">
+            @if (loadingFilterGroups()) {
+              Cargando grupos...
+            } @else if (
+              filterForm.controls.academicCycleId.value <= 0
+            ) {
+              Selecciona primero un ciclo
+            } @else {
+              Todos los grupos
             }
-          </div>
-        </form>
-      </c-card-body>
-    </c-card>
-  </c-col>
+          </option>
 
-  <c-col lg="7">
-    <c-card>
-      <c-card-header>
-        <strong>Alumnos registrados</strong>
-      </c-card-header>
+          @for (group of filterSchoolGroups(); track group.id) {
+            <option [ngValue]="group.id">
+              {{ group.gradeName }} · {{ group.groupName }}
+              {{ group.active ? '' : ' (inactivo)' }}
+            </option>
+          }
+        </select>
+      </div>
 
-      <c-card-body>
-        @if (loading()) {
-          <p class="text-body-secondary mb-0">
-            Cargando alumnos...
+      <div class="filter-field status-field">
+        <label for="activeFilter" class="form-label">
+          Estado
+        </label>
+
+        <select
+          id="activeFilter"
+          class="form-select"
+          formControlName="active"
+          (change)="onActiveFilterChange()"
+        >
+          <option value="all">Todos</option>
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button
+          cButton
+          color="secondary"
+          variant="outline"
+          type="button"
+          [disabled]="!hasFilters()"
+          (click)="clearFilters()"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="list-state" role="status">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span>Cargando alumnos...</span>
+      </div>
+    } @else if (students().length === 0) {
+      <div class="list-state empty-state">
+        @if (hasFilters()) {
+          <h2 class="h5 mb-2">No encontramos alumnos</h2>
+          <p class="text-body-secondary mb-3">
+            Prueba con otra búsqueda o limpia los filtros aplicados.
           </p>
-        } @else if (students().length === 0) {
-          <div class="text-center py-5">
-            <h2 class="h5">
-              Aún no hay alumnos
-            </h2>
-
-            <p class="text-body-secondary mb-0">
-              El primer alumno aparecerá aquí después de registrarlo.
-            </p>
-          </div>
+          <button
+            cButton
+            color="primary"
+            variant="outline"
+            type="button"
+            (click)="clearFilters()"
+          >
+            Limpiar filtros
+          </button>
         } @else {
-          <div class="table-responsive">
-            <table class="table align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>Matrícula</th>
-                  <th>Alumno</th>
-                  <th>Ciclo escolar</th>
-                  <th>Grado y grupo</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                @for (
-                  student of students();
-                  track student.id
-                ) {
-                  <tr>
-                    <td>
-                      <code>
-                        {{ student.enrollmentNumber }}
-                      </code>
-                    </td>
-
-                    <td>
-                      <strong>
-                        {{ student.firstName }}
-                        {{ student.lastName }}
-                      </strong>
-                    </td>
-
-                    <td>
-                      @if (student.academicCycleName) {
-                        {{ student.academicCycleName }}
-                      } @else {
-                        <span class="text-body-secondary">
-                          —
-                        </span>
-                      }
-                    </td>
-
-                    <td>
-                      @if (
-                        student.gradeName ||
-                        student.groupName
-                      ) {
-                        {{ student.gradeName || '—' }}
-                        {{ student.groupName || '' }}
-                      } @else {
-                        <span class="text-body-secondary">
-                          Sin asignar
-                        </span>
-                      }
-                    </td>
-
-                    <td>
-                      @if (student.active) {
-                        <span class="badge text-bg-success">
-                          Activo
-                        </span>
-                      } @else {
-                        <span class="badge text-bg-secondary">
-                          Inactivo
-                        </span>
-                      }
-                    </td>
-
-                    <td>
-                      <button
-                        cButton
-                        color="primary"
-                        variant="outline"
-                        size="sm"
-                        type="button"
-                        (click)="startEditing(student)"
-                      >
-                        Editar
-                      </button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+          <h2 class="h5 mb-2">Aún no hay alumnos</h2>
+          <p class="text-body-secondary mb-3">
+            Registra el primer alumno o usa la opción Carga inicial.
+          </p>
+          <button
+            cButton
+            color="primary"
+            type="button"
+            [disabled]="activeAcademicCycles().length === 0"
+            (click)="openCreateModal()"
+          >
+            Registrar alumno
+          </button>
         }
-      </c-card-body>
-    </c-card>
-  </c-col>
-</c-row>
+      </div>
+    } @else {
+      <div class="table-responsive student-table-wrap">
+        <table class="table align-middle table-hover mb-0 student-table">
+          <thead>
+            <tr>
+              <th [attr.aria-sort]="ariaSort('enrollmentNumber')">
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="changeSort('enrollmentNumber')"
+                >
+                  Matrícula
+                  <span class="sort-indicator">
+                    {{ sortIndicator('enrollmentNumber') }}
+                  </span>
+                </button>
+              </th>
+
+              <th [attr.aria-sort]="ariaSort('studentName')">
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="changeSort('studentName')"
+                >
+                  Alumno
+                  <span class="sort-indicator">
+                    {{ sortIndicator('studentName') }}
+                  </span>
+                </button>
+              </th>
+
+              <th [attr.aria-sort]="ariaSort('academicCycleName')">
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="changeSort('academicCycleName')"
+                >
+                  Ciclo escolar
+                  <span class="sort-indicator">
+                    {{ sortIndicator('academicCycleName') }}
+                  </span>
+                </button>
+              </th>
+
+              <th [attr.aria-sort]="ariaSort('schoolGroup')">
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="changeSort('schoolGroup')"
+                >
+                  Grado y grupo
+                  <span class="sort-indicator">
+                    {{ sortIndicator('schoolGroup') }}
+                  </span>
+                </button>
+              </th>
+
+              <th [attr.aria-sort]="ariaSort('active')">
+                <button
+                  type="button"
+                  class="sort-button"
+                  (click)="changeSort('active')"
+                >
+                  Estado
+                  <span class="sort-indicator">
+                    {{ sortIndicator('active') }}
+                  </span>
+                </button>
+              </th>
+
+              <th class="action-column">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (student of students(); track student.id) {
+              <tr>
+                <td>
+                  <code>{{ student.enrollmentNumber }}</code>
+                </td>
+
+                <td class="student-name">
+                  <strong>
+                    {{ student.firstName }} {{ student.lastName }}
+                  </strong>
+                </td>
+
+                <td>
+                  @if (student.academicCycleName) {
+                    {{ student.academicCycleName }}
+                  } @else {
+                    <span class="text-body-secondary">Sin ciclo</span>
+                  }
+                </td>
+
+                <td>
+                  @if (student.gradeName || student.groupName) {
+                    {{ student.gradeName || '—' }}
+                    <span class="group-name">
+                      {{ student.groupName || '' }}
+                    </span>
+                  } @else {
+                    <span class="text-body-secondary">Sin asignar</span>
+                  }
+                </td>
+
+                <td>
+                  @if (student.active) {
+                    <span class="badge text-bg-success">Activo</span>
+                  } @else {
+                    <span class="badge text-bg-secondary">Inactivo</span>
+                  }
+                </td>
+
+                <td class="action-column">
+                  <button
+                    cButton
+                    color="primary"
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    (click)="startEditing(student)"
+                  >
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <div class="results-summary" aria-live="polite">
+          Mostrando {{ rangeStart() }}–{{ rangeEnd() }}
+          de {{ totalElements() }}
+        </div>
+
+        @if (totalPages() > 1) {
+          <nav aria-label="Páginas de alumnos">
+            <ul class="pagination pagination-sm mb-0">
+              <li
+                class="page-item"
+                [class.disabled]="page() === 0 || loading()"
+              >
+                <button
+                  class="page-link"
+                  type="button"
+                  aria-label="Página anterior"
+                  [disabled]="page() === 0 || loading()"
+                  (click)="goToPage(page() - 1)"
+                >
+                  Anterior
+                </button>
+              </li>
+
+              @for (pageNumber of pageNumbers(); track pageNumber) {
+                <li
+                  class="page-item"
+                  [class.active]="pageNumber === page()"
+                >
+                  <button
+                    class="page-link"
+                    type="button"
+                    [attr.aria-current]="
+                      pageNumber === page() ? 'page' : null
+                    "
+                    (click)="goToPage(pageNumber)"
+                  >
+                    {{ pageNumber + 1 }}
+                  </button>
+                </li>
+              }
+
+              <li
+                class="page-item"
+                [class.disabled]="page() >= totalPages() - 1 || loading()"
+              >
+                <button
+                  class="page-link"
+                  type="button"
+                  aria-label="Página siguiente"
+                  [disabled]="page() >= totalPages() - 1 || loading()"
+                  (click)="goToPage(page() + 1)"
+                >
+                  Siguiente
+                </button>
+              </li>
+            </ul>
+          </nav>
+        }
+
+        <div class="page-size">
+          <label for="studentPageSize">Filas por página</label>
+          <select
+            id="studentPageSize"
+            class="form-select form-select-sm"
+            [value]="pageSize()"
+            (change)="onPageSizeChange($event)"
+          >
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+    }
+  </c-card-body>
+</c-card>
+
+<c-modal
+  id="studentEditorModal"
+  alignment="center"
+  backdrop="static"
+  size="lg"
+  [visible]="studentModalVisible()"
+  (visibleChange)="onModalVisibilityChange($event)"
+>
+  <c-modal-header>
+    <h2 cModalTitle class="h5 mb-0">
+      {{ isEditing() ? 'Editar alumno' : 'Nuevo alumno' }}
+    </h2>
+    <button
+      cButtonClose
+      type="button"
+      [disabled]="submitting()"
+      aria-label="Cerrar"
+      (click)="closeStudentModal()"
+    ></button>
+  </c-modal-header>
+
+  <c-modal-body>
+    @if (modalErrorMessage()) {
+      <div class="alert alert-danger" role="alert">
+        {{ modalErrorMessage() }}
+      </div>
+    }
+
+    <form
+      id="studentEditorForm"
+      cForm
+      [formGroup]="studentForm"
+      (ngSubmit)="saveStudent()"
+      novalidate
+    >
+      <div class="modal-form-grid">
+        <div class="full-field">
+          <label class="form-label" for="enrollmentNumber">
+            Matrícula
+          </label>
+          <input
+            id="enrollmentNumber"
+            type="text"
+            cFormControl
+            formControlName="enrollmentNumber"
+            placeholder="Ej. CSF-2026-001"
+            autocomplete="off"
+          />
+          @if (
+            studentForm.controls.enrollmentNumber.touched &&
+            studentForm.controls.enrollmentNumber.invalid
+          ) {
+            <p class="text-danger small mt-1 mb-0">
+              Ingresa una matrícula válida.
+            </p>
+          }
+        </div>
+
+        <div>
+          <label class="form-label" for="firstName">
+            Nombre
+          </label>
+          <input
+            id="firstName"
+            type="text"
+            cFormControl
+            formControlName="firstName"
+            autocomplete="given-name"
+          />
+          @if (
+            studentForm.controls.firstName.touched &&
+            studentForm.controls.firstName.invalid
+          ) {
+            <p class="text-danger small mt-1 mb-0">
+              Ingresa el nombre del alumno.
+            </p>
+          }
+        </div>
+
+        <div>
+          <label class="form-label" for="lastName">
+            Apellidos
+          </label>
+          <input
+            id="lastName"
+            type="text"
+            cFormControl
+            formControlName="lastName"
+            autocomplete="family-name"
+          />
+          @if (
+            studentForm.controls.lastName.touched &&
+            studentForm.controls.lastName.invalid
+          ) {
+            <p class="text-danger small mt-1 mb-0">
+              Ingresa los apellidos del alumno.
+            </p>
+          }
+        </div>
+
+        <div>
+          <label class="form-label" for="academicCycleId">
+            Ciclo escolar
+          </label>
+          <select
+            id="academicCycleId"
+            class="form-select"
+            formControlName="academicCycleId"
+            (change)="onModalCycleChange()"
+          >
+            <option [ngValue]="0" disabled>
+              Selecciona un ciclo escolar
+            </option>
+
+            @for (cycle of academicCycles(); track cycle.id) {
+              @if (
+                cycle.active ||
+                cycle.id === studentForm.controls.academicCycleId.value
+              ) {
+                <option [ngValue]="cycle.id">
+                  {{ cycle.name }}{{ cycle.active ? '' : ' (inactivo)' }}
+                </option>
+              }
+            }
+          </select>
+          @if (
+            studentForm.controls.academicCycleId.touched &&
+            studentForm.controls.academicCycleId.invalid
+          ) {
+            <p class="text-danger small mt-1 mb-0">
+              Selecciona un ciclo escolar.
+            </p>
+          }
+        </div>
+
+        <div>
+          <label class="form-label" for="schoolGroupId">
+            Grado y grupo
+          </label>
+          <select
+            id="schoolGroupId"
+            class="form-select"
+            formControlName="schoolGroupId"
+          >
+            <option [ngValue]="0" disabled>
+              @if (loadingModalGroups()) {
+                Cargando grupos...
+              } @else {
+                Selecciona un grado y grupo
+              }
+            </option>
+
+            @for (group of modalSchoolGroups(); track group.id) {
+              <option [ngValue]="group.id">
+                {{ group.gradeName }} · {{ group.groupName }}
+                {{ group.active ? '' : ' (inactivo)' }}
+              </option>
+            }
+          </select>
+
+          @if (
+            !loadingModalGroups() &&
+            studentForm.controls.academicCycleId.value > 0 &&
+            modalSchoolGroups().length === 0
+          ) {
+            <div class="form-text text-warning">
+              Este ciclo aún no tiene grupos activos.
+            </div>
+          }
+
+          @if (
+            studentForm.controls.schoolGroupId.touched &&
+            studentForm.controls.schoolGroupId.invalid
+          ) {
+            <p class="text-danger small mt-1 mb-0">
+              Selecciona el grado y grupo del alumno.
+            </p>
+          }
+        </div>
+      </div>
+    </form>
+  </c-modal-body>
+
+  <c-modal-footer>
+    <button
+      cButton
+      color="secondary"
+      variant="outline"
+      type="button"
+      [disabled]="submitting()"
+      (click)="closeStudentModal()"
+    >
+      Cancelar
+    </button>
+    <button
+      cButton
+      color="primary"
+      type="submit"
+      form="studentEditorForm"
+      [disabled]="submitting()"
+    >
+      @if (submitting()) {
+        Guardando...
+      } @else if (isEditing()) {
+        Guardar cambios
+      } @else {
+        Registrar alumno
+      }
+    </button>
+  </c-modal-footer>
+</c-modal>
