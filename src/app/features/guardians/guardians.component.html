@@ -40,7 +40,9 @@
     <c-col lg="5" class="mb-4">
       <c-card>
         <c-card-header>
-          <strong>Nuevo tutor</strong>
+          <strong>
+            {{ editingGuardianId() === null ? 'Nuevo tutor' : 'Editar tutor' }}
+          </strong>
         </c-card-header>
 
         <c-card-body>
@@ -65,10 +67,15 @@
                 formControlName="externalReference"
                 placeholder="Ej. TUT-001"
                 autocomplete="off"
+                [readOnly]="editingGuardianId() !== null"
               />
 
               <div class="form-text">
-                Opcional en el alta manual; permite reutilizar al tutor en cargas masivas.
+                @if (editingGuardianId() === null) {
+                  Opcional en el alta manual; permite reutilizar al tutor en cargas masivas.
+                } @else {
+                  La clave identifica al tutor y no cambia al editar sus datos.
+                }
               </div>
 
               @if (
@@ -161,19 +168,36 @@
               }
             </div>
 
-            <button
-              cButton
-              color="primary"
-              type="submit"
-              class="w-100"
-              [disabled]="submittingGuardian()"
-            >
-              @if (submittingGuardian()) {
-                Registrando...
-              } @else {
-                Registrar tutor
+            <div class="d-flex gap-2">
+              <button
+                cButton
+                color="primary"
+                type="submit"
+                class="flex-grow-1"
+                [disabled]="submittingGuardian()"
+              >
+                @if (submittingGuardian()) {
+                  Guardando...
+                } @else if (editingGuardianId() === null) {
+                  Registrar tutor
+                } @else {
+                  Guardar cambios
+                }
+              </button>
+
+              @if (editingGuardianId() !== null) {
+                <button
+                  cButton
+                  color="secondary"
+                  variant="outline"
+                  type="button"
+                  [disabled]="submittingGuardian()"
+                  (click)="cancelEditing()"
+                >
+                  Cancelar
+                </button>
               }
-            </button>
+            </div>
           </form>
         </c-card-body>
       </c-card>
@@ -205,6 +229,7 @@
                     <th>Tutor</th>
                     <th>Contacto</th>
                     <th>Estado</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
 
@@ -259,6 +284,19 @@
                             Inactivo
                           </span>
                         }
+                      </td>
+
+                      <td>
+                        <button
+                          cButton
+                          color="primary"
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          (click)="startEditing(guardian)"
+                        >
+                          Editar
+                        </button>
                       </td>
                     </tr>
                   }

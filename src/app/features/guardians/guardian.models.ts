@@ -19,6 +19,12 @@ export interface CreateGuardianRequest {
   email: string | null;
 }
 
+export interface UpdateGuardianRequest {
+  fullName: string;
+  phone: string | null;
+  email: string | null;
+}
+
 export interface StudentGuardian {
   studentId: number;
   studentName: string;
