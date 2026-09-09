@@ -20,3 +20,19 @@ export interface GuardianDevice {
   registeredAt: string;
   lastUsedAt: string | null;
 }
+
+export interface CompleteGuardianDeviceEnrollmentResponse {
+  guardianId: number;
+  guardianName: string;
+  schoolName: string;
+  device: GuardianDevice;
+  sessionExpiresAt: string;
+}
+
+export interface GuardianIdentity {
+  guardianId: number;
+  schoolId: number;
+  guardianName: string;
+  schoolName: string;
+  sessionExpiresAt: string;
+}

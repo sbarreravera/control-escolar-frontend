@@ -63,6 +63,13 @@ export function buildNavItems(
             iconComponent: {
               name: 'cil-user-follow'
             }
+          },
+          {
+            name: 'Activación de tutores',
+            url: '/guardian-activation',
+            iconComponent: {
+              name: 'cil-lock-locked'
+            }
           }
         ]
       : [];

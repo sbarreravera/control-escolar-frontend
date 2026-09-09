@@ -19,7 +19,7 @@
             </h1>
 
             <p class="text-body-secondary mb-0">
-              Este dispositivo quedó vinculado correctamente.
+              Este dispositivo quedó vinculado a tu identidad de tutor.
               Recibirás avisos cuando se registre una entrada
               o salida del alumno.
             </p>
@@ -29,8 +29,8 @@
             </h1>
 
             <p class="text-body-secondary mb-0">
-              Vincula este dispositivo para recibir las
-              notificaciones enviadas por la escuela.
+              Vincula este dispositivo para recibir las notificaciones
+              y acceder de forma segura a tu portal.
             </p>
           }
         </div>
@@ -40,10 +40,23 @@
             class="alert alert-success text-center mb-0"
             role="status"
           >
-            <strong>El proceso terminó correctamente.</strong>
+            <strong>
+              @if (activation(); as currentActivation) {
+                Acceso activado para {{ currentActivation.guardianName }}.
+              } @else {
+                El proceso terminó correctamente.
+              }
+            </strong>
             <div class="mt-1">
-              Ya puedes cerrar esta ventana.
+              La sesión de este dispositivo quedó protegida con una cookie
+              segura que JavaScript no puede leer.
             </div>
+            <a
+              class="btn btn-success mt-3"
+              href="#/guardian"
+            >
+              Abrir mi acceso
+            </a>
           </div>
         } @else {
           <ol class="mb-4">

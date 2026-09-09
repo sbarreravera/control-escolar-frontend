@@ -25,6 +25,28 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'guardian/activate',
+    loadComponent: () =>
+      import(
+        './features/guardian-device-enrollment/guardian-device-enrollment.component'
+      ).then(
+        module => module.GuardianDeviceEnrollmentComponent
+      ),
+    data: {
+      title: 'Activar acceso del tutor'
+    }
+  },
+  {
+    path: 'guardian',
+    loadComponent: () =>
+      import(
+        './features/guardian-home/guardian-home.component'
+      ).then(module => module.GuardianHomeComponent),
+    data: {
+      title: 'Acceso del tutor'
+    }
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./layout')
@@ -159,6 +181,24 @@ export const routes: Routes = [
         ],
         data: {
           title: 'Carga de tutores',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
+        path: 'guardian-activation',
+        loadComponent: () =>
+          import(
+            './features/guardian-activation/guardian-activation.component'
+          ).then(
+            module => module.GuardianActivationComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Activación de tutores',
           roles: [
             'ADMIN'
           ]

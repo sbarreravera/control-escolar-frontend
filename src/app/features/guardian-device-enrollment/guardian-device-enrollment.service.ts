@@ -13,8 +13,9 @@ import {
 } from '../../core/auth/auth.models';
 import {
   CompleteGuardianDeviceEnrollmentRequest,
-  GuardianDevice,
-  GuardianDeviceEnrollmentInvitation
+  CompleteGuardianDeviceEnrollmentResponse,
+  GuardianDeviceEnrollmentInvitation,
+  GuardianIdentity
 } from './guardian-device-enrollment.models';
 
 @Injectable({
@@ -35,14 +36,29 @@ export class GuardianDeviceEnrollmentService {
 
   completeEnrollment(
     request: CompleteGuardianDeviceEnrollmentRequest
-  ): Observable<GuardianDevice> {
+  ): Observable<CompleteGuardianDeviceEnrollmentResponse> {
     return this.requestCsrfToken().pipe(
       switchMap(() =>
-        this.http.post<GuardianDevice>(
+        this.http.post<CompleteGuardianDeviceEnrollmentResponse>(
           '/api/v1/guardian-device-enrollments/complete',
           request
         )
       )
+    );
+  }
+
+  loadGuardianIdentity(): Observable<GuardianIdentity> {
+    return this.http.get<GuardianIdentity>(
+      '/api/v1/guardian/me'
+    );
+  }
+
+  logoutGuardian(): Observable<void> {
+    return this.requestCsrfToken().pipe(
+      switchMap(() => this.http.post<void>(
+        '/api/v1/guardian/auth/logout',
+        null
+      ))
     );
   }
 

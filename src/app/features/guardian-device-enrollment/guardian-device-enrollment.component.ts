@@ -12,6 +12,9 @@ import {
   FirebaseMessagingService
 } from '../../core/firebase/firebase-messaging.service';
 import {
+  CompleteGuardianDeviceEnrollmentResponse
+} from './guardian-device-enrollment.models';
+import {
   GuardianDeviceEnrollmentService
 } from './guardian-device-enrollment.service';
 
@@ -41,6 +44,8 @@ export class GuardianDeviceEnrollmentComponent {
 
   readonly processing = signal(false);
   readonly completed = signal(false);
+  readonly activation =
+    signal<CompleteGuardianDeviceEnrollmentResponse | null>(null);
 
   readonly errorMessage = signal<string | null>(
     this.enrollmentToken
@@ -61,7 +66,7 @@ export class GuardianDeviceEnrollmentComponent {
         await this.firebaseMessagingService
           .requestPermissionAndGetToken();
 
-      await firstValueFrom(
+      const activation = await firstValueFrom(
         this.enrollmentService.completeEnrollment({
           enrollmentToken: this.enrollmentToken,
           fcmToken,
@@ -69,6 +74,7 @@ export class GuardianDeviceEnrollmentComponent {
         })
       );
 
+      this.activation.set(activation);
       this.completed.set(true);
     } catch (error: unknown) {
       this.errorMessage.set(

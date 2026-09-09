@@ -1,0 +1,68 @@
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary p-3">
+  <main class="w-100" style="max-width: 680px">
+    <div class="card shadow-sm">
+      <div class="card-body p-4 p-md-5">
+        <div class="text-center mb-4">
+          <div class="fs-1 mb-3" aria-hidden="true">🛡️</div>
+          <div class="text-uppercase text-body-secondary small fw-semibold mb-2">
+            Control Escolar
+          </div>
+          <h1 class="h3 mb-2">Acceso del tutor</h1>
+        </div>
+
+        @if (loading()) {
+          <div class="text-center py-4 text-body-secondary">
+            Comprobando tu sesión segura...
+          </div>
+        } @else if (identity(); as currentIdentity) {
+          <div class="alert alert-success" role="status">
+            <strong>Sesión activa</strong>
+            <div class="mt-2">
+              {{ currentIdentity.guardianName }}
+            </div>
+            <div class="small">
+              {{ currentIdentity.schoolName }}
+            </div>
+          </div>
+
+          <p class="text-body-secondary">
+            El servidor obtuvo tu identidad desde una sesión opaca y no desde
+            un identificador escrito en la dirección. Las consultas del portal
+            usarán siempre esta identidad para limitar los datos a tus alumnos.
+          </p>
+
+          <p class="small text-body-secondary">
+            Esta sesión vence el
+            {{ formatExpiration(currentIdentity.sessionExpiresAt) }}.
+          </p>
+
+          <div class="alert alert-info mb-4">
+            El historial de entradas, salidas y comunicaciones se incorporará
+            en el siguiente bloque del portal.
+          </div>
+
+          <button
+            class="btn btn-outline-danger w-100"
+            type="button"
+            [disabled]="loggingOut()"
+            (click)="logout()"
+          >
+            @if (loggingOut()) {
+              Cerrando sesión...
+            } @else {
+              Cerrar sesión en este dispositivo
+            }
+          </button>
+        } @else {
+          <div class="alert alert-warning" role="alert">
+            {{ errorMessage() }}
+          </div>
+
+          <p class="text-body-secondary text-center mb-0">
+            Abre el enlace o escanea el QR que te proporcionó la escuela.
+          </p>
+        }
+      </div>
+    </div>
+  </main>
+</div>
