@@ -9,7 +9,9 @@ import {
   getMessaging,
   getToken,
   isSupported,
-  Messaging
+  Messaging,
+  onMessage,
+  Unsubscribe
 } from 'firebase/messaging';
 
 import {
@@ -71,6 +73,36 @@ export class FirebaseMessagingService {
     return currentToken;
   }
 
+  /**
+   * Keeps the open guardian portal synchronized when a data-only access
+   * notification arrives. Background notifications are handled by the
+   * Firebase service worker.
+   */
+  async listenForForegroundAccessEvents(
+    onAccessEvent: (eventId: number) => void
+  ): Promise<Unsubscribe> {
+    if (typeof window === 'undefined' || !(await isSupported())) {
+      return () => undefined;
+    }
+
+    return onMessage(this.getMessagingInstance(), payload => {
+      const eventId = Number(payload.data?.['accessEventId']);
+
+      if (!Number.isSafeInteger(eventId) || eventId <= 0) {
+        return;
+      }
+
+      this.showForegroundNotification(
+        payload.data?.['title'] ?? 'Movimiento registrado',
+        payload.data?.['body'] ?? '',
+        payload.data?.['route'] ?? `/#/guardian?eventId=${eventId}`,
+        eventId
+      );
+
+      onAccessEvent(eventId);
+    });
+  }
+
   private getMessagingInstance(): Messaging {
     if (!this.firebaseApp) {
       this.firebaseApp = getApps().length > 0
@@ -83,6 +115,32 @@ export class FirebaseMessagingService {
     }
 
     return this.messaging;
+  }
+
+  private showForegroundNotification(
+    title: string,
+    body: string,
+    route: string,
+    eventId: number
+  ): void {
+    if (!('Notification' in window)
+        || Notification.permission !== 'granted') {
+      return;
+    }
+
+    const notification = new Notification(title, {
+      body,
+      tag: `access-event-${eventId}`,
+      data: { route }
+    });
+
+    notification.onclick = () => {
+      notification.close();
+      window.focus();
+      window.location.assign(
+        new URL(route, window.location.origin).href
+      );
+    };
   }
 
   private validateBrowserEnvironment(): void {
