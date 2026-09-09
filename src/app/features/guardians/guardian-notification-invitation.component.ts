@@ -169,7 +169,7 @@ export class GuardianNotificationInvitationComponent {
 
     return (
       `${window.location.origin}${basePath}` +
-      '#/activate-notifications?token=' +
+      '#/guardian/activate?token=' +
       encodeURIComponent(enrollmentToken)
     );
   }
