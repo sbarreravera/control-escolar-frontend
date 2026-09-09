@@ -26,9 +26,15 @@
 
 <section class="card mb-4">
   <div class="card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
-    <strong>Seleccionar tutores</strong>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <strong>Seleccionar tutores</strong>
+      <span class="badge text-bg-light">
+        {{ totalElements() }}
+        {{ totalElements() === 1 ? 'tutor' : 'tutores' }}
+      </span>
+    </div>
     <span class="badge text-bg-primary">
-      {{ selectedCount() }} seleccionados
+      {{ selectedCount() }} seleccionados en esta página
     </span>
   </div>
 
@@ -198,6 +204,73 @@
             }
           </tbody>
         </table>
+      </div>
+
+      <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mt-3">
+        <span class="small text-body-secondary">
+          Mostrando {{ firstVisible() }}–{{ lastVisible() }}
+          de {{ totalElements() }} tutores
+        </span>
+
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+          @if (totalPages() > 1) {
+            <nav aria-label="Páginas de activación de tutores">
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" [class.disabled]="page() === 0">
+                  <button
+                    class="page-link"
+                    type="button"
+                    aria-label="Página anterior"
+                    [disabled]="page() === 0"
+                    (click)="goToPage(page() - 1)"
+                  >
+                    Anterior
+                  </button>
+                </li>
+                @for (pageNumber of visiblePages(); track pageNumber) {
+                  <li class="page-item" [class.active]="pageNumber === page()">
+                    <button
+                      class="page-link"
+                      type="button"
+                      [attr.aria-current]="pageNumber === page() ? 'page' : null"
+                      (click)="goToPage(pageNumber)"
+                    >
+                      {{ pageNumber + 1 }}
+                    </button>
+                  </li>
+                }
+                <li
+                  class="page-item"
+                  [class.disabled]="page() >= totalPages() - 1"
+                >
+                  <button
+                    class="page-link"
+                    type="button"
+                    aria-label="Página siguiente"
+                    [disabled]="page() >= totalPages() - 1"
+                    (click)="goToPage(page() + 1)"
+                  >
+                    Siguiente
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          }
+
+          <label class="d-flex align-items-center gap-2 small mb-0">
+            Mostrar
+            <select
+              class="form-select form-select-sm"
+              aria-label="Tutores por página"
+              [value]="pageSize()"
+              (change)="updatePageSize($event)"
+            >
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </label>
+        </div>
       </div>
     }
   </div>

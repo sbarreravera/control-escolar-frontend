@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   GuardianAccessRevocation,
-  GuardianActivationStatus,
+  GuardianActivationPage,
   GuardianInvitationBatch
 } from './guardian-activation.models';
 
@@ -14,13 +14,17 @@ export class GuardianActivationService {
 
   private readonly http = inject(HttpClient);
 
-  findAll(
-    schoolId: number
-  ): Observable<GuardianActivationStatus[]> {
-    return this.http.get<GuardianActivationStatus[]>(
+  findPage(
+    schoolId: number,
+    page: number,
+    size: number,
+    search: string,
+    state: string
+  ): Observable<GuardianActivationPage> {
+    return this.http.get<GuardianActivationPage>(
       '/api/v1/guardian-activations',
       {
-        params: { schoolId }
+        params: { schoolId, page, size, search, state }
       }
     );
   }

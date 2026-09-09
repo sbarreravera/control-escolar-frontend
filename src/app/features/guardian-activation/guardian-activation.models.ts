@@ -22,6 +22,16 @@ export interface GuardianActivationStatus {
   activeSessions: number;
 }
 
+export interface GuardianActivationPage {
+  content: GuardianActivationStatus[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
 export interface GuardianInvitation {
   guardianId: number;
   externalReference: string | null;
