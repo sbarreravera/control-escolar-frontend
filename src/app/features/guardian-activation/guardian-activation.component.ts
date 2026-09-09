@@ -26,7 +26,8 @@ import {
   GuardianActivationStatus,
   GuardianActivationSummary,
   GuardianInvitationBatch,
-  GuardianInvitationWithUrl
+  GuardianInvitationWithUrl,
+  GuardianSessionAccess
 } from './guardian-activation.models';
 import {
   GuardianActivationService
@@ -89,6 +90,8 @@ export class GuardianActivationComponent implements OnInit {
     signal<GuardianInvitationBatch | null>(null);
   readonly generatedInvitations =
     signal<GuardianInvitationWithUrl[]>([]);
+  readonly managedGuardian = signal<GuardianActivationStatus | null>(null);
+  readonly managedSessions = signal<GuardianSessionAccess[]>([]);
 
   readonly loading = signal(true);
   readonly loadingCycles = signal(true);
@@ -96,6 +99,9 @@ export class GuardianActivationComponent implements OnInit {
   readonly selectingAll = signal(false);
   readonly generating = signal(false);
   readonly revoking = signal(false);
+  readonly resettingGuardianId = signal<number | null>(null);
+  readonly loadingSessions = signal(false);
+  readonly revokingSessionId = signal<number | null>(null);
   readonly copiedGuardianId = signal<number | null>(null);
   readonly copiedAll = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -121,6 +127,9 @@ export class GuardianActivationComponent implements OnInit {
     .find(cycle => cycle.id === this.academicCycleId()) ?? null);
   readonly generatedPreview = computed(() =>
     this.generatedInvitations().slice(0, 25)
+  );
+  readonly generatedPurpose = computed(() =>
+    this.generatedInvitations()[0]?.purpose ?? 'ACTIVATION'
   );
 
   readonly firstVisible = computed(() => this.totalElements() === 0
@@ -362,20 +371,106 @@ export class GuardianActivationComponent implements OnInit {
       .pipe(finalize(() => this.generating.set(false)))
       .subscribe({
         next: batch => {
-          this.generatedBatch.set(batch);
-          this.generatedInvitations.set(
-            batch.invitations.map(invitation => ({
-              ...invitation,
-              activationUrl: this.buildActivationUrl(
-                invitation.enrollmentToken
-              )
-            }))
-          );
+          this.showGeneratedBatch(batch);
           this.selectedIds.set(new Set());
           this.allMatchingSelected.set(false);
           this.successMessage.set(
             `${batch.invitationsCreated} invitaciones fueron generadas. Descarga el CSV antes de cerrar esta pantalla.`
           );
+          this.loadStatuses();
+        },
+        error: error => this.errorMessage.set(
+          this.resolveErrorMessage(error)
+        )
+      });
+  }
+
+  createPasswordReset(status: GuardianActivationStatus): void {
+    const schoolId = this.schoolId();
+    if (schoolId === null || this.resettingGuardianId() !== null) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Se generará un enlace para cambiar la contraseña de ${status.guardianName}. Al utilizarlo se cerrarán sus sesiones anteriores. ¿Continuar?`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    this.resettingGuardianId.set(status.guardianId);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.activationService
+      .createPasswordResetInvitation(schoolId, status.guardianId)
+      .pipe(finalize(() => this.resettingGuardianId.set(null)))
+      .subscribe({
+        next: batch => {
+          this.showGeneratedBatch(batch);
+          this.successMessage.set(
+            `Se creó el enlace de recuperación para ${status.guardianName}. Compártelo de forma privada.`
+          );
+          this.loadStatuses();
+        },
+        error: error => this.errorMessage.set(
+          this.resolveErrorMessage(error)
+        )
+      });
+  }
+
+  manageSessions(status: GuardianActivationStatus): void {
+    if (this.managedGuardian()?.guardianId === status.guardianId) {
+      this.closeSessionManager();
+      return;
+    }
+
+    this.managedGuardian.set(status);
+    this.loadManagedSessions(status);
+  }
+
+  private loadManagedSessions(status: GuardianActivationStatus): void {
+    this.managedSessions.set([]);
+    this.loadingSessions.set(true);
+    this.errorMessage.set(null);
+    this.activationService.findActiveSessions(status.guardianId)
+      .pipe(finalize(() => this.loadingSessions.set(false)))
+      .subscribe({
+        next: sessions => this.managedSessions.set(sessions),
+        error: error => this.errorMessage.set(
+          this.resolveErrorMessage(error)
+        )
+      });
+  }
+
+  closeSessionManager(): void {
+    this.managedGuardian.set(null);
+    this.managedSessions.set([]);
+  }
+
+  revokeIndividualSession(session: GuardianSessionAccess): void {
+    const guardian = this.managedGuardian();
+    if (guardian === null || this.revokingSessionId() !== null) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Se cerrará la sesión “${session.deviceName ?? 'Navegador sin nombre'}”. ¿Continuar?`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    this.revokingSessionId.set(session.sessionId);
+    this.errorMessage.set(null);
+    this.activationService
+      .revokeSession(guardian.guardianId, session.sessionId)
+      .pipe(finalize(() => this.revokingSessionId.set(null)))
+      .subscribe({
+        next: () => {
+          this.successMessage.set(
+            `La sesión de ${guardian.guardianName} quedó cerrada.`
+          );
+          this.loadManagedSessions(guardian);
           this.loadStatuses();
         },
         error: error => this.errorMessage.set(
@@ -469,7 +564,10 @@ export class GuardianActivationComponent implements OnInit {
         'Tutor',
         'Teléfono',
         'Correo',
-        'Enlace de activación',
+        'Código de escuela',
+        'Usuario',
+        'Tipo de enlace',
+        'Enlace',
         'Vence'
       ],
       ...invitations.map(item => [
@@ -477,6 +575,11 @@ export class GuardianActivationComponent implements OnInit {
         item.guardianName,
         item.phone ?? '',
         item.email ?? '',
+        item.schoolCode,
+        item.username,
+        item.purpose === 'PASSWORD_RESET'
+          ? 'Recuperación de contraseña'
+          : 'Activación',
         item.activationUrl,
         item.expiresAt
       ])
@@ -501,6 +604,7 @@ export class GuardianActivationComponent implements OnInit {
       NOT_INVITED: 'Sin invitación',
       PENDING: 'Invitación pendiente',
       ACTIVE: 'Acceso activo',
+      ACCOUNT_READY: 'Cuenta activa, sin sesión',
       EXPIRED: 'Invitación vencida',
       REVOKED: 'Invitación revocada',
       ACCESS_REVOKED: 'Acceso revocado o vencido',
@@ -510,7 +614,7 @@ export class GuardianActivationComponent implements OnInit {
   }
 
   stateClass(state: GuardianActivationState): string {
-    if (state === 'ACTIVE') {
+    if (state === 'ACTIVE' || state === 'ACCOUNT_READY') {
       return 'text-bg-success';
     }
     if (state === 'PENDING') {
@@ -644,6 +748,18 @@ export class GuardianActivationComponent implements OnInit {
     this.resetSelection();
     this.successMessage.set(null);
     this.loadStatuses(0);
+  }
+
+  private showGeneratedBatch(batch: GuardianInvitationBatch): void {
+    this.generatedBatch.set(batch);
+    this.generatedInvitations.set(
+      batch.invitations.map(invitation => ({
+        ...invitation,
+        activationUrl: this.buildActivationUrl(
+          invitation.enrollmentToken
+        )
+      }))
+    );
   }
 
   private resetSelection(): void {

@@ -1,112 +1,239 @@
 <div
   class="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary p-3"
 >
-  <main class="w-100" style="max-width: 620px">
-    <div class="card shadow-sm">
+  <main class="w-100" style="max-width: 640px">
+    <div class="card shadow-sm border-0">
       <div class="card-body p-4 p-md-5">
         <div class="text-center mb-4">
-          <div class="fs-1 mb-3" aria-hidden="true">
-            🔔
-          </div>
-
+          <div class="fs-1 mb-3" aria-hidden="true">🔐</div>
           <div class="text-uppercase text-body-secondary small fw-semibold mb-2">
             Control Escolar
           </div>
 
-          @if (completed()) {
-            <h1 class="h3 mb-3">
-              Notificaciones activadas
-            </h1>
-
+          @if (loading()) {
+            <h1 class="h3 mb-2">Comprobando tu invitación</h1>
             <p class="text-body-secondary mb-0">
-              Este dispositivo quedó vinculado a tu identidad de tutor.
-              Recibirás avisos cuando se registre una entrada
-              o salida del alumno.
+              Espera un momento mientras validamos el enlace.
+            </p>
+          } @else if (completed()) {
+            <h1 class="h3 mb-2">Tu acceso está listo</h1>
+            <p class="text-body-secondary mb-0">
+              Ya puedes consultar la información de tus alumnos.
+            </p>
+          } @else if (invitation(); as currentInvitation) {
+            <h1 class="h3 mb-2">
+              @if (currentInvitation.status === 'VALID') {
+                {{ purposeTitle(currentInvitation) }}
+              } @else if (currentInvitation.status === 'USED') {
+                Este enlace ya fue utilizado
+              } @else if (currentInvitation.status === 'EXPIRED') {
+                Este enlace venció
+              } @else {
+                Este enlace fue reemplazado
+              }
+            </h1>
+            <p class="text-body-secondary mb-0">
+              {{ currentInvitation.schoolName }}
             </p>
           } @else {
-            <h1 class="h3 mb-3">
-              Activa los avisos escolares
-            </h1>
-
-            <p class="text-body-secondary mb-0">
-              Vincula este dispositivo para recibir las notificaciones
-              y acceder de forma segura a tu portal.
-            </p>
+            <h1 class="h3 mb-2">No pudimos abrir el enlace</h1>
           }
         </div>
 
-        @if (completed()) {
-          <div
-            class="alert alert-success text-center mb-0"
-            role="status"
-          >
-            <strong>
-              @if (activation(); as currentActivation) {
-                Acceso activado para {{ currentActivation.guardianName }}.
-              } @else {
-                El proceso terminó correctamente.
-              }
-            </strong>
-            <div class="mt-1">
-              La sesión de este dispositivo quedó protegida con una cookie
-              segura que JavaScript no puede leer.
-            </div>
-            <a
-              class="btn btn-success mt-3"
-              href="#/guardian"
-            >
-              Abrir mi acceso
-            </a>
+        @if (loading()) {
+          <div class="d-flex justify-content-center py-4" aria-live="polite">
+            <span class="spinner-border text-primary" aria-hidden="true"></span>
           </div>
-        } @else {
-          <ol class="mb-4">
-            <li class="mb-2">
-              Presiona el botón de activación.
-            </li>
-            <li class="mb-2">
-              Cuando el navegador pregunte, selecciona
-              <strong>Permitir</strong>.
-            </li>
-            <li>
-              Espera la confirmación antes de cerrar
-              esta ventana.
-            </li>
-          </ol>
+        } @else if (completed()) {
+          @if (activation(); as currentActivation) {
+            <div class="alert alert-success" role="status">
+              <strong>Acceso confirmado para {{ currentActivation.guardianName }}.</strong>
+              <div class="mt-1">
+                @if (currentActivation.notificationsEnabled) {
+                  Este dispositivo también recibirá avisos escolares.
+                } @else {
+                  Entraste sin notificaciones; podrás activarlas después desde el portal.
+                }
+              </div>
+            </div>
 
-          @if (errorMessage(); as message) {
-            <div
-              class="alert alert-danger"
-              role="alert"
-            >
-              {{ message }}
+            <div class="border rounded p-3 mb-4">
+              <div class="small text-body-secondary">Datos para volver a entrar</div>
+              <div class="row g-2 mt-1">
+                <div class="col-sm-6">
+                  <span class="small text-body-secondary d-block">Escuela</span>
+                  <strong>{{ currentActivation.schoolCode }}</strong>
+                </div>
+                <div class="col-sm-6">
+                  <span class="small text-body-secondary d-block">Usuario</span>
+                  <strong>{{ currentActivation.username }}</strong>
+                </div>
+              </div>
+              <p class="small text-body-secondary mb-0 mt-3">
+                Guarda estos datos. La contraseña no se muestra ni se almacena en el navegador.
+              </p>
             </div>
           }
 
           <button
             class="btn btn-primary btn-lg w-100"
             type="button"
-            [disabled]="
-              processing() ||
-              !enrollmentToken
-            "
-            (click)="activateNotifications()"
+            (click)="openPortal()"
           >
-            @if (processing()) {
-              <span
-                class="spinner-border spinner-border-sm me-2"
-                aria-hidden="true"
-              ></span>
-              Vinculando dispositivo...
-            } @else {
-              Activar notificaciones
-            }
+            Abrir mi portal
           </button>
+        } @else if (invitation(); as currentInvitation) {
+          @if (currentInvitation.status === 'VALID') {
+            <div class="border rounded p-3 mb-4">
+              <div class="fw-semibold">{{ currentInvitation.guardianName }}</div>
+              <div class="row g-2 mt-2">
+                <div class="col-sm-6">
+                  <span class="small text-body-secondary d-block">Código de escuela</span>
+                  <strong>{{ currentInvitation.schoolCode }}</strong>
+                </div>
+                <div class="col-sm-6">
+                  <span class="small text-body-secondary d-block">Usuario</span>
+                  <strong>{{ currentInvitation.username }}</strong>
+                </div>
+              </div>
+            </div>
 
-          <p class="text-body-secondary text-center small mt-4 mb-0">
-            La escuela no tendrá acceso a tus fotografías,
-            contactos ni archivos personales.
-          </p>
+            @if (requiresPassword()) {
+              <div class="mb-3">
+                <label class="form-label" for="guardianNewPassword">
+                  Nueva contraseña
+                </label>
+                <input
+                  id="guardianNewPassword"
+                  class="form-control form-control-lg"
+                  type="password"
+                  autocomplete="new-password"
+                  minlength="8"
+                  maxlength="72"
+                  [value]="password()"
+                  (input)="updatePassword($event)"
+                />
+                <div class="form-text">Usa entre 8 y 72 caracteres.</div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label" for="guardianPasswordConfirmation">
+                  Confirmar contraseña
+                </label>
+                <input
+                  id="guardianPasswordConfirmation"
+                  class="form-control form-control-lg"
+                  type="password"
+                  autocomplete="new-password"
+                  minlength="8"
+                  maxlength="72"
+                  [value]="passwordConfirmation()"
+                  (input)="updatePasswordConfirmation($event)"
+                />
+              </div>
+            } @else {
+              <div class="alert alert-info">
+                Tu cuenta ya tiene contraseña. Este enlace solo abrirá una sesión nueva
+                y después quedará inutilizado.
+              </div>
+            }
+
+            <div class="form-check border rounded p-3 ps-5 mb-3">
+              <input
+                id="guardianEnableNotifications"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="enableNotifications()"
+                (change)="updateNotificationPreference($event)"
+              />
+              <label class="form-check-label" for="guardianEnableNotifications">
+                <strong>Recibir avisos en este dispositivo</strong>
+                <span class="d-block small text-body-secondary">
+                  Es opcional y no afecta tu acceso al portal.
+                </span>
+              </label>
+            </div>
+
+            @if (notificationWarning(); as message) {
+              <div class="alert alert-warning" role="status">{{ message }}</div>
+            }
+            @if (errorMessage(); as message) {
+              <div class="alert alert-danger" role="alert">{{ message }}</div>
+            }
+
+            <button
+              class="btn btn-primary btn-lg w-100"
+              type="button"
+              [disabled]="processing()"
+              (click)="completeAccess()"
+            >
+              @if (processing()) {
+                <span
+                  class="spinner-border spinner-border-sm me-2"
+                  aria-hidden="true"
+                ></span>
+                Preparando acceso...
+              } @else if (currentInvitation.purpose === 'PASSWORD_RESET') {
+                Cambiar contraseña y entrar
+              } @else {
+                {{ currentInvitation.accountActivated
+                  ? 'Abrir portal'
+                  : 'Crear acceso y entrar' }}
+              }
+            </button>
+
+            @if (currentInvitation.accountActivated &&
+                 currentInvitation.purpose === 'ACTIVATION') {
+              <button
+                class="btn btn-link w-100 mt-2"
+                type="button"
+                (click)="openLogin()"
+              >
+                Prefiero iniciar sesión con mi contraseña
+              </button>
+            }
+          } @else {
+            <div class="alert alert-warning" role="alert">
+              @if (currentInvitation.status === 'USED') {
+                Los enlaces son de un solo uso. Tu cuenta sigue disponible:
+                entra con el código de escuela, tu usuario y tu contraseña.
+              } @else {
+                Solicita a la escuela un enlace nuevo. Si ya creaste tu cuenta,
+                también puedes iniciar sesión normalmente.
+              }
+            </div>
+
+            <div class="border rounded p-3 mb-4">
+              <span class="small text-body-secondary d-block">Código de escuela</span>
+              <strong>{{ currentInvitation.schoolCode }}</strong>
+              <span class="small text-body-secondary d-block mt-2">Usuario</span>
+              <strong>{{ currentInvitation.username }}</strong>
+            </div>
+
+            <button
+              class="btn btn-primary btn-lg w-100"
+              type="button"
+              (click)="openLogin()"
+            >
+              Iniciar sesión
+            </button>
+          }
+        } @else {
+          <div class="alert alert-danger" role="alert">
+            {{ errorMessage() }}
+          </div>
+          <button
+            class="btn btn-outline-primary w-100"
+            type="button"
+            (click)="openLogin()"
+          >
+            Ir al inicio de sesión
+          </button>
         }
+
+        <p class="text-body-secondary text-center small mt-4 mb-0">
+          La escuela no tendrá acceso a tus fotografías, contactos ni archivos personales.
+        </p>
       </div>
     </div>
   </main>

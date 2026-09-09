@@ -5,6 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   FirebaseMessagingService
 } from '../../core/firebase/firebase-messaging.service';
@@ -14,6 +15,7 @@ describe('GuardianHomeComponent', () => {
   let fixture: ComponentFixture<GuardianHomeComponent>;
   let component: GuardianHomeComponent;
   let httpTestingController: HttpTestingController;
+  let router: Router;
 
   const messagingService = {
     listenForForegroundAccessEvents: vi.fn()
@@ -37,6 +39,7 @@ describe('GuardianHomeComponent', () => {
     }).compileComponents();
 
     httpTestingController = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
     fixture = TestBed.createComponent(GuardianHomeComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -47,7 +50,7 @@ describe('GuardianHomeComponent', () => {
   it('shows the guardian identity and loads the portal data', () => {
     flushIdentityAndPortal();
 
-    expect(component.identity()?.guardianName).toBe('María Pérez');
+    expect(component.identity()?.guardianName).toBe('Persona de Prueba 1');
     expect(component.students()).toHaveLength(1);
     expect(component.events()).toHaveLength(1);
     expect(component.errorMessage()).toBeNull();
@@ -93,6 +96,8 @@ describe('GuardianHomeComponent', () => {
   it('revokes the current session when the guardian logs out', () => {
     flushIdentityAndPortal();
 
+    const navigate = vi.spyOn(router, 'navigate')
+      .mockResolvedValue(true);
     component.logout();
 
     httpTestingController.expectOne('/api/v1/auth/csrf').flush({
@@ -110,6 +115,10 @@ describe('GuardianHomeComponent', () => {
     expect(component.identity()).toBeNull();
     expect(component.students()).toEqual([]);
     expect(component.events()).toEqual([]);
+    expect(navigate).toHaveBeenCalledWith(
+      ['/guardian/login'],
+      expect.objectContaining({ replaceUrl: true })
+    );
   });
 
   function flushIdentityAndPortal(): void {
@@ -129,8 +138,11 @@ describe('GuardianHomeComponent', () => {
     httpTestingController.expectOne('/api/v1/guardian/me').flush({
       guardianId: 20,
       schoolId: 10,
-      guardianName: 'María Pérez',
-      schoolName: 'Colegio San Felipe de Jesús',
+      guardianName: 'Persona de Prueba 1',
+      schoolName: 'Escuela de Prueba',
+      schoolCode: 'ESC-TEST-1',
+      username: 'tutor.test.1',
+      notificationsEnabled: true,
       sessionExpiresAt: '2026-10-09T10:00:00-06:00'
     });
   }
@@ -138,8 +150,8 @@ describe('GuardianHomeComponent', () => {
   function student() {
     return {
       studentId: 30,
-      enrollmentNumber: '241130709010260',
-      fullName: 'Ana López',
+      enrollmentNumber: 'MAT-TEST-002',
+      fullName: 'Persona de Prueba 4',
       active: true,
       relationship: 'Madre',
       primaryContact: true,
@@ -156,8 +168,8 @@ describe('GuardianHomeComponent', () => {
     return {
       id: 40,
       studentId: 30,
-      studentName: 'Ana López',
-      enrollmentNumber: '241130709010260',
+      studentName: 'Persona de Prueba 4',
+      enrollmentNumber: 'MAT-TEST-002',
       eventType: 'ENTRY',
       occurredAt: '2026-09-09T08:15:00-06:00'
     };

@@ -83,6 +83,14 @@
   padding: 1rem 0 0.5rem;
 }
 
+.welcome-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
 .eyebrow {
   color: var(--cui-primary);
   font-size: 0.72rem;
@@ -428,6 +436,12 @@
 
   .refresh-button {
     width: 100%;
+  }
+
+  .welcome-actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr;
   }
 
   .student-grid,

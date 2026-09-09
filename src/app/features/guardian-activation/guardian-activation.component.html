@@ -26,8 +26,9 @@
 }
 
 <div class="alert alert-info" role="status">
-  Cada enlace usa un código aleatorio de un solo uso y vence en 7 días.
-  Al activarlo se crea una sesión segura para ese tutor y dispositivo.
+  La primera invitación permite al tutor crear su contraseña. Después podrá
+  entrar desde cualquier dispositivo con el código de escuela y su usuario.
+  Los enlaces siguen siendo de un solo uso y vencen en 7 días.
 </div>
 
 <section class="card mb-4">
@@ -69,7 +70,7 @@
       </div>
       <div class="col-6 col-lg">
         <div class="border rounded p-3 h-100">
-          <div class="small text-body-secondary">Activos</div>
+          <div class="small text-body-secondary">Cuentas activadas</div>
           <strong class="fs-5">{{ summary().active }}</strong>
         </div>
       </div>
@@ -136,7 +137,7 @@
           <option value="NOT_ACTIVE">Por activar</option>
           <option value="NOT_INVITED">Sin invitación</option>
           <option value="PENDING">Invitación pendiente</option>
-          <option value="ACTIVE">Acceso activo</option>
+          <option value="ACTIVE">Cuenta activada</option>
           <option value="EXPIRED_OR_REVOKED">Vencido o revocado</option>
           <option value="ALL">Todos</option>
         </select>
@@ -291,6 +292,7 @@
               <th scope="col">Estado</th>
               <th scope="col">Dispositivos</th>
               <th scope="col">Último cambio</th>
+              <th scope="col">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -311,6 +313,11 @@
                   @if (status.externalReference) {
                     <div class="small text-body-secondary">
                       {{ status.externalReference }}
+                    </div>
+                  }
+                  @if (status.username) {
+                    <div class="small text-primary">
+                      Usuario: {{ status.username }}
                     </div>
                   }
                 </td>
@@ -361,6 +368,31 @@
                   } @else {
                     —
                   }
+                </td>
+                <td>
+                  <div class="d-flex flex-column align-items-start gap-1">
+                    @if (status.accountActivated) {
+                      <button
+                        class="btn btn-sm btn-link px-0"
+                        type="button"
+                        [disabled]="resettingGuardianId() !== null"
+                        (click)="createPasswordReset(status)"
+                      >
+                        {{ resettingGuardianId() === status.guardianId
+                          ? 'Generando...'
+                          : 'Restablecer contraseña' }}
+                      </button>
+                    }
+                    @if (status.activeSessions > 0) {
+                      <button
+                        class="btn btn-sm btn-link px-0 text-decoration-none"
+                        type="button"
+                        (click)="manageSessions(status)"
+                      >
+                        Administrar sesiones
+                      </button>
+                    }
+                  </div>
                 </td>
               </tr>
             }
@@ -438,10 +470,82 @@
   </div>
 </section>
 
+@if (managedGuardian(); as guardian) {
+  <section class="card mb-4 border-primary">
+    <div class="card-header d-flex align-items-center justify-content-between gap-3">
+      <div>
+        <strong>Sesiones de {{ guardian.guardianName }}</strong>
+        <div class="small text-body-secondary">
+          Cierra únicamente el teléfono o navegador que ya no deba tener acceso.
+        </div>
+      </div>
+      <button
+        class="btn-close"
+        type="button"
+        aria-label="Cerrar administración de sesiones"
+        (click)="closeSessionManager()"
+      ></button>
+    </div>
+    <div class="card-body">
+      @if (loadingSessions()) {
+        <div class="text-center py-3 text-body-secondary">
+          Cargando sesiones activas...
+        </div>
+      } @else if (managedSessions().length === 0) {
+        <div class="alert alert-light border mb-0">
+          Este tutor no tiene sesiones activas.
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Dispositivo o navegador</th>
+                <th>Notificaciones</th>
+                <th>Último uso</th>
+                <th>Vence</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (session of managedSessions(); track session.sessionId) {
+                <tr>
+                  <td>{{ session.deviceName ?? 'Navegador sin nombre' }}</td>
+                  <td>
+                    {{ session.notificationsEnabled ? 'Activadas' : 'No activadas' }}
+                  </td>
+                  <td>{{ formatDate(session.lastUsedAt) }}</td>
+                  <td>{{ formatDate(session.expiresAt) }}</td>
+                  <td class="text-end">
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      type="button"
+                      [disabled]="revokingSessionId() !== null"
+                      (click)="revokeIndividualSession(session)"
+                    >
+                      {{ revokingSessionId() === session.sessionId
+                        ? 'Cerrando...'
+                        : 'Cerrar sesión' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </section>
+}
+
 @if (generatedBatch(); as batch) {
   <section class="card border-primary">
     <div class="card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
-      <strong>Invitaciones recién generadas</strong>
+      <strong>
+        {{ generatedPurpose() === 'PASSWORD_RESET'
+          ? 'Enlace de recuperación recién generado'
+          : 'Invitaciones recién generadas' }}
+      </strong>
       <span class="badge text-bg-primary">
         {{ batch.invitationsCreated }} enlaces
       </span>
@@ -482,6 +586,7 @@
           <thead>
             <tr>
               <th>Tutor</th>
+              <th>Datos de acceso</th>
               <th>Contacto</th>
               <th>Enlace individual</th>
             </tr>
@@ -496,6 +601,12 @@
                       {{ invitation.externalReference }}
                     </div>
                   }
+                </td>
+                <td>
+                  <div>{{ invitation.schoolCode }}</div>
+                  <div class="small text-primary">
+                    {{ invitation.username }}
+                  </div>
                 </td>
                 <td>
                   {{ invitation.phone ?? invitation.email ?? 'Sin datos' }}
