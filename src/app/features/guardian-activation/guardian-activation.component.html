@@ -19,6 +19,12 @@
   </div>
 }
 
+@if (cycleSelectionWarning(); as message) {
+  <div class="alert alert-warning" role="alert">
+    {{ message }}
+  </div>
+}
+
 <div class="alert alert-info" role="status">
   Cada enlace usa un código aleatorio de un solo uso y vence en 7 días.
   Al activarlo se crea una sesión segura para ese tutor y dispositivo.
@@ -34,13 +40,49 @@
       </span>
     </div>
     <span class="badge text-bg-primary">
-      {{ selectedCount() }} seleccionados en esta página
+      {{ selectedCount() }} seleccionados
+      @if (allMatchingSelected()) {
+        del filtro completo
+      }
     </span>
   </div>
 
   <div class="card-body">
+    <div class="row g-2 mb-3">
+      <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+          <div class="small text-body-secondary">Relacionados</div>
+          <strong class="fs-5">{{ summary().totalGuardians }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+          <div class="small text-body-secondary">Por activar</div>
+          <strong class="fs-5">{{ summary().requiresActivation }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+          <div class="small text-body-secondary">Pendientes</div>
+          <strong class="fs-5">{{ summary().pending }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+          <div class="small text-body-secondary">Activos</div>
+          <strong class="fs-5">{{ summary().active }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+          <div class="small text-body-secondary">Sin contacto</div>
+          <strong class="fs-5">{{ summary().missingContact }}</strong>
+        </div>
+      </div>
+    </div>
+
     <div class="row g-3 mb-3">
-      <div class="col-lg-7">
+      <div class="col-lg-6">
         <label class="form-label" for="guardianActivationSearch">
           Buscar
         </label>
@@ -48,13 +90,40 @@
           id="guardianActivationSearch"
           class="form-control"
           type="search"
-          placeholder="Nombre, clave, teléfono o correo"
+          placeholder="Tutor, alumno, matrícula, teléfono o correo"
           [value]="search()"
           (input)="updateSearch($event)"
         />
       </div>
 
-      <div class="col-lg-5">
+      <div class="col-md-6 col-lg-3">
+        <label class="form-label" for="guardianActivationCycle">
+          Ciclo escolar
+        </label>
+        <select
+          id="guardianActivationCycle"
+          class="form-select"
+          [value]="academicCycleId() ?? 0"
+          [disabled]="loadingCycles()"
+          (change)="updateCycle($event)"
+        >
+          @if (academicCycles().length === 0) {
+            <option value="0">Sin ciclos registrados</option>
+          }
+          @for (cycle of academicCycles(); track cycle.id) {
+            <option [value]="cycle.id">
+              {{ cycle.name }}{{ cycle.active ? '' : ' (inactivo)' }}
+            </option>
+          }
+        </select>
+        @if (selectedCycle(); as cycle) {
+          <div class="form-text">
+            {{ cycle.startDate }} a {{ cycle.endDate }}
+          </div>
+        }
+      </div>
+
+      <div class="col-md-6 col-lg-3">
         <label class="form-label" for="guardianActivationFilter">
           Estado
         </label>
@@ -65,9 +134,63 @@
           (change)="updateFilter($event)"
         >
           <option value="NOT_ACTIVE">Por activar</option>
+          <option value="NOT_INVITED">Sin invitación</option>
           <option value="PENDING">Invitación pendiente</option>
           <option value="ACTIVE">Acceso activo</option>
+          <option value="EXPIRED_OR_REVOKED">Vencido o revocado</option>
           <option value="ALL">Todos</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label class="form-label" for="guardianActivationGrade">Grado</label>
+        <select
+          id="guardianActivationGrade"
+          class="form-select"
+          [value]="gradeName()"
+          [disabled]="loadingGroups()"
+          (change)="updateGrade($event)"
+        >
+          <option value="">Todos los grados</option>
+          @for (grade of grades(); track grade) {
+            <option [value]="grade">{{ grade }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label" for="guardianActivationGroup">Grupo</label>
+        <select
+          id="guardianActivationGroup"
+          class="form-select"
+          [value]="schoolGroupId() ?? 0"
+          [disabled]="loadingGroups()"
+          (change)="updateGroup($event)"
+        >
+          <option value="0">Todos los grupos</option>
+          @for (group of groupsForGrade(); track group.id) {
+            <option [value]="group.id">
+              {{ group.gradeName }} · {{ group.groupName }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label" for="guardianActivationContact">
+          Datos de contacto
+        </label>
+        <select
+          id="guardianActivationContact"
+          class="form-select"
+          [value]="contactFilter()"
+          (change)="updateContactFilter($event)"
+        >
+          <option value="ALL">Todos</option>
+          <option value="AVAILABLE">Con teléfono o correo</option>
+          <option value="MISSING">Sin teléfono ni correo</option>
         </select>
       </div>
     </div>
@@ -85,6 +208,29 @@
           Seleccionar visibles
         }
       </button>
+
+      <button
+        class="btn btn-outline-primary"
+        type="button"
+        [disabled]="totalElements() === 0 || selectingAll()"
+        (click)="selectAllMatching()"
+      >
+        @if (selectingAll()) {
+          Seleccionando...
+        } @else {
+          Seleccionar los {{ totalElements() }} resultados
+        }
+      </button>
+
+      @if (selectedCount() > 0) {
+        <button
+          class="btn btn-link text-decoration-none"
+          type="button"
+          (click)="clearSelection()"
+        >
+          Limpiar selección
+        </button>
+      }
 
       <button
         class="btn btn-primary"
@@ -140,6 +286,7 @@
             <tr>
               <th scope="col" class="text-center">Elegir</th>
               <th scope="col">Tutor</th>
+              <th scope="col">Alumnos del ciclo</th>
               <th scope="col">Contacto</th>
               <th scope="col">Estado</th>
               <th scope="col">Dispositivos</th>
@@ -164,6 +311,21 @@
                   @if (status.externalReference) {
                     <div class="small text-body-secondary">
                       {{ status.externalReference }}
+                    </div>
+                  }
+                </td>
+                <td>
+                  @for (student of status.students.slice(0, 2); track student.studentId) {
+                    <div>
+                      {{ student.fullName }}
+                      <span class="small text-body-secondary">
+                        · {{ student.gradeName }}, {{ student.groupName }}
+                      </span>
+                    </div>
+                  }
+                  @if (status.students.length > 2) {
+                    <div class="small text-body-secondary">
+                      +{{ status.students.length - 2 }} alumno(s) más
                     </div>
                   }
                 </td>
@@ -325,7 +487,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (invitation of generatedInvitations(); track invitation.guardianId) {
+            @for (invitation of generatedPreview(); track invitation.guardianId) {
               <tr>
                 <td>
                   <strong>{{ invitation.guardianName }}</strong>
@@ -356,6 +518,12 @@
           </tbody>
         </table>
       </div>
+      @if (generatedInvitations().length > generatedPreview().length) {
+        <p class="small text-body-secondary mt-2 mb-0">
+          Se muestran los primeros {{ generatedPreview().length }} enlaces.
+          El CSV contiene los {{ generatedInvitations().length }} resultados.
+        </p>
+      }
     </div>
   </section>
 }

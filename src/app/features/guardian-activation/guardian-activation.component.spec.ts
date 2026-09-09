@@ -49,26 +49,28 @@ describe('GuardianActivationComponent', () => {
   afterEach(() => httpTestingController.verify());
 
   it('loads activation states for the authenticated school', () => {
+    flushInitialLoad();
+
     const request = httpTestingController.expectOne(
-      item => item.url === '/api/v1/guardian-activations' &&
-        item.params.get('schoolId') === '10' &&
-        item.params.get('page') === '0' &&
-        item.params.get('size') === '25' &&
-        item.params.get('state') === 'NOT_ACTIVE'
+      item => item.url === '/api/v1/guardian-activations'
     );
+    expect(request.request.params.get('academicCycleId')).toBe('30');
     request.flush(pageResponse([statusResponse]));
 
     expect(component.statuses()).toHaveLength(1);
+    expect(component.academicCycleId()).toBe(30);
     expect(component.filteredStatuses()[0].guardianName)
       .toBe('María Pérez');
   });
 
   it('generates one-time links for the selected guardians', () => {
+    flushInitialLoad();
     httpTestingController
       .expectOne(request => request.url === '/api/v1/guardian-activations')
       .flush(pageResponse([statusResponse]));
 
     component.toggleGuardian(20);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
     component.createInvitations();
 
     const request = httpTestingController.expectOne(
@@ -105,7 +107,8 @@ describe('GuardianActivationComponent', () => {
     expect(component.selectedCount()).toBe(0);
   });
 
-  it('requests a new page without keeping selections from another page', () => {
+  it('keeps explicit selections while navigating between pages', () => {
+    flushInitialLoad();
     httpTestingController
       .expectOne(request => request.url === '/api/v1/guardian-activations')
       .flush(pageResponse([statusResponse], 0, 2, 26));
@@ -119,8 +122,27 @@ describe('GuardianActivationComponent', () => {
     );
     request.flush(pageResponse([], 1, 2, 26));
 
-    expect(component.selectedCount()).toBe(0);
+    expect(component.selectedCount()).toBe(1);
     expect(component.page()).toBe(1);
+  });
+
+  it('selects every guardian matching the current academic filters', () => {
+    flushInitialLoad();
+    httpTestingController
+      .expectOne(request => request.url === '/api/v1/guardian-activations')
+      .flush(pageResponse([statusResponse], 0, 2, 26));
+
+    component.selectAllMatching();
+
+    const request = httpTestingController.expectOne(
+      item => item.url === '/api/v1/guardian-activations/selection'
+    );
+    expect(request.request.params.get('academicCycleId')).toBe('30');
+    expect(request.request.params.get('state')).toBe('NOT_ACTIVE');
+    request.flush({ guardianIds: [20, 21, 22], totalSelected: 3 });
+
+    expect(component.selectedCount()).toBe(3);
+    expect(component.allMatchingSelected()).toBe(true);
   });
 
   const statusResponse = {
@@ -135,8 +157,38 @@ describe('GuardianActivationComponent', () => {
     invitationExpiresAt: null,
     activatedAt: null,
     activeDevices: 0,
-    activeSessions: 0
+    activeSessions: 0,
+    students: [{
+      studentId: 40,
+      enrollmentNumber: 'A-040',
+      fullName: 'Alumno Ejemplo',
+      schoolGroupId: 50,
+      gradeName: '1.er semestre',
+      groupName: 'Grupo 1'
+    }]
   };
+
+  const cycleResponse = {
+    id: 30,
+    schoolId: 10,
+    schoolName: 'Colegio San Felipe de Jesús',
+    name: '2026 - 2027',
+    startDate: '2026-08-01',
+    endDate: '2027-07-31',
+    active: true,
+    createdAt: '2026-08-01T00:00:00-06:00',
+    updatedAt: '2026-08-01T00:00:00-06:00'
+  };
+
+  function flushInitialLoad(): void {
+    httpTestingController
+      .expectOne('/api/v1/academic-cycles?schoolId=10')
+      .flush([cycleResponse]);
+    httpTestingController
+      .expectOne('/api/v1/school-groups?academicCycleId=30')
+      .flush([]);
+
+  }
 
   function pageResponse(
     content: object[],
@@ -151,7 +203,15 @@ describe('GuardianActivationComponent', () => {
       totalElements,
       totalPages,
       first: page === 0,
-      last: page >= totalPages - 1
+      last: page >= totalPages - 1,
+      summary: {
+        totalGuardians: totalElements,
+        notInvited: totalElements,
+        pending: 0,
+        active: 0,
+        requiresActivation: totalElements,
+        missingContact: 0
+      }
     };
   }
 });

@@ -20,6 +20,25 @@ export interface GuardianActivationStatus {
   activatedAt: string | null;
   activeDevices: number;
   activeSessions: number;
+  students: GuardianActivationStudent[];
+}
+
+export interface GuardianActivationStudent {
+  studentId: number;
+  enrollmentNumber: string;
+  fullName: string;
+  schoolGroupId: number;
+  gradeName: string;
+  groupName: string;
+}
+
+export interface GuardianActivationSummary {
+  totalGuardians: number;
+  notInvited: number;
+  pending: number;
+  active: number;
+  requiresActivation: number;
+  missingContact: number;
 }
 
 export interface GuardianActivationPage {
@@ -30,6 +49,24 @@ export interface GuardianActivationPage {
   totalPages: number;
   first: boolean;
   last: boolean;
+  summary: GuardianActivationSummary;
+}
+
+export interface GuardianActivationQuery {
+  schoolId: number;
+  academicCycleId: number;
+  page?: number;
+  size?: number;
+  search?: string;
+  state?: string;
+  schoolGroupId?: number;
+  gradeName?: string;
+  contact?: string;
+}
+
+export interface GuardianActivationSelection {
+  guardianIds: number[];
+  totalSelected: number;
 }
 
 export interface GuardianInvitation {
