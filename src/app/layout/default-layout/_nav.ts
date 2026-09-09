@@ -49,6 +49,13 @@ export function buildNavItems(
             iconComponent: {
               name: 'cil-list'
             }
+          },
+          {
+            name: 'Carga inicial',
+            url: '/student-import',
+            iconComponent: {
+              name: 'cil-spreadsheet'
+            }
           }
         ]
       : [];
