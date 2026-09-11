@@ -74,6 +74,7 @@ export class StudentImportComponent implements OnInit {
   readonly downloading = signal(false);
   readonly validating = signal(false);
   readonly importing = signal(false);
+  readonly showImportNotice = signal(true);
 
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
