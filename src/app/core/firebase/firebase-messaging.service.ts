@@ -146,6 +146,13 @@ export class FirebaseMessagingService {
         'Las notificaciones requieren una conexión HTTPS segura.'
       );
     }
+
+    if (this.isIosDevice() && !this.isStandaloneWebApp()) {
+      throw new Error(
+        'Para recibir avisos en iPhone o iPad: 1) abre este portal en Safari; 2) toca Compartir; 3) elige “Agregar a Inicio”; 4) abre Control Escolar desde el nuevo ícono; 5) vuelve a pulsar “Activar avisos”. Puedes seguir usando todo el portal desde este navegador sin hacerlo; este paso sólo es necesario para recibir notificaciones.'
+      );
+    }
+
     if (!('Notification' in window)) {
       throw new Error(
         'Este navegador no permite mostrar notificaciones.'
@@ -156,5 +163,20 @@ export class FirebaseMessagingService {
         'Este navegador no admite service workers.'
       );
     }
+  }
+
+  private isIosDevice(): boolean {
+    const userAgent = navigator.userAgent;
+    return /iPhone|iPad|iPod/i.test(userAgent)
+      || (/Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1);
+  }
+
+  private isStandaloneWebApp(): boolean {
+    const iosNavigator = navigator as Navigator & {
+      standalone?: boolean;
+    };
+
+    return window.matchMedia('(display-mode: standalone)').matches
+      || iosNavigator.standalone === true;
   }
 }
