@@ -1,4 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpParams
+} from '@angular/common/http';
 import {
   inject,
   Injectable
@@ -7,6 +10,8 @@ import { Observable } from 'rxjs';
 import {
   CreateStudentRequest,
   Student,
+  StudentPage,
+  StudentPageQuery,
   UpdateStudentRequest
 } from './student.models';
 
@@ -27,6 +32,44 @@ export class StudentService {
           schoolId
         }
       }
+    );
+  }
+
+  findPage(
+    query: StudentPageQuery
+  ): Observable<StudentPage> {
+    let params = new HttpParams()
+      .set('schoolId', query.schoolId)
+      .set('page', query.page)
+      .set('size', query.size)
+      .set('sort', query.sort)
+      .set('direction', query.direction);
+
+    if (query.search) {
+      params = params.set('search', query.search);
+    }
+
+    if (query.academicCycleId !== undefined) {
+      params = params.set(
+        'academicCycleId',
+        query.academicCycleId
+      );
+    }
+
+    if (query.schoolGroupId !== undefined) {
+      params = params.set(
+        'schoolGroupId',
+        query.schoolGroupId
+      );
+    }
+
+    if (query.active !== undefined) {
+      params = params.set('active', query.active);
+    }
+
+    return this.http.get<StudentPage>(
+      '/api/v1/students/page',
+      { params }
     );
   }
 

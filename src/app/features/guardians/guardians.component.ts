@@ -38,7 +38,8 @@ import {
   CreateGuardianRequest,
   CreateStudentGuardianRequest,
   Guardian,
-  StudentGuardian
+  StudentGuardian,
+  UpdateGuardianRequest
 } from './guardian.models';
 import {
   GuardianService
@@ -78,6 +79,7 @@ export class GuardiansComponent implements OnInit {
   readonly loading = signal(true);
   readonly loadingRelationships = signal(false);
   readonly submittingGuardian = signal(false);
+  readonly editingGuardianId = signal<number | null>(null);
   readonly submittingRelationship = signal(false);
   readonly removingGuardianId =
     signal<number | null>(null);
@@ -94,6 +96,12 @@ export class GuardiansComponent implements OnInit {
 
   readonly guardianForm =
     this.formBuilder.nonNullable.group({
+      externalReference: [
+        '',
+        [
+          Validators.maxLength(50)
+        ]
+      ],
       fullName: [
         '',
         [
@@ -212,8 +220,7 @@ export class GuardiansComponent implements OnInit {
     const formValue =
       this.guardianForm.getRawValue();
 
-    const request: CreateGuardianRequest = {
-      schoolId,
+    const editableData: UpdateGuardianRequest = {
       fullName: formValue.fullName.trim(),
       phone:
         this.normalizeOptionalText(
@@ -225,8 +232,26 @@ export class GuardiansComponent implements OnInit {
         )?.toLowerCase() ?? null
     };
 
-    this.guardianService
-      .create(request)
+    const editingGuardianId =
+      this.editingGuardianId();
+
+    const request: CreateGuardianRequest = {
+      schoolId,
+      externalReference:
+        this.normalizeOptionalText(
+          formValue.externalReference
+        )?.toUpperCase() ?? null,
+      ...editableData
+    };
+
+    const operation = editingGuardianId === null
+      ? this.guardianService.create(request)
+      : this.guardianService.update(
+          editingGuardianId,
+          editableData
+        );
+
+    operation
       .pipe(
         finalize(
           () => this.submittingGuardian.set(false)
@@ -234,27 +259,67 @@ export class GuardiansComponent implements OnInit {
       )
       .subscribe({
         next: guardian => {
-          this.guardians.update(current => [
-            ...current,
-            guardian
-          ]);
+          this.guardians.update(current =>
+            editingGuardianId === null
+              ? [...current, guardian]
+              : current.map(item =>
+                  item.id === guardian.id
+                    ? guardian
+                    : item
+                )
+          );
 
-          this.guardianForm.reset({
-            fullName: '',
-            phone: '',
-            email: ''
-          });
+          this.resetGuardianForm();
 
           this.successMessage.set(
-            `El tutor ${guardian.fullName} fue registrado correctamente.`
+            editingGuardianId === null
+              ? `El tutor ${guardian.fullName} fue registrado correctamente.`
+              : `Los datos de ${guardian.fullName} fueron actualizados correctamente.`
           );
         },
         error: (error: HttpErrorResponse) => {
+          if (
+            editingGuardianId === null &&
+            error.status === 409
+          ) {
+            this.errorMessage.set(
+              'Ya existe un tutor con esa clave en la escuela.'
+            );
+            return;
+          }
+
           this.errorMessage.set(
             this.resolveErrorMessage(error)
           );
         }
       });
+  }
+
+  startEditing(guardian: Guardian): void {
+    this.editingGuardianId.set(guardian.id);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.guardianForm.reset({
+      externalReference:
+        guardian.externalReference ?? '',
+      fullName: guardian.fullName,
+      phone: guardian.phone ?? '',
+      email: guardian.email ?? ''
+    });
+  }
+
+  cancelEditing(): void {
+    this.resetGuardianForm();
+  }
+
+  private resetGuardianForm(): void {
+    this.editingGuardianId.set(null);
+    this.guardianForm.reset({
+      externalReference: '',
+      fullName: '',
+      phone: '',
+      email: ''
+    });
   }
 
   loadStudentGuardians(): void {

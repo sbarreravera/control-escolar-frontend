@@ -31,3 +31,34 @@ export interface UpdateStudentRequest {
   lastName: string;
   schoolGroupId: number;
 }
+
+export type StudentSort =
+  | 'enrollmentNumber'
+  | 'studentName'
+  | 'academicCycleName'
+  | 'schoolGroup'
+  | 'active';
+
+export type SortDirection = 'asc' | 'desc';
+
+export interface StudentPageQuery {
+  schoolId: number;
+  page: number;
+  size: number;
+  search?: string;
+  academicCycleId?: number;
+  schoolGroupId?: number;
+  active?: boolean;
+  sort: StudentSort;
+  direction: SortDirection;
+}
+
+export interface StudentPage {
+  content: Student[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}

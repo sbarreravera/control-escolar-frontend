@@ -99,4 +99,53 @@ describe('GuardiansComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should update guardian contact data without changing its key', () => {
+    const guardian = {
+      id: 10,
+      schoolId: 1,
+      schoolName: 'Colegio San Felipe',
+      externalReference: 'TUT-PRUEBA-001',
+      fullName: 'Samuel Barrera Vera',
+      phone: null,
+      email: null,
+      active: true,
+      createdAt: '2026-09-09T10:00:00-06:00',
+      updatedAt: '2026-09-09T10:00:00-06:00'
+    };
+
+    component.guardians.set([guardian]);
+    component.startEditing(guardian);
+    component.guardianForm.patchValue({
+      phone: '7737361800',
+      email: 'TRIPLE_SEVEN_SAM@HOTMAIL.COM'
+    });
+
+    component.createGuardian();
+
+    const updateRequest =
+      httpTestingController.expectOne(
+        '/api/v1/guardians/10'
+      );
+
+    expect(updateRequest.request.method).toBe('PUT');
+    expect(updateRequest.request.body).toEqual({
+      fullName: 'Samuel Barrera Vera',
+      phone: '7737361800',
+      email: 'triple_seven_sam@hotmail.com'
+    });
+
+    updateRequest.flush({
+      ...guardian,
+      phone: '7737361800',
+      email: 'triple_seven_sam@hotmail.com',
+      updatedAt: '2026-09-09T11:00:00-06:00'
+    });
+
+    expect(component.editingGuardianId()).toBeNull();
+    expect(component.guardians()[0].externalReference)
+      .toBe('TUT-PRUEBA-001');
+    expect(component.guardians()[0].phone)
+      .toBe('7737361800');
+  });
 });

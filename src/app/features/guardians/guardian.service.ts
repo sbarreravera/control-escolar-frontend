@@ -8,7 +8,8 @@ import {
   CreateGuardianRequest,
   CreateStudentGuardianRequest,
   Guardian,
-  StudentGuardian
+  StudentGuardian,
+  UpdateGuardianRequest
 } from './guardian.models';
 
 @Injectable({
@@ -44,6 +45,16 @@ export class GuardianService {
   ): Observable<Guardian> {
     return this.http.post<Guardian>(
       '/api/v1/guardians',
+      request
+    );
+  }
+
+  update(
+    guardianId: number,
+    request: UpdateGuardianRequest
+  ): Observable<Guardian> {
+    return this.http.put<Guardian>(
+      `/api/v1/guardians/${guardianId}`,
       request
     );
   }

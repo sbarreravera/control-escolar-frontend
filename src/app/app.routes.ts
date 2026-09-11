@@ -25,6 +25,38 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'guardian/activate',
+    loadComponent: () =>
+      import(
+        './features/guardian-device-enrollment/guardian-device-enrollment.component'
+      ).then(
+        module => module.GuardianDeviceEnrollmentComponent
+      ),
+    data: {
+      title: 'Activar acceso del tutor'
+    }
+  },
+  {
+    path: 'guardian/login',
+    loadComponent: () =>
+      import(
+        './features/guardian-login/guardian-login.component'
+      ).then(module => module.GuardianLoginComponent),
+    data: {
+      title: 'Iniciar sesión como tutor'
+    }
+  },
+  {
+    path: 'guardian',
+    loadComponent: () =>
+      import(
+        './features/guardian-home/guardian-home.component'
+      ).then(module => module.GuardianHomeComponent),
+    data: {
+      title: 'Acceso del tutor'
+    }
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./layout')
@@ -113,6 +145,24 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'student-import',
+        loadComponent: () =>
+          import(
+            './features/student-import/student-import.component'
+          ).then(
+            module => module.StudentImportComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Carga inicial',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
         path: 'guardians',
         loadComponent: () =>
           import('./features/guardians/guardians.component')
@@ -125,6 +175,42 @@ export const routes: Routes = [
           roles: [
             'ADMIN',
             'OPERATOR'
+          ]
+        }
+      },
+      {
+        path: 'guardian-import',
+        loadComponent: () =>
+          import(
+            './features/guardian-import/guardian-import.component'
+          ).then(
+            module => module.GuardianImportComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Carga de tutores',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
+        path: 'guardian-activation',
+        loadComponent: () =>
+          import(
+            './features/guardian-activation/guardian-activation.component'
+          ).then(
+            module => module.GuardianActivationComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Activación de tutores',
+          roles: [
+            'ADMIN'
           ]
         }
       },

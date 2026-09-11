@@ -1,0 +1,95 @@
+<div
+  class="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary p-3"
+>
+  <main class="w-100" style="max-width: 480px">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4 p-md-5">
+        <div class="text-center mb-4">
+          <div
+            class="d-inline-flex align-items-center justify-content-center rounded-3 text-bg-primary fw-bold mb-3"
+            style="width: 48px; height: 48px"
+            aria-hidden="true"
+          >
+            CE
+          </div>
+          <h1 class="h3 mb-2">Portal de tutores</h1>
+          <p class="text-body-secondary mb-0">
+            Entra desde cualquier dispositivo con los datos de tu cuenta.
+          </p>
+        </div>
+
+        @if (errorMessage(); as message) {
+          <div class="alert alert-danger" role="alert">{{ message }}</div>
+        }
+
+        <form (submit)="$event.preventDefault(); submit()">
+          <div class="mb-3">
+            <label class="form-label" for="guardianSchoolCode">
+              Código de escuela
+            </label>
+            <input
+              id="guardianSchoolCode"
+              class="form-control form-control-lg"
+              type="text"
+              autocomplete="organization"
+              maxlength="50"
+              [value]="schoolCode()"
+              (input)="updateSchoolCode($event)"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="guardianUsername">Usuario</label>
+            <input
+              id="guardianUsername"
+              class="form-control form-control-lg"
+              type="text"
+              autocomplete="username"
+              maxlength="100"
+              [value]="username()"
+              (input)="updateUsername($event)"
+            />
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="guardianPassword">Contraseña</label>
+            <input
+              id="guardianPassword"
+              class="form-control form-control-lg"
+              type="password"
+              autocomplete="current-password"
+              maxlength="72"
+              [value]="password()"
+              (input)="updatePassword($event)"
+            />
+          </div>
+
+          <button
+            class="btn btn-primary btn-lg w-100"
+            type="submit"
+            [disabled]="submitting()"
+          >
+            @if (submitting()) {
+              <span
+                class="spinner-border spinner-border-sm me-2"
+                aria-hidden="true"
+              ></span>
+              Iniciando sesión...
+            } @else {
+              Iniciar sesión
+            }
+          </button>
+        </form>
+
+        <div class="border-top mt-4 pt-4 text-center">
+          <p class="small text-body-secondary mb-1">
+            ¿Es tu primera vez o no recuerdas tu contraseña?
+          </p>
+          <p class="small mb-0">
+            Solicita a la escuela una invitación de activación o recuperación.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

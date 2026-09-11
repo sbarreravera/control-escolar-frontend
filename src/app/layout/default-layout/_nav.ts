@@ -49,6 +49,27 @@ export function buildNavItems(
             iconComponent: {
               name: 'cil-list'
             }
+          },
+          {
+            name: 'Carga inicial',
+            url: '/student-import',
+            iconComponent: {
+              name: 'cil-spreadsheet'
+            }
+          },
+          {
+            name: 'Carga de tutores',
+            url: '/guardian-import',
+            iconComponent: {
+              name: 'cil-user-follow'
+            }
+          },
+          {
+            name: 'Activación de tutores',
+            url: '/guardian-activation',
+            iconComponent: {
+              name: 'cil-lock-locked'
+            }
           }
         ]
       : [];

@@ -1,0 +1,640 @@
+<div class="mb-4">
+  <h1 class="h3 mb-1">Activación de tutores</h1>
+
+  <p class="text-body-secondary mb-0">
+    Genera y administra accesos seguros para los tutores de
+    {{ schoolName() }}.
+  </p>
+</div>
+
+@if (errorMessage(); as message) {
+  <div class="alert alert-danger" role="alert">
+    {{ message }}
+  </div>
+}
+
+@if (successMessage(); as message) {
+  <div class="alert alert-success" role="status">
+    {{ message }}
+  </div>
+}
+
+@if (cycleSelectionWarning(); as message) {
+  <div class="alert alert-warning" role="alert">
+    {{ message }}
+  </div>
+}
+
+<div class="alert alert-info" role="status">
+  La primera invitación permite al tutor crear su contraseña. Después podrá
+  entrar desde cualquier dispositivo con el código de escuela y su usuario.
+  Los enlaces siguen siendo de un solo uso y vencen en 7 días.
+</div>
+
+<section class="card mb-4">
+  <div class="card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <strong>Seleccionar tutores</strong>
+      <span class="badge text-bg-light">
+        {{ totalElements() }}
+        {{ totalElements() === 1 ? 'tutor' : 'tutores' }}
+      </span>
+    </div>
+    <span class="badge text-bg-primary">
+      {{ selectedCount() }} seleccionados
+      @if (allMatchingSelected()) {
+        del filtro completo
+      }
+    </span>
+  </div>
+
+  <div class="card-body">
+    <div class="row g-2 mb-3">
+      <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+          <div class="small text-body-secondary">Relacionados</div>
+          <strong class="fs-5">{{ summary().totalGuardians }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+          <div class="small text-body-secondary">Por activar</div>
+          <strong class="fs-5">{{ summary().requiresActivation }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+          <div class="small text-body-secondary">Pendientes</div>
+          <strong class="fs-5">{{ summary().pending }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+          <div class="small text-body-secondary">Cuentas activadas</div>
+          <strong class="fs-5">{{ summary().active }}</strong>
+        </div>
+      </div>
+      <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+          <div class="small text-body-secondary">Sin contacto</div>
+          <strong class="fs-5">{{ summary().missingContact }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-lg-6">
+        <label class="form-label" for="guardianActivationSearch">
+          Buscar
+        </label>
+        <input
+          id="guardianActivationSearch"
+          class="form-control"
+          type="search"
+          placeholder="Tutor, alumno, matrícula, teléfono o correo"
+          [value]="search()"
+          (input)="updateSearch($event)"
+        />
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <label class="form-label" for="guardianActivationCycle">
+          Ciclo escolar
+        </label>
+        <select
+          id="guardianActivationCycle"
+          class="form-select"
+          [value]="academicCycleId() ?? 0"
+          [disabled]="loadingCycles()"
+          (change)="updateCycle($event)"
+        >
+          @if (academicCycles().length === 0) {
+            <option value="0">Sin ciclos registrados</option>
+          }
+          @for (cycle of academicCycles(); track cycle.id) {
+            <option [value]="cycle.id">
+              {{ cycle.name }}{{ cycle.active ? '' : ' (inactivo)' }}
+            </option>
+          }
+        </select>
+        @if (selectedCycle(); as cycle) {
+          <div class="form-text">
+            {{ cycle.startDate }} a {{ cycle.endDate }}
+          </div>
+        }
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <label class="form-label" for="guardianActivationFilter">
+          Estado
+        </label>
+        <select
+          id="guardianActivationFilter"
+          class="form-select"
+          [value]="filter()"
+          (change)="updateFilter($event)"
+        >
+          <option value="NOT_ACTIVE">Por activar</option>
+          <option value="NOT_INVITED">Sin invitación</option>
+          <option value="PENDING">Invitación pendiente</option>
+          <option value="ACTIVE">Cuenta activada</option>
+          <option value="EXPIRED_OR_REVOKED">Vencido o revocado</option>
+          <option value="ALL">Todos</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label class="form-label" for="guardianActivationGrade">Grado</label>
+        <select
+          id="guardianActivationGrade"
+          class="form-select"
+          [value]="gradeName()"
+          [disabled]="loadingGroups()"
+          (change)="updateGrade($event)"
+        >
+          <option value="">Todos los grados</option>
+          @for (grade of grades(); track grade) {
+            <option [value]="grade">{{ grade }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label" for="guardianActivationGroup">Grupo</label>
+        <select
+          id="guardianActivationGroup"
+          class="form-select"
+          [value]="schoolGroupId() ?? 0"
+          [disabled]="loadingGroups()"
+          (change)="updateGroup($event)"
+        >
+          <option value="0">Todos los grupos</option>
+          @for (group of groupsForGrade(); track group.id) {
+            <option [value]="group.id">
+              {{ group.gradeName }} · {{ group.groupName }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label" for="guardianActivationContact">
+          Datos de contacto
+        </label>
+        <select
+          id="guardianActivationContact"
+          class="form-select"
+          [value]="contactFilter()"
+          (change)="updateContactFilter($event)"
+        >
+          <option value="ALL">Todos</option>
+          <option value="AVAILABLE">Con teléfono o correo</option>
+          <option value="MISSING">Sin teléfono ni correo</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <button
+        class="btn btn-outline-secondary"
+        type="button"
+        [disabled]="selectableVisibleIds().length === 0"
+        (click)="toggleAllVisible()"
+      >
+        @if (allVisibleSelected()) {
+          Quitar visibles
+        } @else {
+          Seleccionar visibles
+        }
+      </button>
+
+      <button
+        class="btn btn-outline-primary"
+        type="button"
+        [disabled]="totalElements() === 0 || selectingAll()"
+        (click)="selectAllMatching()"
+      >
+        @if (selectingAll()) {
+          Seleccionando...
+        } @else {
+          Seleccionar los {{ totalElements() }} resultados
+        }
+      </button>
+
+      @if (selectedCount() > 0) {
+        <button
+          class="btn btn-link text-decoration-none"
+          type="button"
+          (click)="clearSelection()"
+        >
+          Limpiar selección
+        </button>
+      }
+
+      <button
+        class="btn btn-primary"
+        type="button"
+        [disabled]="selectedCount() === 0 || generating() || revoking()"
+        (click)="createInvitations()"
+      >
+        @if (generating()) {
+          Generando invitaciones...
+        } @else {
+          Generar invitaciones
+        }
+      </button>
+
+      <button
+        class="btn btn-outline-danger"
+        type="button"
+        [disabled]="selectedCount() === 0 || generating() || revoking()"
+        (click)="revokeSelectedAccess()"
+      >
+        @if (revoking()) {
+          Revocando acceso...
+        } @else {
+          Revocar acceso
+        }
+      </button>
+
+      <button
+        class="btn btn-outline-secondary ms-auto"
+        type="button"
+        [disabled]="loading()"
+        (click)="loadStatuses()"
+      >
+        Actualizar estados
+      </button>
+    </div>
+
+    @if (loading()) {
+      <div class="text-center py-5 text-body-secondary">
+        Cargando estado de activaciones...
+      </div>
+    } @else if (filteredStatuses().length === 0) {
+      <div class="text-center py-5">
+        <h2 class="h5">No hay tutores en este filtro</h2>
+        <p class="text-body-secondary mb-0">
+          Cambia la búsqueda o el estado seleccionado.
+        </p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col" class="text-center">Elegir</th>
+              <th scope="col">Tutor</th>
+              <th scope="col">Alumnos del ciclo</th>
+              <th scope="col">Contacto</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Dispositivos</th>
+              <th scope="col">Último cambio</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (status of filteredStatuses(); track status.guardianId) {
+              <tr>
+                <td class="text-center">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    [attr.aria-label]="'Seleccionar a ' + status.guardianName"
+                    [checked]="selectedIds().has(status.guardianId)"
+                    [disabled]="!status.guardianActive"
+                    (change)="toggleGuardian(status.guardianId)"
+                  />
+                </td>
+                <td>
+                  <strong>{{ status.guardianName }}</strong>
+                  @if (status.externalReference) {
+                    <div class="small text-body-secondary">
+                      {{ status.externalReference }}
+                    </div>
+                  }
+                  @if (status.username) {
+                    <div class="small text-primary">
+                      Usuario: {{ status.username }}
+                    </div>
+                  }
+                </td>
+                <td>
+                  @for (student of status.students.slice(0, 2); track student.studentId) {
+                    <div>
+                      {{ student.fullName }}
+                      <span class="small text-body-secondary">
+                        · {{ student.gradeName }}, {{ student.groupName }}
+                      </span>
+                    </div>
+                  }
+                  @if (status.students.length > 2) {
+                    <div class="small text-body-secondary">
+                      +{{ status.students.length - 2 }} alumno(s) más
+                    </div>
+                  }
+                </td>
+                <td>
+                  <div>{{ status.phone ?? 'Sin teléfono' }}</div>
+                  @if (status.email) {
+                    <div class="small text-body-secondary">
+                      {{ status.email }}
+                    </div>
+                  }
+                </td>
+                <td>
+                  <span [class]="'badge ' + stateClass(status.activationState)">
+                    {{ stateLabel(status.activationState) }}
+                  </span>
+                  @if (status.activationState === 'PENDING') {
+                    <div class="small text-body-secondary mt-1">
+                      Vence {{ formatDate(status.invitationExpiresAt) }}
+                    </div>
+                  }
+                </td>
+                <td>
+                  <div>{{ status.activeDevices }} dispositivo(s)</div>
+                  <div class="small text-body-secondary">
+                    {{ status.activeSessions }} sesión(es)
+                  </div>
+                </td>
+                <td>
+                  @if (status.activatedAt) {
+                    Activado {{ formatDate(status.activatedAt) }}
+                  } @else if (status.invitationCreatedAt) {
+                    Invitado {{ formatDate(status.invitationCreatedAt) }}
+                  } @else {
+                    —
+                  }
+                </td>
+                <td>
+                  <div class="d-flex flex-column align-items-start gap-1">
+                    @if (status.accountActivated) {
+                      <button
+                        class="btn btn-sm btn-link px-0"
+                        type="button"
+                        [disabled]="resettingGuardianId() !== null"
+                        (click)="createPasswordReset(status)"
+                      >
+                        {{ resettingGuardianId() === status.guardianId
+                          ? 'Generando...'
+                          : 'Restablecer contraseña' }}
+                      </button>
+                    }
+                    @if (status.activeSessions > 0) {
+                      <button
+                        class="btn btn-sm btn-link px-0 text-decoration-none"
+                        type="button"
+                        (click)="manageSessions(status)"
+                      >
+                        Administrar sesiones
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mt-3">
+        <span class="small text-body-secondary">
+          Mostrando {{ firstVisible() }}–{{ lastVisible() }}
+          de {{ totalElements() }} tutores
+        </span>
+
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+          @if (totalPages() > 1) {
+            <nav aria-label="Páginas de activación de tutores">
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" [class.disabled]="page() === 0">
+                  <button
+                    class="page-link"
+                    type="button"
+                    aria-label="Página anterior"
+                    [disabled]="page() === 0"
+                    (click)="goToPage(page() - 1)"
+                  >
+                    Anterior
+                  </button>
+                </li>
+                @for (pageNumber of visiblePages(); track pageNumber) {
+                  <li class="page-item" [class.active]="pageNumber === page()">
+                    <button
+                      class="page-link"
+                      type="button"
+                      [attr.aria-current]="pageNumber === page() ? 'page' : null"
+                      (click)="goToPage(pageNumber)"
+                    >
+                      {{ pageNumber + 1 }}
+                    </button>
+                  </li>
+                }
+                <li
+                  class="page-item"
+                  [class.disabled]="page() >= totalPages() - 1"
+                >
+                  <button
+                    class="page-link"
+                    type="button"
+                    aria-label="Página siguiente"
+                    [disabled]="page() >= totalPages() - 1"
+                    (click)="goToPage(page() + 1)"
+                  >
+                    Siguiente
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          }
+
+          <label class="d-flex align-items-center gap-2 small mb-0">
+            Mostrar
+            <select
+              class="form-select form-select-sm"
+              aria-label="Tutores por página"
+              [value]="pageSize()"
+              (change)="updatePageSize($event)"
+            >
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+@if (managedGuardian(); as guardian) {
+  <section class="card mb-4 border-primary">
+    <div class="card-header d-flex align-items-center justify-content-between gap-3">
+      <div>
+        <strong>Sesiones de {{ guardian.guardianName }}</strong>
+        <div class="small text-body-secondary">
+          Cierra únicamente el teléfono o navegador que ya no deba tener acceso.
+        </div>
+      </div>
+      <button
+        class="btn-close"
+        type="button"
+        aria-label="Cerrar administración de sesiones"
+        (click)="closeSessionManager()"
+      ></button>
+    </div>
+    <div class="card-body">
+      @if (loadingSessions()) {
+        <div class="text-center py-3 text-body-secondary">
+          Cargando sesiones activas...
+        </div>
+      } @else if (managedSessions().length === 0) {
+        <div class="alert alert-light border mb-0">
+          Este tutor no tiene sesiones activas.
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Dispositivo o navegador</th>
+                <th>Notificaciones</th>
+                <th>Último uso</th>
+                <th>Vence</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (session of managedSessions(); track session.sessionId) {
+                <tr>
+                  <td>{{ session.deviceName ?? 'Navegador sin nombre' }}</td>
+                  <td>
+                    {{ session.notificationsEnabled ? 'Activadas' : 'No activadas' }}
+                  </td>
+                  <td>{{ formatDate(session.lastUsedAt) }}</td>
+                  <td>{{ formatDate(session.expiresAt) }}</td>
+                  <td class="text-end">
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      type="button"
+                      [disabled]="revokingSessionId() !== null"
+                      (click)="revokeIndividualSession(session)"
+                    >
+                      {{ revokingSessionId() === session.sessionId
+                        ? 'Cerrando...'
+                        : 'Cerrar sesión' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </section>
+}
+
+@if (generatedBatch(); as batch) {
+  <section class="card border-primary">
+    <div class="card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
+      <strong>
+        {{ generatedPurpose() === 'PASSWORD_RESET'
+          ? 'Enlace de recuperación recién generado'
+          : 'Invitaciones recién generadas' }}
+      </strong>
+      <span class="badge text-bg-primary">
+        {{ batch.invitationsCreated }} enlaces
+      </span>
+    </div>
+
+    <div class="card-body">
+      <div class="alert alert-warning" role="alert">
+        Guarda estos enlaces ahora. Por seguridad, el servidor almacena
+        únicamente su huella y no podrá mostrarlos otra vez.
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <button
+          class="btn btn-primary"
+          type="button"
+          (click)="downloadCsv()"
+        >
+          Descargar CSV
+        </button>
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          (click)="copyAllLinks()"
+        >
+          @if (copiedAll()) {
+            Enlaces copiados
+          } @else {
+            Copiar todos los enlaces
+          }
+        </button>
+        <span class="text-body-secondary align-self-center ms-lg-auto">
+          Vencen {{ formatDate(batch.expiresAt) }}
+        </span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Tutor</th>
+              <th>Datos de acceso</th>
+              <th>Contacto</th>
+              <th>Enlace individual</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (invitation of generatedPreview(); track invitation.guardianId) {
+              <tr>
+                <td>
+                  <strong>{{ invitation.guardianName }}</strong>
+                  @if (invitation.externalReference) {
+                    <div class="small text-body-secondary">
+                      {{ invitation.externalReference }}
+                    </div>
+                  }
+                </td>
+                <td>
+                  <div>{{ invitation.schoolCode }}</div>
+                  <div class="small text-primary">
+                    {{ invitation.username }}
+                  </div>
+                </td>
+                <td>
+                  {{ invitation.phone ?? invitation.email ?? 'Sin datos' }}
+                </td>
+                <td>
+                  <button
+                    class="btn btn-sm btn-outline-primary"
+                    type="button"
+                    (click)="copyInvitation(invitation)"
+                  >
+                    @if (copiedGuardianId() === invitation.guardianId) {
+                      Copiado
+                    } @else {
+                      Copiar enlace
+                    }
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (generatedInvitations().length > generatedPreview().length) {
+        <p class="small text-body-secondary mt-2 mb-0">
+          Se muestran los primeros {{ generatedPreview().length }} enlaces.
+          El CSV contiene los {{ generatedInvitations().length }} resultados.
+        </p>
+      }
+    </div>
+  </section>
+}
