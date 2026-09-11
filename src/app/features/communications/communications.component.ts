@@ -1,8 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnInit
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { AcademicCycle } from '../academic-cycles/academic-cycle.models';
 import { AcademicCycleService } from '../academic-cycles/academic-cycle.service';
@@ -48,6 +53,7 @@ export class CommunicationsComponent implements OnInit {
   private readonly cycleService = inject(AcademicCycleService);
   private readonly groupService = inject(SchoolGroupService);
   private readonly studentService = inject(StudentService);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly templates: CommunicationTemplate[] = [
     {
@@ -185,25 +191,27 @@ export class CommunicationsComponent implements OnInit {
       cycles: this.cycleService.findAllBySchool(schoolId),
       students: this.studentService.findAllBySchool(schoolId),
       history: this.communicationService.findHistory(schoolId)
-    }).subscribe({
-      next: result => {
-        this.cycles = result.cycles;
-        this.students = result.students.filter(student => student.active);
-        this.history = result.history;
-        this.academicCycleId =
-          this.cycles.find(cycle => cycle.active)?.id
-          ?? this.cycles[0]?.id
-          ?? null;
-        if (this.academicCycleId !== null) {
-          this.loadGroups(this.academicCycleId);
+    })
+      .pipe(finalize(() => this.refreshView()))
+      .subscribe({
+        next: result => {
+          this.cycles = result.cycles;
+          this.students = result.students.filter(student => student.active);
+          this.history = result.history;
+          this.academicCycleId =
+            this.cycles.find(cycle => cycle.active)?.id
+            ?? this.cycles[0]?.id
+            ?? null;
+          if (this.academicCycleId !== null) {
+            this.loadGroups(this.academicCycleId);
+          }
+          this.loadingInitial = false;
+        },
+        error: error => {
+          this.loadingInitial = false;
+          this.errorMessage = this.resolveError(error);
         }
-        this.loadingInitial = false;
-      },
-      error: error => {
-        this.loadingInitial = false;
-        this.errorMessage = this.resolveError(error);
-      }
-    });
+      });
   }
 
   setView(view: 'COMPOSE' | 'HISTORY'): void {
@@ -284,17 +292,20 @@ export class CommunicationsComponent implements OnInit {
 
     this.loadingPreview = true;
     this.errorMessage = null;
-    this.communicationService.preview(audience).subscribe({
-      next: preview => {
-        this.preview = preview;
-        this.loadingPreview = false;
-      },
-      error: error => {
-        this.loadingPreview = false;
-        this.preview = null;
-        this.errorMessage = this.resolveError(error);
-      }
-    });
+    this.communicationService
+      .preview(audience)
+      .pipe(finalize(() => this.refreshView()))
+      .subscribe({
+        next: preview => {
+          this.preview = preview;
+          this.loadingPreview = false;
+        },
+        error: error => {
+          this.loadingPreview = false;
+          this.preview = null;
+          this.errorMessage = this.resolveError(error);
+        }
+      });
   }
 
   save(): void {
@@ -350,20 +361,23 @@ export class CommunicationsComponent implements OnInit {
     };
 
     this.saving = true;
-    this.communicationService.create(request).subscribe({
-      next: result => {
-        this.saving = false;
-        this.successMessage = result.status === 'PUBLISHED'
-          ? `Aviso publicado para ${result.recipientCount} tutor(es).`
-          : 'Aviso programado correctamente.';
-        this.resetForm(false);
-        this.refreshHistory();
-      },
-      error: error => {
-        this.saving = false;
-        this.errorMessage = this.resolveError(error);
-      }
-    });
+    this.communicationService
+      .create(request)
+      .pipe(finalize(() => this.refreshView()))
+      .subscribe({
+        next: result => {
+          this.saving = false;
+          this.successMessage = result.status === 'PUBLISHED'
+            ? `Aviso publicado para ${result.recipientCount} tutor(es).`
+            : 'Aviso programado correctamente.';
+          this.resetForm(false);
+          this.refreshHistory();
+        },
+        error: error => {
+          this.saving = false;
+          this.errorMessage = this.resolveError(error);
+        }
+      });
   }
 
   editScheduled(item: Communication): void {
@@ -421,29 +435,35 @@ export class CommunicationsComponent implements OnInit {
     )) {
       return;
     }
-    this.communicationService.cancel(item.id).subscribe({
-      next: () => {
-        this.successMessage = 'El aviso programado fue cancelado.';
-        this.refreshHistory();
-      },
-      error: error => this.errorMessage = this.resolveError(error)
-    });
+    this.communicationService
+      .cancel(item.id)
+      .pipe(finalize(() => this.refreshView()))
+      .subscribe({
+        next: () => {
+          this.successMessage = 'El aviso programado fue cancelado.';
+          this.refreshHistory();
+        },
+        error: error => this.errorMessage = this.resolveError(error)
+      });
   }
 
   openDetail(item: Communication): void {
     this.selectedDetail = item;
     this.detailRecipients = [];
     this.loadingDetail = true;
-    this.communicationService.findRecipients(item.id).subscribe({
-      next: recipients => {
-        this.detailRecipients = recipients;
-        this.loadingDetail = false;
-      },
-      error: error => {
-        this.loadingDetail = false;
-        this.errorMessage = this.resolveError(error);
-      }
-    });
+    this.communicationService
+      .findRecipients(item.id)
+      .pipe(finalize(() => this.refreshView()))
+      .subscribe({
+        next: recipients => {
+          this.detailRecipients = recipients;
+          this.loadingDetail = false;
+        },
+        error: error => {
+          this.loadingDetail = false;
+          this.errorMessage = this.resolveError(error);
+        }
+      });
   }
 
   closeDetail(): void {
@@ -457,21 +477,24 @@ export class CommunicationsComponent implements OnInit {
       return;
     }
     this.loadingHistory = true;
-    this.communicationService.findHistory(schoolId).subscribe({
-      next: history => {
-        this.history = history;
-        this.loadingHistory = false;
-        if (this.selectedDetail) {
-          this.selectedDetail = history.find(
-            item => item.id === this.selectedDetail?.id
-          ) ?? null;
+    this.communicationService
+      .findHistory(schoolId)
+      .pipe(finalize(() => this.refreshView()))
+      .subscribe({
+        next: history => {
+          this.history = history;
+          this.loadingHistory = false;
+          if (this.selectedDetail) {
+            this.selectedDetail = history.find(
+              item => item.id === this.selectedDetail?.id
+            ) ?? null;
+          }
+        },
+        error: error => {
+          this.loadingHistory = false;
+          this.errorMessage = this.resolveError(error);
         }
-      },
-      error: error => {
-        this.loadingHistory = false;
-        this.errorMessage = this.resolveError(error);
-      }
-    });
+      });
   }
 
   statusLabel(status: CommunicationStatus): string {
@@ -534,36 +557,39 @@ export class CommunicationsComponent implements OnInit {
     };
 
     this.saving = true;
-    this.communicationService.updateScheduled(
-      communicationId,
-      request
-    ).subscribe({
-      next: () => {
-        this.saving = false;
-        this.successMessage = 'Aviso programado actualizado.';
-        this.resetForm(false);
-        this.refreshHistory();
-      },
-      error: error => {
-        this.saving = false;
-        this.errorMessage = this.resolveError(error);
-      }
-    });
+    this.communicationService
+      .updateScheduled(communicationId, request)
+      .pipe(finalize(() => this.refreshView()))
+      .subscribe({
+        next: () => {
+          this.saving = false;
+          this.successMessage = 'Aviso programado actualizado.';
+          this.resetForm(false);
+          this.refreshHistory();
+        },
+        error: error => {
+          this.saving = false;
+          this.errorMessage = this.resolveError(error);
+        }
+      });
   }
 
   private loadGroups(cycleId: number): void {
     this.loadingGroups = true;
-    this.groupService.findAllByAcademicCycle(cycleId).subscribe({
-      next: groups => {
-        this.groups = groups.filter(group => group.active);
-        this.loadingGroups = false;
-      },
-      error: error => {
-        this.groups = [];
-        this.loadingGroups = false;
-        this.errorMessage = this.resolveError(error);
-      }
-    });
+    this.groupService
+      .findAllByAcademicCycle(cycleId)
+      .pipe(finalize(() => this.refreshView()))
+      .subscribe({
+        next: groups => {
+          this.groups = groups.filter(group => group.active);
+          this.loadingGroups = false;
+        },
+        error: error => {
+          this.groups = [];
+          this.loadingGroups = false;
+          this.errorMessage = this.resolveError(error);
+        }
+      });
   }
 
   private buildAudience(): CommunicationAudienceRequest | null {
@@ -648,6 +674,10 @@ export class CommunicationsComponent implements OnInit {
     return new Date(date.getTime() - offset)
       .toISOString()
       .slice(0, 16);
+  }
+
+  private refreshView(): void {
+    this.changeDetectorRef.markForCheck();
   }
 
   private resolveError(error: unknown): string {
