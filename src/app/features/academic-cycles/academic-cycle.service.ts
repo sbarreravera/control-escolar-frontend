@@ -6,7 +6,8 @@ import {
 import { Observable } from 'rxjs';
 import {
   AcademicCycle,
-  CreateAcademicCycleRequest
+  CreateAcademicCycleRequest,
+  UpdateAcademicCycleRequest
 } from './academic-cycle.models';
 
 @Injectable({
@@ -35,6 +36,22 @@ export class AcademicCycleService {
     return this.http.post<AcademicCycle>(
       '/api/v1/academic-cycles',
       request
+    );
+  }
+
+  update(
+    academicCycleId: number,
+    request: UpdateAcademicCycleRequest
+  ): Observable<AcademicCycle> {
+    return this.http.put<AcademicCycle>(
+      `/api/v1/academic-cycles/${academicCycleId}`,
+      request
+    );
+  }
+
+  delete(academicCycleId: number): Observable<void> {
+    return this.http.delete<void>(
+      `/api/v1/academic-cycles/${academicCycleId}`
     );
   }
 }
