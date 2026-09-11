@@ -30,14 +30,27 @@
   <c-col lg="5" class="mb-4">
     <c-card>
       <c-card-header>
-        <strong>Nuevo ciclo escolar</strong>
+        <strong>
+          @if (editing()) {
+            Editar ciclo escolar
+          } @else {
+            Nuevo ciclo escolar
+          }
+        </strong>
       </c-card-header>
 
       <c-card-body>
+        @if (editing()) {
+          <div class="alert alert-info py-2 small" role="status">
+            Puedes corregir el nombre o las fechas. Los grados y grupos
+            relacionados con este ciclo no se modificarán.
+          </div>
+        }
+
         <form
           cForm
           [formGroup]="academicCycleForm"
-          (ngSubmit)="createAcademicCycle()"
+          (ngSubmit)="saveAcademicCycle()"
           novalidate
         >
           <div class="mb-3">
@@ -117,19 +130,41 @@
             }
           </div>
 
-          <button
-            cButton
-            color="primary"
-            type="submit"
-            class="w-100"
-            [disabled]="submitting()"
-          >
-            @if (submitting()) {
-              Registrando...
-            } @else {
-              Registrar ciclo escolar
+          <div class="d-grid gap-2">
+            <button
+              cButton
+              color="primary"
+              type="submit"
+              [disabled]="submitting()"
+            >
+              @if (submitting()) {
+                @if (editing()) {
+                  Guardando cambios...
+                } @else {
+                  Registrando...
+                }
+              } @else {
+                @if (editing()) {
+                  Guardar cambios
+                } @else {
+                  Registrar ciclo escolar
+                }
+              }
+            </button>
+
+            @if (editing()) {
+              <button
+                cButton
+                color="secondary"
+                variant="outline"
+                type="button"
+                [disabled]="submitting()"
+                (click)="cancelEditing()"
+              >
+                Cancelar edición
+              </button>
             }
-          </button>
+          </div>
         </form>
       </c-card-body>
     </c-card>
@@ -165,6 +200,7 @@
                   <th>Inicio</th>
                   <th>Término</th>
                   <th>Estado</th>
+                  <th class="text-end">Acciones</th>
                 </tr>
               </thead>
 
@@ -178,6 +214,12 @@
                       <strong>
                         {{ academicCycle.name }}
                       </strong>
+
+                      @if (academicCycle.hasGroups) {
+                        <small class="d-block text-body-secondary mt-1">
+                          Con grados o grupos asociados
+                        </small>
+                      }
                     </td>
 
                     <td>
@@ -203,11 +245,51 @@
                         </span>
                       }
                     </td>
+
+                    <td class="text-end text-nowrap">
+                      <button
+                        cButton
+                        color="primary"
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        class="me-2"
+                        [disabled]="submitting() || deletingCycleId() !== null"
+                        (click)="startEditing(academicCycle)"
+                      >
+                        Editar
+                      </button>
+
+                      <button
+                        cButton
+                        color="danger"
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        [disabled]="academicCycle.hasGroups || deletingCycleId() !== null"
+                        [attr.title]="academicCycle.hasGroups
+                          ? 'No se puede eliminar porque tiene grados o grupos asociados.'
+                          : 'Eliminar ciclo escolar'"
+                        (click)="deleteAcademicCycle(academicCycle)"
+                      >
+                        @if (deletingCycleId() === academicCycle.id) {
+                          Eliminando...
+                        } @else {
+                          Eliminar
+                        }
+                      </button>
+                    </td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
+
+          <p class="text-body-secondary small mt-3 mb-0">
+            Un ciclo escolar sólo puede eliminarse mientras no tenga grados
+            o grupos asociados. La edición permanece disponible para corregir
+            errores de captura.
+          </p>
         }
       </c-card-body>
     </c-card>
