@@ -25,7 +25,8 @@ import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import {
   AcademicCycle,
-  CreateAcademicCycleRequest
+  CreateAcademicCycleRequest,
+  UpdateAcademicCycleRequest
 } from './academic-cycle.models';
 import { AcademicCycleService } from './academic-cycle.service';
 
@@ -54,6 +55,8 @@ export class AcademicCyclesComponent implements OnInit {
   readonly academicCycles = signal<AcademicCycle[]>([]);
   readonly loading = signal(true);
   readonly submitting = signal(false);
+  readonly deletingCycleId = signal<number | null>(null);
+  readonly editingCycleId = signal<number | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
 
@@ -61,6 +64,10 @@ export class AcademicCyclesComponent implements OnInit {
     () =>
       this.authService.currentUser()?.schoolName ??
       'Tu escuela'
+  );
+
+  readonly editing = computed(
+    () => this.editingCycleId() !== null
   );
 
   readonly academicCycleForm =
@@ -122,19 +129,9 @@ export class AcademicCyclesComponent implements OnInit {
       });
   }
 
-  createAcademicCycle(): void {
+  saveAcademicCycle(): void {
     if (this.academicCycleForm.invalid) {
       this.academicCycleForm.markAllAsTouched();
-      return;
-    }
-
-    const schoolId =
-      this.authService.currentUser()?.schoolId;
-
-    if (schoolId === null || schoolId === undefined) {
-      this.errorMessage.set(
-        'Tu usuario no tiene una escuela asignada.'
-      );
       return;
     }
 
@@ -144,6 +141,107 @@ export class AcademicCyclesComponent implements OnInit {
     if (formValue.endDate < formValue.startDate) {
       this.errorMessage.set(
         'La fecha de término no puede ser anterior a la fecha de inicio.'
+      );
+      return;
+    }
+
+    const editingCycleId = this.editingCycleId();
+
+    if (editingCycleId === null) {
+      this.createAcademicCycle(formValue);
+      return;
+    }
+
+    this.updateAcademicCycle(editingCycleId, formValue);
+  }
+
+  startEditing(academicCycle: AcademicCycle): void {
+    this.editingCycleId.set(academicCycle.id);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.academicCycleForm.reset({
+      name: academicCycle.name,
+      startDate: academicCycle.startDate,
+      endDate: academicCycle.endDate
+    });
+  }
+
+  cancelEditing(): void {
+    this.editingCycleId.set(null);
+    this.resetForm();
+    this.errorMessage.set(null);
+  }
+
+  deleteAcademicCycle(academicCycle: AcademicCycle): void {
+    if (academicCycle.hasGroups) {
+      this.errorMessage.set(
+        `No se puede eliminar ${academicCycle.name} porque ya tiene grados o grupos asociados.`
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `¿Eliminar el ciclo escolar ${academicCycle.name}? Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingCycleId.set(academicCycle.id);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.academicCycleService
+      .delete(academicCycle.id)
+      .pipe(
+        finalize(() => this.deletingCycleId.set(null))
+      )
+      .subscribe({
+        next: () => {
+          this.academicCycles.update(current =>
+            current.filter(item => item.id !== academicCycle.id)
+          );
+
+          if (this.editingCycleId() === academicCycle.id) {
+            this.editingCycleId.set(null);
+            this.resetForm();
+          }
+
+          this.successMessage.set(
+            `El ciclo escolar ${academicCycle.name} fue eliminado correctamente.`
+          );
+        },
+        error: (error: HttpErrorResponse) => {
+          if (error.status === 409) {
+            this.errorMessage.set(
+              `No se puede eliminar ${academicCycle.name} porque ya tiene grados o grupos asociados.`
+            );
+            this.loadAcademicCycles();
+            return;
+          }
+
+          this.errorMessage.set(
+            this.resolveErrorMessage(error)
+          );
+        }
+      });
+  }
+
+  private createAcademicCycle(
+    formValue: {
+      name: string;
+      startDate: string;
+      endDate: string;
+    }
+  ): void {
+    const schoolId =
+      this.authService.currentUser()?.schoolId;
+
+    if (schoolId === null || schoolId === undefined) {
+      this.errorMessage.set(
+        'Tu usuario no tiene una escuela asignada.'
       );
       return;
     }
@@ -166,16 +264,14 @@ export class AcademicCyclesComponent implements OnInit {
       )
       .subscribe({
         next: academicCycle => {
-          this.academicCycles.update(current => [
-            academicCycle,
-            ...current
-          ]);
+          this.academicCycles.update(current =>
+            this.sortCycles([
+              ...current,
+              academicCycle
+            ])
+          );
 
-          this.academicCycleForm.reset({
-            name: '',
-            startDate: '',
-            endDate: ''
-          });
+          this.resetForm();
 
           this.successMessage.set(
             `El ciclo escolar ${academicCycle.name} fue registrado correctamente.`
@@ -189,11 +285,79 @@ export class AcademicCyclesComponent implements OnInit {
       });
   }
 
+  private updateAcademicCycle(
+    academicCycleId: number,
+    formValue: {
+      name: string;
+      startDate: string;
+      endDate: string;
+    }
+  ): void {
+    this.submitting.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    const request: UpdateAcademicCycleRequest = {
+      name: formValue.name.trim(),
+      startDate: formValue.startDate,
+      endDate: formValue.endDate
+    };
+
+    this.academicCycleService
+      .update(academicCycleId, request)
+      .pipe(
+        finalize(() => this.submitting.set(false))
+      )
+      .subscribe({
+        next: academicCycle => {
+          this.academicCycles.update(current =>
+            this.sortCycles(
+              current.map(item =>
+                item.id === academicCycle.id
+                  ? academicCycle
+                  : item
+              )
+            )
+          );
+
+          this.editingCycleId.set(null);
+          this.resetForm();
+          this.successMessage.set(
+            `El ciclo escolar ${academicCycle.name} fue actualizado correctamente.`
+          );
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage.set(
+            this.resolveErrorMessage(error)
+          );
+        }
+      });
+  }
+
+  private resetForm(): void {
+    this.academicCycleForm.reset({
+      name: '',
+      startDate: '',
+      endDate: ''
+    });
+  }
+
+  private sortCycles(cycles: AcademicCycle[]): AcademicCycle[] {
+    return [...cycles].sort(
+      (left, right) =>
+        right.startDate.localeCompare(left.startDate)
+    );
+  }
+
   private resolveErrorMessage(
     error: HttpErrorResponse
   ): string {
     if (error.status === 409) {
       return 'Ya existe un ciclo escolar con ese nombre.';
+    }
+
+    if (error.status === 404) {
+      return 'El ciclo escolar ya no existe. Actualiza la lista e inténtalo de nuevo.';
     }
 
     if (error.status === 400) {

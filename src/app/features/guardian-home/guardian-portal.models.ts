@@ -42,3 +42,35 @@ export interface GuardianHistoryQuery {
   occurredFrom?: string;
   occurredTo?: string;
 }
+
+export type GuardianCommunicationType =
+  | 'GENERAL_NOTICE'
+  | 'EXPRESS_ALERT';
+
+export type GuardianCommunicationCategory =
+  | 'GENERAL'
+  | 'SCHEDULE'
+  | 'ACADEMIC'
+  | 'EVENT'
+  | 'WEATHER'
+  | 'EMERGENCY'
+  | 'REMINDER'
+  | 'OTHER';
+
+export type GuardianCommunicationPriority =
+  | 'NORMAL'
+  | 'IMPORTANT'
+  | 'URGENT';
+
+export interface GuardianCommunication {
+  id: number;
+  type: GuardianCommunicationType;
+  category: GuardianCommunicationCategory;
+  priority: GuardianCommunicationPriority;
+  title: string;
+  message: string;
+  requiresAcknowledgement: boolean;
+  publishedAt: string;
+  viewedAt: string | null;
+  acknowledgedAt: string | null;
+}

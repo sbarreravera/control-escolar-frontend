@@ -25,10 +25,20 @@
   </div>
 }
 
-<div class="alert alert-info" role="status">
+<div
+  #guardianActivationNotice
+  class="alert alert-info alert-dismissible"
+  role="status"
+>
   La primera invitación permite al tutor crear su contraseña. Después podrá
   entrar desde cualquier dispositivo con el código de escuela y su usuario.
   Los enlaces siguen siendo de un solo uso y vencen en 7 días.
+  <button
+    type="button"
+    class="btn-close"
+    aria-label="Cerrar aviso"
+    (click)="guardianActivationNotice.hidden = true"
+  ></button>
 </div>
 
 <section class="card mb-4">

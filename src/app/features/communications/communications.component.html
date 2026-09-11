@@ -1,0 +1,552 @@
+<div class="communications-page">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <h2 class="mb-1">Avisos y comunicaciones</h2>
+      <p class="text-body-secondary mb-0">
+        Comunícate con los tutores de {{ schoolName }} y conserva el historial de cada aviso.
+      </p>
+    </div>
+    <div class="btn-group" role="group" aria-label="Secciones de comunicaciones">
+      <button
+        type="button"
+        class="btn"
+        [class.btn-primary]="activeView === 'COMPOSE'"
+        [class.btn-outline-primary]="activeView !== 'COMPOSE'"
+        (click)="setView('COMPOSE')"
+      >
+        Nuevo aviso
+      </button>
+      <button
+        type="button"
+        class="btn"
+        [class.btn-primary]="activeView === 'HISTORY'"
+        [class.btn-outline-primary]="activeView !== 'HISTORY'"
+        (click)="setView('HISTORY')"
+      >
+        Historial
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success" role="alert">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loadingInitial" class="card">
+    <div class="card-body py-5 text-center text-body-secondary">
+      Cargando información de la escuela…
+    </div>
+  </div>
+
+  <ng-container *ngIf="!loadingInitial && activeView === 'COMPOSE'">
+    <div class="row g-4">
+      <div class="col-12 col-xl-8">
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>{{ editingScheduledId ? 'Editar aviso programado' : '1. Mensaje' }}</strong>
+            <span *ngIf="editingScheduledId" class="badge text-bg-info">Programado</span>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Tipo</label>
+                <select
+                  class="form-select"
+                  [(ngModel)]="type"
+                  (ngModelChange)="onTypeChange()"
+                >
+                  <option value="GENERAL_NOTICE">Aviso general</option>
+                  <option value="EXPRESS_ALERT">Alerta express</option>
+                </select>
+                <div class="form-text">
+                  {{ type === 'EXPRESS_ALERT'
+                    ? 'Para situaciones inmediatas o urgentes.'
+                    : 'Para información escolar, recordatorios y circulares.' }}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Categoría</label>
+                <select class="form-select" [(ngModel)]="category">
+                  <option value="GENERAL">General</option>
+                  <option value="SCHEDULE">Horarios</option>
+                  <option value="ACADEMIC">Escolar</option>
+                  <option value="EVENT">Evento</option>
+                  <option value="WEATHER">Clima</option>
+                  <option value="EMERGENCY">Emergencia</option>
+                  <option value="REMINDER">Recordatorio</option>
+                  <option value="OTHER">Otro</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Prioridad</label>
+                <select class="form-select" [(ngModel)]="priority">
+                  <option value="NORMAL">Normal</option>
+                  <option value="IMPORTANT">Importante</option>
+                  <option value="URGENT">Urgente</option>
+                </select>
+              </div>
+
+              <div class="col-12" *ngIf="editingScheduledId === null">
+                <label class="form-label">Plantillas rápidas</label>
+                <div class="d-flex flex-wrap gap-2">
+                  <button
+                    *ngFor="let template of templates"
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    (click)="applyTemplate(template)"
+                  >
+                    {{ template.label }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Título</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  maxlength="150"
+                  [(ngModel)]="title"
+                  placeholder="Ej. Cambio de horario de salida"
+                />
+                <div class="form-text text-end">{{ title.length }}/150</div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Mensaje</label>
+                <textarea
+                  class="form-control message-box"
+                  rows="7"
+                  maxlength="4000"
+                  [(ngModel)]="message"
+                  placeholder="Escribe la información completa que verá el tutor en su portal."
+                ></textarea>
+                <div class="form-text d-flex justify-content-between gap-2">
+                  <span>El contenido completo queda disponible en el portal del tutor.</span>
+                  <span>{{ message.length }}/4000</span>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="form-check">
+                  <input
+                    id="requiresAcknowledgement"
+                    class="form-check-input"
+                    type="checkbox"
+                    [(ngModel)]="requiresAcknowledgement"
+                  />
+                  <label class="form-check-label" for="requiresAcknowledgement">
+                    Solicitar confirmación de enterado
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4" *ngIf="editingScheduledId === null">
+          <div class="card-header"><strong>2. Destinatarios</strong></div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-5">
+                <label class="form-label">Enviar a</label>
+                <select
+                  class="form-select"
+                  [(ngModel)]="audienceType"
+                  (ngModelChange)="onAudienceTypeChange()"
+                >
+                  <option value="ALL_SCHOOL">Toda la escuela</option>
+                  <option value="CYCLE">Un ciclo escolar</option>
+                  <option value="GRADES">Uno o varios grados</option>
+                  <option value="GROUPS">Uno o varios grupos</option>
+                  <option value="STUDENTS">Alumnos específicos</option>
+                </select>
+              </div>
+
+              <div
+                class="col-md-7"
+                *ngIf="audienceType === 'CYCLE' || audienceType === 'GRADES' || audienceType === 'GROUPS'"
+              >
+                <label class="form-label">Ciclo escolar</label>
+                <select
+                  class="form-select"
+                  [(ngModel)]="academicCycleId"
+                  (ngModelChange)="onCycleChange()"
+                >
+                  <option [ngValue]="null">Selecciona un ciclo</option>
+                  <option *ngFor="let cycle of cycles" [ngValue]="cycle.id">
+                    {{ cycle.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-12" *ngIf="audienceType === 'GRADES'">
+                <label class="form-label">Grados</label>
+                <div class="selection-grid">
+                  <label
+                    class="selection-item"
+                    *ngFor="let grade of availableGrades"
+                  >
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      [checked]="selectedGrades.has(grade)"
+                      (change)="toggleGrade(grade, $any($event.target).checked)"
+                    />
+                    <span>{{ grade }}</span>
+                  </label>
+                </div>
+                <div *ngIf="!loadingGroups && availableGrades.length === 0" class="text-body-secondary small mt-2">
+                  No hay grados disponibles para este ciclo.
+                </div>
+              </div>
+
+              <div class="col-12" *ngIf="audienceType === 'GROUPS'">
+                <label class="form-label">Grupos</label>
+                <div class="selection-grid">
+                  <label
+                    class="selection-item"
+                    *ngFor="let group of groups"
+                  >
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      [checked]="selectedGroupIds.has(group.id)"
+                      (change)="toggleGroup(group.id, $any($event.target).checked)"
+                    />
+                    <span>{{ group.gradeName }} · {{ group.groupName }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-12" *ngIf="audienceType === 'STUDENTS'">
+                <label class="form-label">Buscar alumnos</label>
+                <input
+                  type="search"
+                  class="form-control mb-2"
+                  [(ngModel)]="studentSearch"
+                  placeholder="Nombre o matrícula"
+                />
+                <div class="student-selection">
+                  <label
+                    class="student-selection-item"
+                    *ngFor="let student of visibleStudents"
+                  >
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      [checked]="selectedStudentIds.has(student.id)"
+                      (change)="toggleStudent(student.id, $any($event.target).checked)"
+                    />
+                    <span>
+                      <strong>{{ student.firstName }} {{ student.lastName }}</strong>
+                      <small>
+                        {{ student.enrollmentNumber }}
+                        <ng-container *ngIf="student.gradeName || student.groupName">
+                          · {{ student.gradeName }} {{ student.groupName }}
+                        </ng-container>
+                      </small>
+                    </span>
+                  </label>
+                </div>
+                <div class="form-text">
+                  {{ selectedStudentIds.size }} alumno(s) seleccionado(s)
+                </div>
+              </div>
+
+              <div class="col-12 d-flex justify-content-end">
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  [disabled]="loadingPreview"
+                  (click)="previewAudience()"
+                >
+                  {{ loadingPreview ? 'Calculando…' : 'Revisar alcance' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4" *ngIf="editingScheduledId !== null">
+          <div class="card-header"><strong>2. Destinatarios</strong></div>
+          <div class="card-body">
+            <p class="mb-2"><strong>{{ editingAudienceSummary }}</strong></p>
+            <p class="text-body-secondary mb-0">
+              Los destinatarios quedaron fijados al programar el aviso y no cambian durante la edición.
+            </p>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header"><strong>3. Envío</strong></div>
+          <div class="card-body">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-5" *ngIf="editingScheduledId === null">
+                <label class="form-label">Cuándo</label>
+                <select
+                  class="form-select"
+                  [(ngModel)]="deliveryMode"
+                  [disabled]="type === 'EXPRESS_ALERT'"
+                >
+                  <option value="NOW">Enviar ahora</option>
+                  <option value="SCHEDULED">Programar</option>
+                </select>
+              </div>
+              <div
+                class="col-md-7"
+                *ngIf="deliveryMode === 'SCHEDULED' || editingScheduledId !== null"
+              >
+                <label class="form-label">Fecha y hora</label>
+                <input
+                  type="datetime-local"
+                  class="form-control"
+                  [(ngModel)]="scheduledAt"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-4">
+        <div class="card sticky-summary">
+          <div class="card-header"><strong>Resumen antes de enviar</strong></div>
+          <div class="card-body">
+            <ng-container *ngIf="preview; else previewEmpty">
+              <div class="audience-summary mb-3">
+                <div class="summary-number">{{ preview.guardians }}</div>
+                <div class="text-body-secondary">tutores únicos</div>
+                <div class="small mt-1">{{ preview.audienceSummary }}</div>
+              </div>
+
+              <div class="row g-2 text-center mb-3">
+                <div class="col-6">
+                  <div class="metric-box">
+                    <strong>{{ preview.students }}</strong>
+                    <span>Alumnos</span>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="metric-box">
+                    <strong>{{ preview.guardiansWithPush }}</strong>
+                    <span>Con push</span>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="metric-box">
+                    <strong>{{ preview.guardiansWithoutPush }}</strong>
+                    <span>Sin push</span>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="metric-box">
+                    <strong>{{ requiresAcknowledgement ? 'Sí' : 'No' }}</strong>
+                    <span>Confirmación</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="alert alert-info small mb-3">
+                Todos los destinatarios podrán consultar el aviso en su portal. El push se enviará sólo a quienes tengan un dispositivo habilitado.
+              </div>
+            </ng-container>
+
+            <ng-template #previewEmpty>
+              <p class="text-body-secondary">
+                Define los destinatarios y usa <strong>Revisar alcance</strong> para saber cuántos tutores recibirán el comunicado.
+              </p>
+            </ng-template>
+
+            <div class="d-grid gap-2">
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="saving || (!editingScheduledId && !preview)"
+                (click)="save()"
+              >
+                <ng-container *ngIf="editingScheduledId; else createButton">
+                  {{ saving ? 'Guardando…' : 'Guardar cambios' }}
+                </ng-container>
+                <ng-template #createButton>
+                  {{ saving
+                    ? 'Procesando…'
+                    : deliveryMode === 'NOW'
+                      ? 'Enviar aviso'
+                      : 'Programar aviso' }}
+                </ng-template>
+              </button>
+              <button
+                *ngIf="editingScheduledId"
+                type="button"
+                class="btn btn-outline-secondary"
+                [disabled]="saving"
+                (click)="cancelEditing()"
+              >
+                Cancelar edición
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="!loadingInitial && activeView === 'HISTORY'">
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+          <div class="text-body-secondary small">Publicados</div>
+          <div class="fs-3 fw-semibold">{{ publishedCount }}</div>
+        </div></div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+          <div class="text-body-secondary small">Programados</div>
+          <div class="fs-3 fw-semibold">{{ scheduledCount }}</div>
+        </div></div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+          <div class="text-body-secondary small">Publicados este mes</div>
+          <div class="fs-3 fw-semibold">{{ sentThisMonthCount }}</div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center gap-2">
+        <strong>Historial de comunicaciones</strong>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          [disabled]="loadingHistory"
+          (click)="refreshHistory()"
+        >
+          {{ loadingHistory ? 'Actualizando…' : 'Actualizar' }}
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Comunicado</th>
+              <th>Destinatarios</th>
+              <th>Estado</th>
+              <th>Entrega</th>
+              <th>Lectura</th>
+              <th>Fecha</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of history">
+              <td>
+                <div class="fw-semibold">{{ item.title }}</div>
+                <div class="small text-body-secondary">
+                  {{ typeLabel(item.type) }} · {{ priorityLabel(item.priority) }}
+                </div>
+                <div class="small text-body-secondary">{{ item.audienceSummary }}</div>
+              </td>
+              <td>
+                <div>{{ item.recipientCount }} tutores</div>
+                <div class="small text-body-secondary">{{ item.studentCount }} alumnos</div>
+              </td>
+              <td>
+                <span
+                  class="badge"
+                  [class.text-bg-success]="item.status === 'PUBLISHED'"
+                  [class.text-bg-info]="item.status === 'SCHEDULED'"
+                  [class.text-bg-secondary]="item.status === 'CANCELLED'"
+                >{{ statusLabel(item.status) }}</span>
+              </td>
+              <td>
+                <div>{{ item.sentCount }} enviados</div>
+                <div class="small text-danger" *ngIf="item.failedCount > 0">
+                  {{ item.failedCount }} fallidos
+                </div>
+                <div class="small text-body-secondary" *ngIf="item.pushRecipientCount < item.recipientCount">
+                  {{ item.recipientCount - item.pushRecipientCount }} sin push
+                </div>
+              </td>
+              <td>
+                <div>{{ item.viewedCount }} consultados</div>
+                <div class="small text-body-secondary" *ngIf="item.requiresAcknowledgement">
+                  {{ item.acknowledgedCount }} enterados
+                </div>
+              </td>
+              <td>
+                {{ formatDate(item.status === 'SCHEDULED' ? item.scheduledAt : item.publishedAt) }}
+              </td>
+              <td class="text-end text-nowrap">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="openDetail(item)">
+                  Ver
+                </button>
+                <button
+                  *ngIf="item.status === 'SCHEDULED'"
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary me-1"
+                  (click)="editScheduled(item)"
+                >Editar</button>
+                <button
+                  *ngIf="item.status === 'SCHEDULED'"
+                  type="button"
+                  class="btn btn-sm btn-outline-danger me-1"
+                  (click)="cancelScheduled(item)"
+                >Cancelar</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="duplicate(item)">
+                  Duplicar
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="history.length === 0">
+              <td colspan="7" class="text-center text-body-secondary py-5">
+                Aún no hay comunicaciones registradas.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mb-4" *ngIf="selectedDetail as detail">
+      <div class="card-header d-flex justify-content-between align-items-center gap-2">
+        <div>
+          <strong>{{ detail.title }}</strong>
+          <div class="small text-body-secondary">{{ detail.audienceSummary }}</div>
+        </div>
+        <button type="button" class="btn-close" aria-label="Cerrar" (click)="closeDetail()"></button>
+      </div>
+      <div class="card-body">
+        <div class="communication-message mb-4">{{ detail.message }}</div>
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-lg-3"><div class="metric-box"><strong>{{ detail.recipientCount }}</strong><span>Destinatarios</span></div></div>
+          <div class="col-6 col-lg-3"><div class="metric-box"><strong>{{ detail.sentCount }}</strong><span>Push enviados</span></div></div>
+          <div class="col-6 col-lg-3"><div class="metric-box"><strong>{{ detail.viewedCount }}</strong><span>Consultaron</span></div></div>
+          <div class="col-6 col-lg-3"><div class="metric-box"><strong>{{ detail.acknowledgedCount }}</strong><span>Enterados</span></div></div>
+        </div>
+
+        <div *ngIf="loadingDetail" class="text-center text-body-secondary py-4">Cargando destinatarios…</div>
+        <div class="table-responsive" *ngIf="!loadingDetail">
+          <table class="table table-sm align-middle">
+            <thead><tr><th>Tutor</th><th>Push</th><th>Consultó</th><th>Enterado</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let recipient of detailRecipients">
+                <td>
+                  <div class="fw-semibold">{{ recipient.guardianName }}</div>
+                  <div class="small text-body-secondary">{{ recipient.phone || recipient.email || 'Sin contacto' }}</div>
+                </td>
+                <td>{{ pushStatusLabel(recipient.pushStatus) }}</td>
+                <td>{{ formatDate(recipient.viewedAt) }}</td>
+                <td>{{ formatDate(recipient.acknowledgedAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

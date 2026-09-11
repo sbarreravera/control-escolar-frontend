@@ -1,44 +1,34 @@
-<div class="mb-4">
-  <h1 class="h3 mb-1">
-    Bienvenido, {{ currentUser()?.fullName }}
-  </h1>
+@if (currentUser()?.role === 'SUPER_ADMIN') {
+  <div class="mb-4">
+    <h1 class="h3 mb-1">
+      Bienvenido, {{ currentUser()?.fullName }}
+    </h1>
+    <p class="text-body-secondary mb-0">
+      Administración general de Control Escolar
+    </p>
+  </div>
 
-  <p class="text-body-secondary mb-0">
-    Panel principal del sistema de control escolar
-  </p>
-</div>
-
-<c-row>
-  <c-col md="6" lg="4" class="mb-4">
-    <c-card class="h-100">
-      <c-card-body>
-        <p
-          class="text-body-secondary text-uppercase small mb-2"
-        >
-          Sesión actual
-        </p>
-
-        <h2 class="h5 mb-2">
-          {{ roleLabel() }}
-        </h2>
-
-        <p class="text-body-secondary mb-0">
-          {{ currentUser()?.email }}
-        </p>
-      </c-card-body>
-    </c-card>
-  </c-col>
-
-  @if (currentUser()?.role === 'SUPER_ADMIN') {
+  <c-row>
     <c-col md="6" lg="4" class="mb-4">
       <c-card class="h-100">
         <c-card-body>
-          <p
-            class="text-body-secondary text-uppercase small mb-2"
-          >
+          <p class="text-body-secondary text-uppercase small mb-2">
+            Sesión actual
+          </p>
+          <h2 class="h5 mb-2">{{ roleLabel() }}</h2>
+          <p class="text-body-secondary mb-0">
+            {{ currentUser()?.email }}
+          </p>
+        </c-card-body>
+      </c-card>
+    </c-col>
+
+    <c-col md="6" lg="4" class="mb-4">
+      <c-card class="h-100">
+        <c-card-body>
+          <p class="text-body-secondary text-uppercase small mb-2">
             Escuelas registradas
           </p>
-
           <h2 class="display-6 mb-3">
             @if (loadingSchools()) {
               ...
@@ -46,7 +36,6 @@
               {{ schoolCount() ?? 0 }}
             }
           </h2>
-
           <a
             cButton
             color="primary"
@@ -58,73 +47,325 @@
         </c-card-body>
       </c-card>
     </c-col>
-  } @else {
-    <c-col md="6" lg="4" class="mb-4">
-      <c-card class="h-100">
-        <c-card-body>
-          <p
-            class="text-body-secondary text-uppercase small mb-2"
-          >
-            Escuela
-          </p>
+  </c-row>
+} @else {
+  <div class="dashboard-heading mb-4">
+    <div>
+      <p class="dashboard-eyebrow mb-1">Resumen de hoy</p>
+      <h1 class="h3 mb-1">
+        {{ currentUser()?.schoolName }}
+      </h1>
+      <p class="text-body-secondary text-capitalize mb-0">
+        {{ todayLabel }}
+      </p>
+    </div>
 
-          <h2 class="h5 mb-0">
-            {{ currentUser()?.schoolName }}
-          </h2>
-        </c-card-body>
-      </c-card>
-    </c-col>
+    <button
+      cButton
+      color="primary"
+      variant="outline"
+      type="button"
+      [disabled]="loadingSummary()"
+      (click)="refreshSummary()"
+    >
+      {{ loadingSummary() ? 'Actualizando...' : 'Actualizar resumen' }}
+    </button>
+  </div>
+
+  @if (summaryError()) {
+    <div class="alert alert-danger" role="alert">
+      No fue posible cargar el resumen operativo de la escuela.
+      Puedes volver a intentarlo con “Actualizar resumen”.
+    </div>
   }
 
-  <c-col md="6" lg="4" class="mb-4">
-    <c-card class="h-100">
-      <c-card-body>
-        <p
-          class="text-body-secondary text-uppercase small mb-2"
-        >
-          Estado
-        </p>
-
-        <h2 class="h5 text-success mb-2">
-          Sesión activa
-        </h2>
-
-        <p class="text-body-secondary mb-0">
-          El frontend está conectado con el backend.
-        </p>
+  @if (loadingSummary() && !summary()) {
+    <c-card class="mb-4">
+      <c-card-body class="py-5 text-center text-body-secondary">
+        Cargando información de la escuela...
       </c-card-body>
     </c-card>
-  </c-col>
-</c-row>
+  }
 
-<c-card>
-  <c-card-body>
-    @if (currentUser()?.role === 'SUPER_ADMIN') {
-      <h2 class="h5">
-        Administración de la plataforma
-      </h2>
+  @if (summary(); as data) {
+    <c-row class="dashboard-metrics">
+      <c-col sm="6" xl="3" class="mb-4">
+        <c-card class="metric-card h-100">
+          <c-card-body>
+            <span class="metric-label">Alumnos activos</span>
+            <strong class="metric-value">{{ data.activeStudents }}</strong>
+            <a routerLink="/students" class="metric-link">
+              Ver alumnos
+            </a>
+          </c-card-body>
+        </c-card>
+      </c-col>
 
-      <p class="text-body-secondary mb-3">
-        Desde el módulo de escuelas podrás registrar cada
-        institución junto con su primer administrador.
-      </p>
+      <c-col sm="6" xl="3" class="mb-4">
+        <c-card class="metric-card metric-card-entry h-100">
+          <c-card-body>
+            <span class="metric-label">Entradas de hoy</span>
+            <strong class="metric-value">{{ data.entriesToday }}</strong>
+            <span class="metric-note">Registros de ingreso</span>
+          </c-card-body>
+        </c-card>
+      </c-col>
 
-      <a
-        cButton
-        color="primary"
-        routerLink="/schools"
-      >
-        Ir a escuelas
-      </a>
-    } @else {
-      <h2 class="h5">
-        Operación escolar
-      </h2>
+      <c-col sm="6" xl="3" class="mb-4">
+        <c-card class="metric-card metric-card-exit h-100">
+          <c-card-body>
+            <span class="metric-label">Salidas de hoy</span>
+            <strong class="metric-value">{{ data.exitsToday }}</strong>
+            <span class="metric-note">Registros de salida</span>
+          </c-card-body>
+        </c-card>
+      </c-col>
 
-      <p class="text-body-secondary mb-0">
-        Aquí tendrás acceso a alumnos, tutores, credenciales
-        y registros de entrada y salida de tu escuela.
-      </p>
+      <c-col sm="6" xl="3" class="mb-4">
+        <c-card class="metric-card h-100">
+          <c-card-body>
+            <span class="metric-label">Tutores con acceso</span>
+            <strong class="metric-value">
+              {{ data.activatedGuardianAccounts }}
+              <small>/ {{ data.activeGuardians }}</small>
+            </strong>
+            <a routerLink="/guardian-activation" class="metric-link">
+              Revisar activaciones
+            </a>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    @if (
+      studentsWithoutGuardian() > 0 ||
+      studentsWithoutCredential() > 0 ||
+      guardiansPendingActivation() > 0
+    ) {
+      <c-card class="attention-card mb-4">
+        <c-card-body>
+          <div class="attention-header mb-3">
+            <div>
+              <p class="dashboard-eyebrow mb-1">Requiere atención</p>
+              <h2 class="h5 mb-0">Pendientes para completar la operación</h2>
+            </div>
+          </div>
+
+          <div class="attention-items">
+            @if (studentsWithoutGuardian() > 0) {
+              <a routerLink="/guardians" class="attention-item">
+                <strong>{{ studentsWithoutGuardian() }}</strong>
+                <span>alumnos sin tutor relacionado</span>
+              </a>
+            }
+
+            @if (studentsWithoutCredential() > 0) {
+              <a routerLink="/credentials" class="attention-item">
+                <strong>{{ studentsWithoutCredential() }}</strong>
+                <span>alumnos sin credencial QR activa</span>
+              </a>
+            }
+
+            @if (guardiansPendingActivation() > 0) {
+              <a routerLink="/guardian-activation" class="attention-item">
+                <strong>{{ guardiansPendingActivation() }}</strong>
+                <span>tutores pendientes de activar su acceso</span>
+              </a>
+            }
+          </div>
+        </c-card-body>
+      </c-card>
     }
-  </c-card-body>
-</c-card>
+
+    <c-row>
+      <c-col lg="5" class="mb-4">
+        <c-card class="h-100">
+          <c-card-body>
+            <div class="section-heading mb-4">
+              <div>
+                <p class="dashboard-eyebrow mb-1">Preparación operativa</p>
+                <h2 class="h5 mb-0">Cobertura de la escuela</h2>
+              </div>
+            </div>
+
+            <div class="readiness-item">
+              <div class="readiness-heading">
+                <span>Alumnos con tutor</span>
+                <strong>
+                  {{ data.studentsWithGuardian }} / {{ data.activeStudents }}
+                </strong>
+              </div>
+              <div class="progress" role="progressbar">
+                <div
+                  class="progress-bar"
+                  [style.width.%]="percentage(data.studentsWithGuardian, data.activeStudents)"
+                ></div>
+              </div>
+              <small class="text-body-secondary">
+                {{ percentage(data.studentsWithGuardian, data.activeStudents) }}% de cobertura
+              </small>
+            </div>
+
+            <div class="readiness-item">
+              <div class="readiness-heading">
+                <span>Credenciales QR activas</span>
+                <strong>
+                  {{ data.activeCredentials }} / {{ data.activeStudents }}
+                </strong>
+              </div>
+              <div class="progress" role="progressbar">
+                <div
+                  class="progress-bar"
+                  [style.width.%]="percentage(data.activeCredentials, data.activeStudents)"
+                ></div>
+              </div>
+              <small class="text-body-secondary">
+                {{ percentage(data.activeCredentials, data.activeStudents) }}% de alumnos listos para escaneo
+              </small>
+            </div>
+
+            <div class="readiness-item">
+              <div class="readiness-heading">
+                <span>Tutores con acceso al portal</span>
+                <strong>
+                  {{ data.activatedGuardianAccounts }} / {{ data.activeGuardians }}
+                </strong>
+              </div>
+              <div class="progress" role="progressbar">
+                <div
+                  class="progress-bar"
+                  [style.width.%]="percentage(data.activatedGuardianAccounts, data.activeGuardians)"
+                ></div>
+              </div>
+              <small class="text-body-secondary">
+                {{ percentage(data.activatedGuardianAccounts, data.activeGuardians) }}% de tutores activados
+              </small>
+            </div>
+
+            <div class="readiness-item mb-0">
+              <div class="readiness-heading">
+                <span>Tutores con avisos activos</span>
+                <strong>
+                  {{ data.guardiansWithNotifications }} / {{ data.activeGuardians }}
+                </strong>
+              </div>
+              <div class="progress" role="progressbar">
+                <div
+                  class="progress-bar"
+                  [style.width.%]="percentage(data.guardiansWithNotifications, data.activeGuardians)"
+                ></div>
+              </div>
+              <small class="text-body-secondary">
+                {{ guardiansWithoutNotifications() }} tutores aún sin dispositivo de avisos
+              </small>
+            </div>
+          </c-card-body>
+        </c-card>
+      </c-col>
+
+      <c-col lg="7" class="mb-4">
+        <c-card class="h-100">
+          <c-card-body>
+            <div class="section-heading mb-3">
+              <div>
+                <p class="dashboard-eyebrow mb-1">Actividad de hoy</p>
+                <h2 class="h5 mb-0">Últimos movimientos</h2>
+              </div>
+              <a cButton color="primary" size="sm" routerLink="/access-scanner">
+                Registrar acceso
+              </a>
+            </div>
+
+            @if (data.recentEvents.length === 0) {
+              <div class="empty-state">
+                <strong>Aún no hay movimientos registrados hoy.</strong>
+                <span>
+                  Las entradas y salidas aparecerán aquí conforme se escaneen las credenciales.
+                </span>
+              </div>
+            } @else {
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Hora</th>
+                      <th>Alumno</th>
+                      <th>Grupo</th>
+                      <th class="text-end">Movimiento</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (event of data.recentEvents; track event.id) {
+                      <tr>
+                        <td class="text-nowrap">
+                          {{ event.occurredAt | date:'h:mm a' }}
+                        </td>
+                        <td>
+                          <strong class="d-block">{{ event.studentName }}</strong>
+                          <small class="text-body-secondary">
+                            {{ event.enrollmentNumber }}
+                          </small>
+                        </td>
+                        <td>
+                          {{ event.gradeName || '—' }}
+                          @if (event.groupName) {
+                            <span class="text-body-secondary"> · {{ event.groupName }}</span>
+                          }
+                        </td>
+                        <td class="text-end">
+                          <span
+                            class="movement-badge"
+                            [class.movement-entry]="event.eventType === 'ENTRY'"
+                            [class.movement-exit]="event.eventType === 'EXIT'"
+                          >
+                            {{ eventLabel(event) }}
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+
+    <c-card>
+      <c-card-body>
+        <div class="section-heading mb-3">
+          <div>
+            <p class="dashboard-eyebrow mb-1">Accesos rápidos</p>
+            <h2 class="h5 mb-0">Operación diaria</h2>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <a routerLink="/access-scanner" class="quick-action">
+            <strong>Registrar acceso</strong>
+            <span>Escanear entrada o salida</span>
+          </a>
+          <a routerLink="/students" class="quick-action">
+            <strong>Alumnos</strong>
+            <span>Consultar y actualizar alumnos</span>
+          </a>
+          <a routerLink="/guardians" class="quick-action">
+            <strong>Tutores</strong>
+            <span>Consultar relaciones y contactos</span>
+          </a>
+          <a routerLink="/credentials" class="quick-action">
+            <strong>Credenciales QR</strong>
+            <span>Revisar credenciales activas</span>
+          </a>
+          @if (currentUser()?.role === 'ADMIN') {
+            <a routerLink="/guardian-activation" class="quick-action">
+              <strong>Activación de tutores</strong>
+              <span>Dar seguimiento al acceso de padres</span>
+            </a>
+          }
+        </div>
+      </c-card-body>
+    </c-card>
+  }
+}

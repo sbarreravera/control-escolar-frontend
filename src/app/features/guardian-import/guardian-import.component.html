@@ -20,8 +20,18 @@
   </div>
 }
 
-<div class="alert alert-info" role="status">
+<div
+  #guardianImportNotice
+  class="alert alert-info alert-dismissible"
+  role="status"
+>
   Una clave identifica al mismo tutor dentro de la escuela. Repite esa clave cuando el tutor tenga varios alumnos; el sistema no deduce identidades por nombre.
+  <button
+    type="button"
+    class="btn-close"
+    aria-label="Cerrar aviso"
+    (click)="guardianImportNotice.hidden = true"
+  ></button>
 </div>
 
 <c-row>
