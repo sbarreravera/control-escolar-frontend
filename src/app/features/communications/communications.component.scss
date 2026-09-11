@@ -1,0 +1,95 @@
+.communications-page {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.message-box {
+  resize: vertical;
+  min-height: 150px;
+}
+
+.selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: .65rem;
+}
+
+.selection-item,
+.student-selection-item {
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+  border: 1px solid var(--cui-border-color);
+  border-radius: .5rem;
+  padding: .75rem;
+  cursor: pointer;
+}
+
+.selection-item:hover,
+.student-selection-item:hover {
+  background: var(--cui-tertiary-bg);
+}
+
+.student-selection {
+  max-height: 340px;
+  overflow-y: auto;
+  display: grid;
+  gap: .5rem;
+}
+
+.student-selection-item small {
+  display: block;
+  color: var(--cui-secondary-color);
+  margin-top: .15rem;
+}
+
+.sticky-summary {
+  position: sticky;
+  top: 1rem;
+}
+
+.audience-summary {
+  text-align: center;
+  padding: .75rem 0;
+}
+
+.summary-number {
+  font-size: 2.4rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.metric-box {
+  border: 1px solid var(--cui-border-color);
+  border-radius: .5rem;
+  padding: .75rem;
+  height: 100%;
+}
+
+.metric-box strong,
+.metric-box span {
+  display: block;
+}
+
+.metric-box strong {
+  font-size: 1.2rem;
+}
+
+.metric-box span {
+  color: var(--cui-secondary-color);
+  font-size: .78rem;
+  margin-top: .2rem;
+}
+
+.communication-message {
+  white-space: pre-wrap;
+  padding: 1rem;
+  border-radius: .5rem;
+  background: var(--cui-tertiary-bg);
+}
+
+@media (max-width: 1199.98px) {
+  .sticky-summary {
+    position: static;
+  }
+}
