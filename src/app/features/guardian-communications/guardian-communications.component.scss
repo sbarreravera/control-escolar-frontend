@@ -1,0 +1,273 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #202735;
+  color: #f4f6fb;
+}
+
+.guardian-communications-shell {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #283143 0, #202735 170px);
+}
+
+.portal-container {
+  width: min(100% - 2rem, 1040px);
+  margin-inline: auto;
+}
+
+.communications-topbar {
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(30, 37, 50, .9);
+}
+
+.topbar-content,
+.brand-lockup,
+.page-heading,
+.section-heading,
+.detail-heading,
+.notice-card-heading,
+.notice-footer {
+  display: flex;
+  align-items: center;
+}
+
+.topbar-content {
+  min-height: 72px;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand-lockup {
+  gap: .75rem;
+}
+
+.brand-lockup div,
+.notice-card-heading > div {
+  display: grid;
+}
+
+.brand-lockup span:last-child {
+  color: #aeb8ca;
+  font-size: .78rem;
+}
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #5b5bd6;
+  color: white;
+  font-weight: 700;
+}
+
+.communications-main {
+  padding-block: 2.5rem 4rem;
+}
+
+.page-heading,
+.section-heading,
+.detail-heading,
+.notice-card-heading,
+.notice-footer {
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-heading {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  color: #8587ff;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.unread-pill,
+.new-badge,
+.notice-chip,
+.priority-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.unread-pill {
+  background: rgba(91, 91, 214, .2);
+  color: #b8baff;
+  padding: .45rem .75rem;
+}
+
+.communication-detail,
+.notice-card,
+.portal-state {
+  background: #252d3c;
+  border-color: rgba(255, 255, 255, .09);
+  color: inherit;
+}
+
+.communication-detail {
+  margin-bottom: 2rem;
+  border-left: 4px solid #6869e8;
+}
+
+.communication-detail.communication-important {
+  border-left-color: #f0ad4e;
+}
+
+.communication-detail.communication-urgent {
+  border-left-color: #dc3545;
+}
+
+.detail-heading {
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.notice-chip {
+  color: #c5c7ff;
+  background: rgba(91, 91, 214, .2);
+  padding: .25rem .55rem;
+}
+
+.priority-chip {
+  color: #cbd2df;
+  background: rgba(255, 255, 255, .08);
+  padding: .25rem .55rem;
+}
+
+.priority-important {
+  color: #ffd898;
+  background: rgba(240, 173, 78, .14);
+}
+
+.priority-urgent {
+  color: #ffb4bb;
+  background: rgba(220, 53, 69, .16);
+}
+
+.notice-message {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+  color: #eef1f7;
+}
+
+.acknowledged-box {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  padding: .9rem 1rem;
+  border-radius: .6rem;
+  background: rgba(25, 135, 84, .14);
+  color: #b9f0d0;
+}
+
+.acknowledged-box span {
+  font-size: .8rem;
+}
+
+.notices-section {
+  margin-top: 1.5rem;
+}
+
+.section-heading {
+  margin-bottom: 1rem;
+}
+
+.notice-list {
+  display: grid;
+  gap: .75rem;
+}
+
+.notice-card {
+  width: 100%;
+  text-align: left;
+  transition: transform .15s ease, border-color .15s ease;
+}
+
+.notice-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(133, 135, 255, .45);
+}
+
+.notice-card.notice-unread {
+  border-left: 4px solid #8587ff;
+}
+
+.notice-card.notice-urgent {
+  border-left-color: #dc3545;
+}
+
+.notice-card strong {
+  color: #f7f8fc;
+}
+
+.notice-date,
+.notice-footer,
+.notice-card p,
+.text-body-secondary {
+  color: #aeb8ca !important;
+}
+
+.notice-date {
+  font-size: .78rem;
+  white-space: nowrap;
+}
+
+.notice-card p {
+  margin: .7rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notice-footer {
+  font-size: .78rem;
+}
+
+.new-badge {
+  padding: .2rem .45rem;
+  background: #5b5bd6;
+  color: white;
+}
+
+.portal-state {
+  padding: 2rem;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto .75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(25, 135, 84, .15);
+  color: #9ce1b9;
+}
+
+.btn-close {
+  filter: invert(1) grayscale(1);
+}
+
+@media (max-width: 700px) {
+  .page-heading,
+  .notice-card-heading,
+  .notice-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .notice-date {
+    white-space: normal;
+  }
+}

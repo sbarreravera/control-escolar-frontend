@@ -27,24 +27,17 @@ export class FirebaseMessagingService {
   private firebaseApp?: FirebaseApp;
   private messaging?: Messaging;
 
-  /**
-   * Requests notification permission and returns the FCM
-   * registration token generated for this browser.
-   */
   async requestPermissionAndGetToken(): Promise<string> {
     this.validateBrowserEnvironment();
 
     const messagingSupported = await isSupported();
-
     if (!messagingSupported) {
       throw new Error(
         'Este navegador no es compatible con notificaciones push.'
       );
     }
 
-    const permission =
-      await Notification.requestPermission();
-
+    const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       throw new Error(
         'Debes permitir las notificaciones para vincular este dispositivo.'
@@ -52,9 +45,7 @@ export class FirebaseMessagingService {
     }
 
     const serviceWorkerRegistration =
-      await navigator.serviceWorker.register(
-        '/firebase-messaging-sw.js'
-      );
+      await navigator.serviceWorker.register('/firebase-messaging-sw.js');
 
     const currentToken = await getToken(
       this.getMessagingInstance(),
@@ -69,14 +60,12 @@ export class FirebaseMessagingService {
         'Firebase no pudo generar el identificador del dispositivo.'
       );
     }
-
     return currentToken;
   }
 
   /**
-   * Keeps the open guardian portal synchronized when a data-only access
-   * notification arrives. Background notifications are handled by the
-   * Firebase service worker.
+   * Shows all guardian pushes while the portal is open. Access-event pushes
+   * additionally invoke the callback so the movement history can refresh.
    */
   async listenForForegroundAccessEvents(
     onAccessEvent: (eventId: number) => void
@@ -86,8 +75,19 @@ export class FirebaseMessagingService {
     }
 
     return onMessage(this.getMessagingInstance(), payload => {
-      const eventId = Number(payload.data?.['accessEventId']);
+      const communicationId = Number(payload.data?.['communicationId']);
+      if (Number.isSafeInteger(communicationId) && communicationId > 0) {
+        this.showForegroundNotification(
+          payload.data?.['title'] ?? 'Nuevo aviso de la escuela',
+          payload.data?.['body'] ?? '',
+          payload.data?.['route']
+            ?? `/#/guardian/communications?communicationId=${communicationId}`,
+          `communication-${communicationId}`
+        );
+        return;
+      }
 
+      const eventId = Number(payload.data?.['accessEventId']);
       if (!Number.isSafeInteger(eventId) || eventId <= 0) {
         return;
       }
@@ -96,9 +96,8 @@ export class FirebaseMessagingService {
         payload.data?.['title'] ?? 'Movimiento registrado',
         payload.data?.['body'] ?? '',
         payload.data?.['route'] ?? `/#/guardian?eventId=${eventId}`,
-        eventId
+        `access-event-${eventId}`
       );
-
       onAccessEvent(eventId);
     });
   }
@@ -109,11 +108,9 @@ export class FirebaseMessagingService {
         ? getApp()
         : initializeApp(firebaseConfig);
     }
-
     if (!this.messaging) {
       this.messaging = getMessaging(this.firebaseApp);
     }
-
     return this.messaging;
   }
 
@@ -121,7 +118,7 @@ export class FirebaseMessagingService {
     title: string,
     body: string,
     route: string,
-    eventId: number
+    tag: string
   ): void {
     if (!('Notification' in window)
         || Notification.permission !== 'granted') {
@@ -130,7 +127,7 @@ export class FirebaseMessagingService {
 
     const notification = new Notification(title, {
       body,
-      tag: `access-event-${eventId}`,
+      tag,
       data: { route }
     });
 
@@ -149,13 +146,11 @@ export class FirebaseMessagingService {
         'Las notificaciones requieren una conexión HTTPS segura.'
       );
     }
-
     if (!('Notification' in window)) {
       throw new Error(
         'Este navegador no permite mostrar notificaciones.'
       );
     }
-
     if (!('serviceWorker' in navigator)) {
       throw new Error(
         'Este navegador no admite service workers.'

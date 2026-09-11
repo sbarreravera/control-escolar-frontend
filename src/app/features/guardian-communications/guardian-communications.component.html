@@ -1,0 +1,149 @@
+<div class="guardian-communications-shell">
+  <header class="communications-topbar">
+    <div class="portal-container topbar-content">
+      <div class="brand-lockup">
+        <span class="brand-mark" aria-hidden="true">CE</span>
+        <div>
+          <strong>Control Escolar</strong>
+          <span>{{ identity()?.schoolName || 'Portal de tutores' }}</span>
+        </div>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="backToPortal()">
+        Volver al portal
+      </button>
+    </div>
+  </header>
+
+  <main class="portal-container communications-main">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow mb-2">Comunicación escolar</p>
+        <h1 class="h2 mb-2">Avisos</h1>
+        <p class="text-body-secondary mb-0">
+          Consulta los comunicados enviados por la escuela.
+        </p>
+      </div>
+      @if (!loading()) {
+        <span class="unread-pill">
+          {{ unreadCount }} {{ unreadCount === 1 ? 'pendiente' : 'pendientes' }}
+        </span>
+      }
+    </section>
+
+    @if (errorMessage()) {
+      <div class="alert alert-warning" role="alert">{{ errorMessage() }}</div>
+    }
+
+    @if (selected(); as communication) {
+      <section
+        class="communication-detail card"
+        [class.communication-urgent]="communication.priority === 'URGENT'"
+        [class.communication-important]="communication.priority === 'IMPORTANT'"
+      >
+        <div class="card-body">
+          <div class="detail-heading">
+            <div>
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <span class="notice-chip">{{ categoryLabel(communication.category) }}</span>
+                <span
+                  class="priority-chip"
+                  [class.priority-urgent]="communication.priority === 'URGENT'"
+                  [class.priority-important]="communication.priority === 'IMPORTANT'"
+                >{{ priorityLabel(communication.priority) }}</span>
+              </div>
+              <h2 class="h4 mb-1">{{ communication.title }}</h2>
+              <small class="text-body-secondary">
+                {{ formatDate(communication.publishedAt) }}
+              </small>
+            </div>
+            <button type="button" class="btn-close" aria-label="Cerrar aviso" (click)="closeCommunication()"></button>
+          </div>
+
+          <div class="notice-message">{{ communication.message }}</div>
+
+          @if (communication.requiresAcknowledgement) {
+            @if (communication.acknowledgedAt) {
+              <div class="acknowledged-box">
+                <strong>Enterado confirmado</strong>
+                <span>{{ formatDate(communication.acknowledgedAt) }}</span>
+              </div>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="acknowledging()"
+                (click)="acknowledge()"
+              >
+                {{ acknowledging() ? 'Confirmando…' : 'Confirmar que estoy enterado' }}
+              </button>
+            }
+          }
+        </div>
+      </section>
+    } @else if (loadingSelected()) {
+      <section class="card portal-state">Cargando aviso…</section>
+    }
+
+    <section class="notices-section" aria-labelledby="notices-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow mb-1">Historial</p>
+          <h2 id="notices-title" class="h4 mb-0">Comunicados de la escuela</h2>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="loading()" (click)="loadCommunications()">
+          Actualizar
+        </button>
+      </div>
+
+      @if (loading()) {
+        <div class="card portal-state">Cargando avisos…</div>
+      } @else if (communications().length === 0) {
+        <div class="card portal-state">
+          <div class="empty-icon" aria-hidden="true">✓</div>
+          <h3 class="h6 mb-1">No tienes avisos pendientes</h3>
+          <p class="text-body-secondary mb-0">
+            Los comunicados que envíe la escuela aparecerán aquí.
+          </p>
+        </div>
+      } @else {
+        <div class="notice-list">
+          @for (communication of communications(); track communication.id) {
+            <button
+              type="button"
+              class="notice-card card"
+              [class.notice-unread]="communication.viewedAt === null"
+              [class.notice-urgent]="communication.priority === 'URGENT'"
+              (click)="openCommunication(communication.id)"
+            >
+              <div class="card-body">
+                <div class="notice-card-heading">
+                  <div>
+                    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                      @if (communication.viewedAt === null) {
+                        <span class="new-badge">Nuevo</span>
+                      }
+                      <span class="notice-chip">{{ categoryLabel(communication.category) }}</span>
+                    </div>
+                    <strong>{{ communication.title }}</strong>
+                  </div>
+                  <span class="notice-date">{{ formatDate(communication.publishedAt) }}</span>
+                </div>
+                <p>{{ communication.message }}</p>
+                <div class="notice-footer">
+                  <span>{{ priorityLabel(communication.priority) }}</span>
+                  @if (communication.requiresAcknowledgement) {
+                    <span>
+                      {{ communication.acknowledgedAt
+                        ? 'Enterado confirmado'
+                        : 'Requiere confirmación' }}
+                    </span>
+                  }
+                </div>
+              </div>
+            </button>
+          }
+        </div>
+      }
+    </section>
+  </main>
+</div>
