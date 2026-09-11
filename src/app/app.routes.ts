@@ -47,6 +47,16 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'guardian/communications',
+    loadComponent: () =>
+      import(
+        './features/guardian-communications/guardian-communications.component'
+      ).then(module => module.GuardianCommunicationsComponent),
+    data: {
+      title: 'Avisos de la escuela'
+    }
+  },
+  {
     path: 'guardian',
     loadComponent: () =>
       import(
@@ -209,6 +219,22 @@ export const routes: Routes = [
         ],
         data: {
           title: 'Activación de tutores',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
+        path: 'communications',
+        loadComponent: () =>
+          import(
+            './features/communications/communications.component'
+          ).then(module => module.CommunicationsComponent),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Avisos y comunicaciones',
           roles: [
             'ADMIN'
           ]

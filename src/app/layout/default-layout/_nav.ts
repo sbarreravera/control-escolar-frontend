@@ -70,6 +70,13 @@ export function buildNavItems(
             iconComponent: {
               name: 'cil-lock-locked'
             }
+          },
+          {
+            name: 'Avisos y comunicaciones',
+            url: '/communications',
+            iconComponent: {
+              name: 'cil-bell'
+            }
           }
         ]
       : [];
