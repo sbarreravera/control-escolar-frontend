@@ -26,12 +26,21 @@
   </div>
 }
 
-<div
-  class="alert alert-info"
-  role="status"
->
-  Esta carga registra alumnos nuevos. No crea tutores ni credenciales QR y no modifica alumnos existentes.
-</div>
+@if (showImportNotice()) {
+  <div
+    class="alert alert-info alert-dismissible fade show"
+    role="status"
+  >
+    Esta carga registra alumnos nuevos. No crea tutores ni credenciales QR y no modifica alumnos existentes.
+
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Cerrar aviso"
+      (click)="showImportNotice.set(false)"
+    ></button>
+  </div>
+}
 
 <c-row>
   <c-col lg="5" class="mb-4">
