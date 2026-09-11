@@ -41,7 +41,7 @@
           <p class="eyebrow mb-2">Portal de tutores</p>
           <h1 class="h2 mb-2">Hola, {{ currentIdentity.guardianName }}</h1>
           <p class="text-body-secondary mb-0">
-            Consulta las entradas y salidas registradas por la escuela.
+            Consulta avisos, entradas y salidas registradas por la escuela.
           </p>
         </div>
 
@@ -58,6 +58,12 @@
                 : 'Activar avisos' }}
             </button>
           }
+          <a
+            class="btn btn-outline-primary"
+            href="/#/guardian/communications"
+          >
+            Avisos
+          </a>
           <button
             class="btn btn-primary refresh-button"
             type="button"

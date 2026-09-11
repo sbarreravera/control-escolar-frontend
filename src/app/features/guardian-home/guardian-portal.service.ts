@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import {
   GuardianAccessEvent,
   GuardianAccessEventPage,
+  GuardianCommunication,
   GuardianHistoryQuery,
   GuardianStudent
 } from './guardian-portal.models';
@@ -50,6 +51,30 @@ export class GuardianPortalService {
   findEvent(eventId: number): Observable<GuardianAccessEvent> {
     return this.http.get<GuardianAccessEvent>(
       `/api/v1/guardian/access-events/${eventId}`
+    );
+  }
+
+  findCommunications(): Observable<GuardianCommunication[]> {
+    return this.http.get<GuardianCommunication[]>(
+      '/api/v1/guardian/communications'
+    );
+  }
+
+  viewCommunication(
+    communicationId: number
+  ): Observable<GuardianCommunication> {
+    return this.http.post<GuardianCommunication>(
+      `/api/v1/guardian/communications/${communicationId}/view`,
+      {}
+    );
+  }
+
+  acknowledgeCommunication(
+    communicationId: number
+  ): Observable<GuardianCommunication> {
+    return this.http.post<GuardianCommunication>(
+      `/api/v1/guardian/communications/${communicationId}/acknowledge`,
+      {}
     );
   }
 }

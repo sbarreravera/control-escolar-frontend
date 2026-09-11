@@ -1,7 +1,6 @@
 /*
- * Register the click handler before Firebase imports its own listeners.
- * The route comes from the backend and contains only an access-event id;
- * authorization still happens when the portal requests the event.
+ * The backend provides an application route for every guardian push.
+ * Authorization still happens when the destination requests its data.
  */
 self.addEventListener('notificationclick', event => {
   event.notification.close();
@@ -15,7 +14,6 @@ self.addEventListener('notificationclick', event => {
         const exactClient = windowClients.find(
           client => client.url === destination
         );
-
         if (exactClient) {
           return exactClient.focus();
         }
@@ -23,12 +21,10 @@ self.addEventListener('notificationclick', event => {
         const applicationClient = windowClients.find(
           client => new URL(client.url).origin === self.location.origin
         );
-
         if (applicationClient && 'navigate' in applicationClient) {
           return applicationClient.navigate(destination)
             .then(client => client?.focus());
         }
-
         return clients.openWindow(destination);
       })
   );
@@ -37,7 +33,6 @@ self.addEventListener('notificationclick', event => {
 importScripts(
   'https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js'
 );
-
 importScripts(
   'https://www.gstatic.com/firebasejs/12.18.0/firebase-messaging-compat.js'
 );
@@ -55,15 +50,25 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(payload => {
   const data = payload.data || {};
-  const eventId = data.accessEventId || 'unknown';
+  const communicationId = data.communicationId;
+  const eventId = data.accessEventId;
+  const isCommunication = Boolean(communicationId);
 
   return self.registration.showNotification(
-    data.title || 'Movimiento registrado',
+    data.title || (isCommunication
+      ? 'Nuevo aviso de la escuela'
+      : 'Movimiento registrado'),
     {
-      body: data.body || 'La escuela registró un nuevo movimiento.',
-      tag: `access-event-${eventId}`,
+      body: data.body || (isCommunication
+        ? 'La escuela publicó un nuevo comunicado.'
+        : 'La escuela registró un nuevo movimiento.'),
+      tag: isCommunication
+        ? `communication-${communicationId}`
+        : `access-event-${eventId || 'unknown'}`,
       data: {
-        route: data.route || '/#/guardian'
+        route: data.route || (isCommunication
+          ? `/#/guardian/communications?communicationId=${communicationId}`
+          : '/#/guardian')
       }
     }
   );
