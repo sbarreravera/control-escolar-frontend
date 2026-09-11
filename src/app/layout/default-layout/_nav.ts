@@ -1,7 +1,5 @@
-﻿import { INavData } from '@coreui/angular';
-import {
-  AppUserRole
-} from '../../core/auth/auth.models';
+import { INavData } from '@coreui/angular';
+import { AppUserRole } from '../../core/auth/auth.models';
 
 export function buildNavItems(
   role: AppUserRole
@@ -33,88 +31,108 @@ export function buildNavItems(
     ];
   }
 
-  const academicItems: INavData[] =
-    role === 'ADMIN'
+  const studentChildren: INavData[] = [
+    {
+      name: 'Listado de alumnos',
+      url: '/students'
+    },
+    ...(role === 'ADMIN'
       ? [
           {
-            name: 'Ciclos escolares',
-            url: '/academic-cycles',
-            iconComponent: {
-              name: 'cil-calendar'
-            }
-          },
-          {
-            name: 'Grados y grupos',
-            url: '/school-groups',
-            iconComponent: {
-              name: 'cil-list'
-            }
-          },
-          {
-            name: 'Carga inicial',
-            url: '/student-import',
-            iconComponent: {
-              name: 'cil-spreadsheet'
-            }
-          },
-          {
-            name: 'Carga de tutores',
-            url: '/guardian-import',
-            iconComponent: {
-              name: 'cil-user-follow'
-            }
-          },
-          {
-            name: 'Activación de tutores',
-            url: '/guardian-activation',
-            iconComponent: {
-              name: 'cil-lock-locked'
-            }
-          },
-          {
-            name: 'Avisos y comunicaciones',
-            url: '/communications',
-            iconComponent: {
-              name: 'cil-bell'
-            }
+            name: 'Carga masiva',
+            url: '/student-import'
           }
         ]
-      : [];
+      : []),
+    {
+      name: 'Credenciales QR',
+      url: '/credentials'
+    }
+  ];
 
-  return [
+  const guardianChildren: INavData[] = [
+    {
+      name: 'Listado de tutores',
+      url: '/guardians'
+    },
+    ...(role === 'ADMIN'
+      ? [
+          {
+            name: 'Carga masiva',
+            url: '/guardian-import'
+          },
+          {
+            name: 'Accesos al portal',
+            url: '/guardian-activation'
+          }
+        ]
+      : [])
+  ];
+
+  const navigation: INavData[] = [
     ...items,
     {
       title: true,
-      name: 'Control escolar'
-    },
-    ...academicItems,
-    {
-      name: 'Alumnos',
-      url: '/students',
-      iconComponent: {
-        name: 'cil-people'
-      }
+      name: 'Operación'
     },
     {
-      name: 'Tutores',
-      url: '/guardians',
-      iconComponent: {
-        name: 'cil-user'
-      }
-    },
-    {
-      name: 'Credenciales QR',
-      url: '/credentials',
-      iconComponent: {
-        name: 'cil-credit-card'
-      }
-    },
-    {
-      name: 'Registrar acceso',
+      name: 'Registrar entrada/salida',
       url: '/access-scanner',
       iconComponent: {
         name: 'cil-check'
       }
     }
   ];
+
+  if (role === 'ADMIN') {
+    navigation.push({
+      name: 'Avisos y comunicaciones',
+      url: '/communications',
+      iconComponent: {
+        name: 'cil-bell'
+      }
+    });
+  }
+
+  navigation.push(
+    {
+      title: true,
+      name: 'Gestión escolar'
+    },
+    {
+      name: 'Alumnos',
+      iconComponent: {
+        name: 'cil-people'
+      },
+      children: studentChildren
+    },
+    {
+      name: 'Tutores',
+      iconComponent: {
+        name: 'cil-user'
+      },
+      children: guardianChildren
+    }
+  );
+
+  if (role === 'ADMIN') {
+    navigation.push({
+      name: 'Administración escolar',
+      iconComponent: {
+        name: 'cil-settings'
+      },
+      children: [
+        {
+          name: 'Ciclos escolares',
+          url: '/academic-cycles'
+        },
+        {
+          name: 'Grados y grupos',
+          url: '/school-groups'
+        }
+      ]
+    });
+  }
+
+  return navigation;
 }
