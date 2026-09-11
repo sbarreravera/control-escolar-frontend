@@ -6,7 +6,8 @@ import {
 import { Observable } from 'rxjs';
 import {
   CreateSchoolGroupRequest,
-  SchoolGroup
+  SchoolGroup,
+  UpdateSchoolGroupRequest
 } from './school-group.models';
 
 @Injectable({
@@ -35,6 +36,22 @@ export class SchoolGroupService {
     return this.http.post<SchoolGroup>(
       '/api/v1/school-groups',
       request
+    );
+  }
+
+  update(
+    schoolGroupId: number,
+    request: UpdateSchoolGroupRequest
+  ): Observable<SchoolGroup> {
+    return this.http.put<SchoolGroup>(
+      `/api/v1/school-groups/${schoolGroupId}`,
+      request
+    );
+  }
+
+  delete(schoolGroupId: number): Observable<void> {
+    return this.http.delete<void>(
+      `/api/v1/school-groups/${schoolGroupId}`
     );
   }
 }
