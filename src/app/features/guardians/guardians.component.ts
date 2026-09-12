@@ -38,6 +38,7 @@ import {
   CreateGuardianRequest,
   CreateStudentGuardianRequest,
   Guardian,
+  GuardianDeletionImpact,
   StudentGuardian,
   UpdateGuardianRequest
 } from './guardian.models';
@@ -83,6 +84,10 @@ export class GuardiansComponent implements OnInit {
   readonly submittingRelationship = signal(false);
   readonly removingGuardianId =
     signal<number | null>(null);
+  readonly checkingDeletionGuardianId =
+    signal<number | null>(null);
+  readonly deletingGuardianId =
+    signal<number | null>(null);
 
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage =
@@ -92,6 +97,10 @@ export class GuardiansComponent implements OnInit {
     () =>
       this.authService.currentUser()?.schoolName ??
       'Tu escuela'
+  );
+
+  readonly canDeleteGuardians = computed(
+    () => this.authService.currentUser()?.role === 'ADMIN'
   );
 
   readonly guardianForm =
@@ -310,6 +319,113 @@ export class GuardiansComponent implements OnInit {
 
   cancelEditing(): void {
     this.resetGuardianForm();
+  }
+
+  requestGuardianDeletion(guardian: Guardian): void {
+    if (
+      !this.canDeleteGuardians() ||
+      this.checkingDeletionGuardianId() !== null ||
+      this.deletingGuardianId() !== null
+    ) {
+      return;
+    }
+
+    this.checkingDeletionGuardianId.set(guardian.id);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.guardianService
+      .deletionImpact(guardian.id)
+      .pipe(
+        finalize(() => this.checkingDeletionGuardianId.set(null))
+      )
+      .subscribe({
+        next: impact => {
+          const confirmed = window.confirm(
+            this.buildGuardianDeletionConfirmation(impact)
+          );
+
+          if (confirmed) {
+            this.deleteGuardian(guardian);
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage.set(
+            this.resolveErrorMessage(error)
+          );
+        }
+      });
+  }
+
+  private deleteGuardian(guardian: Guardian): void {
+    this.deletingGuardianId.set(guardian.id);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.guardianService
+      .delete(guardian.id)
+      .pipe(
+        finalize(() => this.deletingGuardianId.set(null))
+      )
+      .subscribe({
+        next: () => {
+          this.guardians.update(current =>
+            current.filter(item => item.id !== guardian.id)
+          );
+          this.studentGuardians.update(current =>
+            current.filter(item => item.guardianId !== guardian.id)
+          );
+
+          if (this.editingGuardianId() === guardian.id) {
+            this.resetGuardianForm();
+          }
+
+          if (
+            this.relationshipForm.controls.guardianId.value === guardian.id
+          ) {
+            this.relationshipForm.controls.guardianId.setValue(null);
+          }
+
+          this.successMessage.set(
+            `El tutor ${guardian.fullName} fue eliminado definitivamente.`
+          );
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage.set(
+            this.resolveErrorMessage(error)
+          );
+        }
+      });
+  }
+
+  private buildGuardianDeletionConfirmation(
+    impact: GuardianDeletionImpact
+  ): string {
+    if (impact.students.length === 0) {
+      const activeDevices = impact.activeNotificationDeviceCount > 0
+        ? ` Tiene ${impact.activeNotificationDeviceCount} dispositivo(s) con notificaciones activas, que también serán eliminados.`
+        : '';
+
+      return `¿Eliminar definitivamente a ${impact.guardianName}?${activeDevices}\n\nTambién se eliminarán su acceso al portal, sesiones, invitaciones y datos de notificaciones asociados. Esta acción no se puede deshacer.`;
+    }
+
+    const studentLines = impact.students
+      .map(student =>
+        `• ${student.studentName} — matrícula ${student.enrollmentNumber}`
+      )
+      .join('\n');
+
+    const deviceLine = impact.activeNotificationDeviceCount > 0
+      ? `\n- ${impact.activeNotificationDeviceCount} dispositivo(s) con notificaciones activas.`
+      : '';
+
+    const historyCount =
+      impact.notificationLogCount + impact.communicationRecipientCount;
+    const historyLine = historyCount > 0
+      ? '\n- Su historial de entrega/recepción de notificaciones y avisos asociado.'
+      : '';
+
+    return `ATENCIÓN: ${impact.guardianName} está asignado a:\n${studentLines}\n\nAl eliminar este tutor se eliminarán:\n- Todas estas asignaciones alumno-tutor.\n- Su cuenta de acceso al portal, sesiones e invitaciones.\n- Sus dispositivos y configuración de notificaciones.${deviceLine}${historyLine}\n\nLos alumnos y su historial de entradas/salidas NO se eliminarán.\n\nEsta acción no se puede deshacer. ¿Deseas eliminar al tutor definitivamente?`;
   }
 
   private resetGuardianForm(): void {

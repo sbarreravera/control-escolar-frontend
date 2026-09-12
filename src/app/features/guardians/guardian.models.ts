@@ -43,3 +43,19 @@ export interface CreateStudentGuardianRequest {
   primaryContact: boolean;
   receivesNotifications: boolean;
 }
+
+export interface GuardianDeletionStudent {
+  studentId: number;
+  studentName: string;
+  enrollmentNumber: string;
+}
+
+export interface GuardianDeletionImpact {
+  guardianId: number;
+  guardianName: string;
+  externalReference: string | null;
+  students: GuardianDeletionStudent[];
+  activeNotificationDeviceCount: number;
+  notificationLogCount: number;
+  communicationRecipientCount: number;
+}

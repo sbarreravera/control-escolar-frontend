@@ -148,4 +148,66 @@ describe('GuardiansComponent', () => {
     expect(component.guardians()[0].phone)
       .toBe('7737361800');
   });
+
+  it('warns about linked students before permanently deleting a guardian', () => {
+    const guardian = {
+      id: 20,
+      schoolId: 1,
+      schoolName: 'Colegio San Felipe',
+      externalReference: 'EJE-02',
+      fullName: 'José de Jesús Corona',
+      phone: '5578971234',
+      email: 'jose.corona@gmail.com',
+      active: true,
+      createdAt: '2026-09-11T10:00:00-06:00',
+      updatedAt: '2026-09-11T10:00:00-06:00'
+    };
+    const confirmSpy = vi.spyOn(window, 'confirm')
+      .mockReturnValue(true);
+
+    component.guardians.set([guardian]);
+    component.requestGuardianDeletion(guardian);
+
+    const impactRequest = httpTestingController.expectOne(
+      '/api/v1/guardians/20/deletion-impact'
+    );
+    expect(impactRequest.request.method).toBe('GET');
+    impactRequest.flush({
+      guardianId: 20,
+      guardianName: 'José de Jesús Corona',
+      externalReference: 'EJE-02',
+      students: [
+        {
+          studentId: 30,
+          studentName: 'Alumno Ejemplo',
+          enrollmentNumber: 'MAT-001'
+        }
+      ],
+      activeNotificationDeviceCount: 1,
+      notificationLogCount: 2,
+      communicationRecipientCount: 1
+    });
+
+    expect(confirmSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Alumno Ejemplo')
+    );
+    expect(confirmSpy).toHaveBeenCalledWith(
+      expect.stringContaining('NO se eliminarán')
+    );
+
+    const deleteRequest = httpTestingController.expectOne(
+      '/api/v1/guardians/20'
+    );
+    expect(deleteRequest.request.method).toBe('DELETE');
+    deleteRequest.flush(null, {
+      status: 204,
+      statusText: 'No Content'
+    });
+
+    expect(component.guardians()).toEqual([]);
+    expect(component.successMessage())
+      .toContain('fue eliminado definitivamente');
+
+    confirmSpy.mockRestore();
+  });
 });

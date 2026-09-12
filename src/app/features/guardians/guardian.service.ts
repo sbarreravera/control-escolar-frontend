@@ -8,6 +8,7 @@ import {
   CreateGuardianRequest,
   CreateStudentGuardianRequest,
   Guardian,
+  GuardianDeletionImpact,
   StudentGuardian,
   UpdateGuardianRequest
 } from './guardian.models';
@@ -56,6 +57,22 @@ export class GuardianService {
     return this.http.put<Guardian>(
       `/api/v1/guardians/${guardianId}`,
       request
+    );
+  }
+
+  deletionImpact(
+    guardianId: number
+  ): Observable<GuardianDeletionImpact> {
+    return this.http.get<GuardianDeletionImpact>(
+      `/api/v1/guardians/${guardianId}/deletion-impact`
+    );
+  }
+
+  delete(
+    guardianId: number
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `/api/v1/guardians/${guardianId}`
     );
   }
 
