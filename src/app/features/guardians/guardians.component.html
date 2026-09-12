@@ -287,16 +287,41 @@
                       </td>
 
                       <td>
-                        <button
-                          cButton
-                          color="primary"
-                          variant="outline"
-                          size="sm"
-                          type="button"
-                          (click)="startEditing(guardian)"
-                        >
-                          Editar
-                        </button>
+                        <div class="d-flex gap-2">
+                          <button
+                            cButton
+                            color="primary"
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            (click)="startEditing(guardian)"
+                          >
+                            Editar
+                          </button>
+
+                          @if (canDeleteGuardians()) {
+                            <button
+                              cButton
+                              color="danger"
+                              variant="outline"
+                              size="sm"
+                              type="button"
+                              [disabled]="
+                                checkingDeletionGuardianId() !== null ||
+                                deletingGuardianId() !== null
+                              "
+                              (click)="requestGuardianDeletion(guardian)"
+                            >
+                              @if (checkingDeletionGuardianId() === guardian.id) {
+                                Revisando...
+                              } @else if (deletingGuardianId() === guardian.id) {
+                                Eliminando...
+                              } @else {
+                                Eliminar
+                              }
+                            </button>
+                          }
+                        </div>
                       </td>
                     </tr>
                   }
