@@ -64,6 +64,43 @@ export class FirebaseMessagingService {
   }
 
   /**
+   * Reuses a previously granted notification permission without prompting the
+   * guardian again. Authentication must never fail only because Firebase is
+   * unavailable, so this method deliberately falls back to null.
+   */
+  async getExistingTokenIfPermitted(): Promise<string | null> {
+    try {
+      if (typeof window === 'undefined' || !window.isSecureContext) {
+        return null;
+      }
+      if (this.isIosDevice() && !this.isStandaloneWebApp()) {
+        return null;
+      }
+      if (!('Notification' in window)
+          || Notification.permission !== 'granted') {
+        return null;
+      }
+      if (!('serviceWorker' in navigator) || !(await isSupported())) {
+        return null;
+      }
+
+      const serviceWorkerRegistration =
+        await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      const currentToken = await getToken(
+        this.getMessagingInstance(),
+        {
+          vapidKey: firebaseVapidKey,
+          serviceWorkerRegistration
+        }
+      );
+
+      return currentToken || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Shows all guardian pushes while the portal is open. Access-event pushes
    * additionally invoke the callback so the movement history can refresh.
    */
@@ -100,6 +137,21 @@ export class FirebaseMessagingService {
       );
       onAccessEvent(eventId);
     });
+  }
+
+  isIosDevice(): boolean {
+    const userAgent = navigator.userAgent;
+    return /iPhone|iPad|iPod/i.test(userAgent)
+      || (/Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1);
+  }
+
+  isStandaloneWebApp(): boolean {
+    const iosNavigator = navigator as Navigator & {
+      standalone?: boolean;
+    };
+
+    return window.matchMedia('(display-mode: standalone)').matches
+      || iosNavigator.standalone === true;
   }
 
   private getMessagingInstance(): Messaging {
@@ -163,20 +215,5 @@ export class FirebaseMessagingService {
         'Este navegador no admite service workers.'
       );
     }
-  }
-
-  private isIosDevice(): boolean {
-    const userAgent = navigator.userAgent;
-    return /iPhone|iPad|iPod/i.test(userAgent)
-      || (/Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1);
-  }
-
-  private isStandaloneWebApp(): boolean {
-    const iosNavigator = navigator as Navigator & {
-      standalone?: boolean;
-    };
-
-    return window.matchMedia('(display-mode: standalone)').matches
-      || iosNavigator.standalone === true;
   }
 }

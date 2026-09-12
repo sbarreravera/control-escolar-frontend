@@ -51,6 +51,8 @@
               <div class="mt-1">
                 @if (currentActivation.notificationsEnabled) {
                   Este dispositivo también recibirá avisos escolares.
+                } @else if (iosNotificationSetupNeeded()) {
+                  Tu cuenta se creó correctamente. Falta configurar las notificaciones en tu iPhone o iPad.
                 } @else {
                   Entraste sin notificaciones; podrás activarlas después desde el portal.
                 }
@@ -70,9 +72,67 @@
                 </div>
               </div>
               <p class="small text-body-secondary mb-0 mt-3">
-                Guarda estos datos. La contraseña no se muestra ni se almacena en el navegador.
+                Guarda estos datos junto con la contraseña que acabas de crear.
+                Por seguridad, la contraseña no se muestra ni se almacena en el navegador.
               </p>
             </div>
+
+            @if (iosNotificationSetupNeeded()) {
+              <div class="border border-primary rounded p-3 p-md-4 mb-4">
+                <div class="d-flex gap-3 align-items-start">
+                  <div class="fs-3" aria-hidden="true">🔔</div>
+                  <div class="flex-grow-1">
+                    <h2 class="h5 mb-2">Falta un paso para recibir notificaciones</h2>
+                    <p class="mb-3">
+                      En iPhone y iPad, Control Escolar debe agregarse a la pantalla de inicio
+                      antes de que Apple permita activar los avisos.
+                    </p>
+
+                    <ol class="ps-3 mb-3">
+                      <li class="mb-1">Abre Control Escolar en Safari.</li>
+                      <li class="mb-1">Toca <strong>Compartir</strong>.</li>
+                      <li class="mb-1">Selecciona <strong>Agregar a Inicio</strong>.</li>
+                      <li class="mb-1">Abre Control Escolar desde el nuevo icono.</li>
+                      <li>Inicia sesión y pulsa <strong>Activar avisos</strong>.</li>
+                    </ol>
+
+                    <p class="small text-body-secondary mb-3">
+                      El enlace de Safari ya llevará tu código de escuela y usuario para que
+                      no tengas que recordarlos al cambiar de navegador.
+                    </p>
+
+                    <div class="d-grid gap-2">
+                      <a
+                        class="btn btn-primary"
+                        [href]="safariLoginUrl()"
+                      >
+                        Abrir en Safari
+                      </a>
+                      <button
+                        class="btn btn-outline-primary"
+                        type="button"
+                        (click)="showHelpPlaceholder('guide')"
+                      >
+                        Ver guía paso a paso
+                      </button>
+                      <button
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        (click)="showHelpPlaceholder('video')"
+                      >
+                        Ver video
+                      </button>
+                    </div>
+
+                    @if (helpPlaceholder(); as message) {
+                      <div class="alert alert-secondary mt-3 mb-0" role="status">
+                        {{ message }}
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
           }
 
           <button
@@ -153,6 +213,15 @@
                 </span>
               </label>
             </div>
+
+            @if (iosBrowserSetupRequired() && enableNotifications()) {
+              <div class="alert alert-info" role="status">
+                <strong>Si usas iPhone o iPad:</strong>
+                primero termina de crear tu acceso aquí. Después te guiaremos para abrir
+                Control Escolar en Safari y agregarlo a la pantalla de inicio sin perder
+                tu código de escuela ni tu usuario.
+              </div>
+            }
 
             @if (notificationWarning(); as message) {
               <div class="alert alert-warning" role="status">{{ message }}</div>

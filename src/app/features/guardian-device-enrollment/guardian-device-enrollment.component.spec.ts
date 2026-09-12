@@ -23,11 +23,18 @@ describe('GuardianDeviceEnrollmentComponent', () => {
   let httpTestingController: HttpTestingController;
 
   const messagingService = {
-    requestPermissionAndGetToken: vi.fn()
+    requestPermissionAndGetToken: vi.fn(),
+    isIosDevice: vi.fn(),
+    isStandaloneWebApp: vi.fn()
   };
 
   beforeEach(async () => {
     messagingService.requestPermissionAndGetToken.mockReset();
+    messagingService.isIosDevice.mockReset();
+    messagingService.isStandaloneWebApp.mockReset();
+    messagingService.isIosDevice.mockReturnValue(false);
+    messagingService.isStandaloneWebApp.mockReturnValue(false);
+
     await TestBed.configureTestingModule({
       imports: [GuardianDeviceEnrollmentComponent],
       providers: [
@@ -78,14 +85,7 @@ describe('GuardianDeviceEnrollmentComponent', () => {
   });
 
   it('creates the password even when notifications are declined', async () => {
-    httpTestingController.expectOne(
-      request => request.url ===
-        '/api/v1/guardian-device-enrollments/status'
-    ).flush(invitationStatus('VALID'));
-    await fixture.whenStable();
-    httpTestingController.expectOne('/api/v1/guardian/me')
-      .flush({}, { status: 401, statusText: 'Unauthorized' });
-    await fixture.whenStable();
+    await loadValidInvitation();
 
     component.password.set('segura-123');
     component.passwordConfirmation.set('segura-123');
@@ -107,22 +107,64 @@ describe('GuardianDeviceEnrollmentComponent', () => {
       fcmToken: null,
       password: 'segura-123'
     }));
-    completion.flush({
-      guardianId: 20,
-      guardianName: 'Persona de Prueba 1',
-      schoolName: 'Escuela de Prueba',
-      schoolCode: 'ESC-TEST-1',
-      username: 'tutor.test.1',
-      device: null,
-      notificationsEnabled: false,
-      sessionExpiresAt: '2026-12-08T10:00:00-06:00'
-    });
+    completion.flush(completionResponse(false));
     await completionPromise;
 
     expect(component.completed()).toBe(true);
     expect(messagingService.requestPermissionAndGetToken)
       .not.toHaveBeenCalled();
   });
+
+  it('keeps iOS notification setup visible after the account is created', async () => {
+    messagingService.isIosDevice.mockReturnValue(true);
+    messagingService.isStandaloneWebApp.mockReturnValue(false);
+    messagingService.requestPermissionAndGetToken.mockRejectedValue(
+      new Error('Agrega Control Escolar a Inicio.')
+    );
+    await loadValidInvitation();
+
+    component.password.set('segura-123');
+    component.passwordConfirmation.set('segura-123');
+    const completionPromise = component.completeAccess();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    httpTestingController.expectOne('/api/v1/auth/csrf').flush({
+      headerName: 'X-XSRF-TOKEN',
+      parameterName: '_csrf',
+      token: 'csrf-token'
+    });
+    await Promise.resolve();
+    const completion = httpTestingController.expectOne(
+      '/api/v1/guardian-device-enrollments/complete'
+    );
+    expect(completion.request.body.fcmToken).toBeNull();
+    completion.flush(completionResponse(false));
+    await completionPromise;
+    fixture.detectChanges();
+
+    expect(component.completed()).toBe(true);
+    expect(component.iosNotificationSetupNeeded()).toBe(true);
+    expect(fixture.nativeElement.textContent)
+      .toContain('Falta un paso para recibir notificaciones');
+    expect(fixture.nativeElement.textContent)
+      .toContain('Abrir en Safari');
+    expect(fixture.nativeElement.textContent)
+      .toContain('Ver guía paso a paso');
+    expect(fixture.nativeElement.textContent)
+      .toContain('Ver video');
+  });
+
+  async function loadValidInvitation(): Promise<void> {
+    httpTestingController.expectOne(
+      request => request.url ===
+        '/api/v1/guardian-device-enrollments/status'
+    ).flush(invitationStatus('VALID'));
+    await fixture.whenStable();
+    httpTestingController.expectOne('/api/v1/guardian/me')
+      .flush({}, { status: 401, statusText: 'Unauthorized' });
+    await fixture.whenStable();
+  }
 
   function invitationStatus(status: 'VALID' | 'USED') {
     return {
@@ -135,6 +177,19 @@ describe('GuardianDeviceEnrollmentComponent', () => {
       username: 'tutor.test.1',
       accountActivated: status === 'USED',
       expiresAt: '2026-09-16T10:00:00-06:00'
+    };
+  }
+
+  function completionResponse(notificationsEnabled: boolean) {
+    return {
+      guardianId: 20,
+      guardianName: 'Persona de Prueba 1',
+      schoolName: 'Escuela de Prueba',
+      schoolCode: 'ESC-TEST-1',
+      username: 'tutor.test.1',
+      device: null,
+      notificationsEnabled,
+      sessionExpiresAt: '2026-12-08T10:00:00-06:00'
     };
   }
 });

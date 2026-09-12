@@ -52,6 +52,8 @@ export class GuardianDeviceEnrollmentComponent implements OnInit {
   readonly enableNotifications = signal(true);
   readonly notificationWarning = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  readonly iosNotificationSetupNeeded = signal(false);
+  readonly helpPlaceholder = signal<string | null>(null);
 
   readonly requiresPassword = computed(() => {
     const invitation = this.invitation();
@@ -64,6 +66,20 @@ export class GuardianDeviceEnrollmentComponent implements OnInit {
   readonly isValid = computed(() =>
     this.invitation()?.status === 'VALID'
   );
+
+  readonly iosBrowserSetupRequired = computed(() =>
+    this.firebaseMessagingService.isIosDevice()
+      && !this.firebaseMessagingService.isStandaloneWebApp()
+  );
+
+  readonly safariLoginUrl = computed(() => {
+    const activation = this.activation();
+    const invitation = this.invitation();
+    const schoolCode = activation?.schoolCode ?? invitation?.schoolCode ?? '';
+    const username = activation?.username ?? invitation?.username ?? '';
+
+    return this.buildSafariLoginUrl(schoolCode, username);
+  });
 
   async ngOnInit(): Promise<void> {
     if (!this.enrollmentToken) {
@@ -106,10 +122,13 @@ export class GuardianDeviceEnrollmentComponent implements OnInit {
   }
 
   updateNotificationPreference(event: Event): void {
-    this.enableNotifications.set(
-      (event.target as HTMLInputElement).checked
-    );
+    const enabled = (event.target as HTMLInputElement).checked;
+    this.enableNotifications.set(enabled);
     this.notificationWarning.set(null);
+    this.helpPlaceholder.set(null);
+    if (!enabled) {
+      this.iosNotificationSetupNeeded.set(false);
+    }
   }
 
   async completeAccess(): Promise<void> {
@@ -124,6 +143,7 @@ export class GuardianDeviceEnrollmentComponent implements OnInit {
     this.processing.set(true);
     this.errorMessage.set(null);
     this.notificationWarning.set(null);
+    this.helpPlaceholder.set(null);
 
     try {
       const fcmToken = await this.resolveOptionalNotificationToken();
@@ -165,6 +185,13 @@ export class GuardianDeviceEnrollmentComponent implements OnInit {
     void this.router.navigate(['/guardian']);
   }
 
+  showHelpPlaceholder(type: 'guide' | 'video'): void {
+    this.helpPlaceholder.set(type === 'guide'
+      ? 'Aquí abriremos la guía visual paso a paso. Durante esta prueba el contenido está simulado.'
+      : 'Aquí abriremos el video corto de YouTube. Durante esta prueba el enlace está simulado.'
+    );
+  }
+
   purposeTitle(invitation: GuardianInvitationStatus): string {
     if (invitation.purpose === 'PASSWORD_RESET') {
       return 'Crea una contraseña nueva';
@@ -200,18 +227,48 @@ export class GuardianDeviceEnrollmentComponent implements OnInit {
 
   private async resolveOptionalNotificationToken(): Promise<string | null> {
     if (!this.enableNotifications()) {
+      this.iosNotificationSetupNeeded.set(false);
       return null;
     }
 
+    const requiresIosSetup = this.iosBrowserSetupRequired();
+    this.iosNotificationSetupNeeded.set(requiresIosSetup);
+
     try {
-      return await this.firebaseMessagingService
+      const token = await this.firebaseMessagingService
         .requestPermissionAndGetToken();
+      this.iosNotificationSetupNeeded.set(false);
+      return token;
     } catch (error: unknown) {
       this.notificationWarning.set(
         this.notificationPermissionMessage(error)
       );
       return null;
     }
+  }
+
+  private buildSafariLoginUrl(
+    schoolCode: string,
+    username: string
+  ): string {
+    if (typeof window === 'undefined') {
+      return '#';
+    }
+
+    const params = new URLSearchParams({
+      schoolCode,
+      username,
+      returnUrl: '/guardian'
+    });
+    const loginUrl = `${window.location.origin}/#/guardian/login?${params}`;
+
+    if (loginUrl.startsWith('https://')) {
+      return loginUrl.replace(/^https:/, 'x-safari-https:');
+    }
+    if (loginUrl.startsWith('http://')) {
+      return loginUrl.replace(/^http:/, 'x-safari-http:');
+    }
+    return loginUrl;
   }
 
   private resolveDeviceName(): string {
