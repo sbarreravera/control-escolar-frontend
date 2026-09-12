@@ -1,8 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
+import {
+  FirebaseMessagingService
+} from '../../core/firebase/firebase-messaging.service';
 import {
   GuardianDeviceEnrollmentService
 } from '../guardian-device-enrollment/guardian-device-enrollment.service';
@@ -19,6 +22,8 @@ export class GuardianLoginComponent {
   private readonly router = inject(Router);
   private readonly enrollmentService =
     inject(GuardianDeviceEnrollmentService);
+  private readonly firebaseMessagingService =
+    inject(FirebaseMessagingService);
 
   readonly schoolCode = signal(
     this.route.snapshot.queryParamMap.get('schoolCode')?.trim() ?? ''
@@ -46,34 +51,39 @@ export class GuardianLoginComponent {
     this.password.set((event.target as HTMLInputElement).value);
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     const schoolCode = this.schoolCode().trim();
     const username = this.username().trim();
     const password = this.password();
 
-    if (!schoolCode || !username || !password) {
-      this.errorMessage.set('Completa escuela, usuario y contraseña.');
+    if (!schoolCode || !username || !password || this.submitting()) {
+      if (!schoolCode || !username || !password) {
+        this.errorMessage.set('Completa escuela, usuario y contraseña.');
+      }
       return;
     }
 
     this.submitting.set(true);
     this.errorMessage.set(null);
-    this.enrollmentService.loginGuardian({
-      schoolCode,
-      username,
-      password,
-      fcmToken: null,
-      deviceName: this.resolveDeviceName()
-    })
-      .pipe(finalize(() => this.submitting.set(false)))
-      .subscribe({
-        next: () => void this.router.navigateByUrl(this.returnUrl, {
-          replaceUrl: true
-        }),
-        error: error => this.errorMessage.set(
-          this.resolveErrorMessage(error)
-        )
+
+    try {
+      const fcmToken = await this.firebaseMessagingService
+        .getExistingTokenIfPermitted();
+      await firstValueFrom(this.enrollmentService.loginGuardian({
+        schoolCode,
+        username,
+        password,
+        fcmToken,
+        deviceName: this.resolveDeviceName()
+      }));
+      await this.router.navigateByUrl(this.returnUrl, {
+        replaceUrl: true
       });
+    } catch (error: unknown) {
+      this.errorMessage.set(this.resolveErrorMessage(error));
+    } finally {
+      this.submitting.set(false);
+    }
   }
 
   private safeReturnUrl(value: string | null): string {
