@@ -235,6 +235,24 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'guardian-registration-settings',
+        loadComponent: () =>
+          import(
+            './features/guardian-registration/guardian-registration-settings.component'
+          ).then(
+            module => module.GuardianRegistrationSettingsComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Autoregistro de tutores',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
         path: 'communications',
         loadComponent: () =>
           import(
