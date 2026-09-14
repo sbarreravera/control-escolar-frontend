@@ -1,0 +1,292 @@
+<div class="registration-shell">
+  <main class="registration-layout">
+    <section class="registration-hero" aria-label="Registro de tutores">
+      <div class="hero-brand">
+        <span class="hero-brand-icon" aria-hidden="true">
+          <img src="assets/control-escolar-credential.svg" alt="" />
+        </span>
+        <div>
+          <span>CONTROL ESCOLAR</span>
+          <strong>Portal de tutores</strong>
+        </div>
+      </div>
+
+      <div class="hero-copy">
+        <p class="hero-eyebrow">Crea tu acceso</p>
+        <h1>Regístrate y vincula a tus alumnos.</h1>
+        <p>
+          Ten a la mano la matrícula escolar de cada alumno que estará a tu
+          cargo. La escuela validará automáticamente que la relación pueda
+          registrarse.
+        </p>
+      </div>
+
+      <button class="btn btn-light hero-login" type="button" (click)="goToLogin()">
+        Ya tengo cuenta
+      </button>
+    </section>
+
+    <section class="registration-panel">
+      <div class="registration-card">
+        @if (loadingContext()) {
+          <div class="registration-loading" role="status">
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            Preparando registro...
+          </div>
+        } @else if (result(); as registration) {
+          <div class="registration-success">
+            <span class="success-icon" aria-hidden="true">✓</span>
+            <p class="registration-eyebrow">Registro completado</p>
+            <h2>Tu cuenta ya está lista</h2>
+            <p class="text-body-secondary">
+              Guarda tu matrícula de tutor. Éste será también tu usuario para
+              entrar al portal.
+            </p>
+
+            <div class="guardian-reference">
+              <small>Matrícula de tutor</small>
+              <strong>{{ registration.guardianReference }}</strong>
+            </div>
+
+            <div class="registered-school">
+              <span>{{ registration.schoolName }}</span>
+              <small>{{ registration.studentEnrollmentNumbers.length }} alumno(s) vinculado(s)</small>
+            </div>
+
+            @if (errorMessage(); as message) {
+              <div class="alert alert-warning" role="alert">{{ message }}</div>
+            }
+
+            <button
+              class="btn btn-primary registration-submit"
+              type="button"
+              [disabled]="entering()"
+              (click)="enterPortal()"
+            >
+              @if (entering()) {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                Abriendo portal...
+              } @else {
+                Entrar a mi portal
+              }
+            </button>
+          </div>
+        } @else {
+          <div class="registration-heading">
+            <p class="registration-eyebrow">Nuevo tutor</p>
+            <h2>Crea tu cuenta</h2>
+            <p>Los datos se utilizarán para identificarte y darte acceso a los alumnos a tu cargo.</p>
+          </div>
+
+          @if (errorMessage(); as message) {
+            <div class="alert alert-danger registration-alert" role="alert">
+              {{ message }}
+            </div>
+          }
+
+          <form (submit)="$event.preventDefault(); submit()">
+            @if (context(); as registrationContext) {
+              <div class="school-context">
+                <small>Escuela</small>
+                <strong>{{ registrationContext.schoolName }}</strong>
+              </div>
+            } @else {
+              <div class="registration-field">
+                <label class="form-label" for="registrationSchool">Escuela</label>
+                <select
+                  id="registrationSchool"
+                  class="form-select"
+                  [value]="schoolCode()"
+                  (change)="updateSchool($event)"
+                >
+                  <option value="">Selecciona tu escuela</option>
+                  @for (school of schools(); track school.code) {
+                    <option [value]="school.code">{{ school.name }}</option>
+                  }
+                </select>
+              </div>
+            }
+
+            <div class="registration-section">
+              <div class="section-heading">
+                <div>
+                  <small>Paso 1</small>
+                  <strong>Alumnos a tu cargo</strong>
+                </div>
+                @if (studentEnrollments().length < 10) {
+                  <button class="btn btn-sm btn-outline-primary" type="button" (click)="addStudent()">
+                    + Agregar alumno
+                  </button>
+                }
+              </div>
+
+              @for (enrollment of studentEnrollments(); track $index; let index = $index) {
+                <div class="student-row">
+                  <div class="flex-grow-1">
+                    <label class="form-label" [for]="'studentEnrollment' + index">
+                      Matrícula del alumno{{ index > 0 ? ' ' + (index + 1) : '' }}
+                    </label>
+                    <input
+                      class="form-control"
+                      [id]="'studentEnrollment' + index"
+                      type="text"
+                      maxlength="50"
+                      autocomplete="off"
+                      placeholder="Matrícula escolar"
+                      [value]="enrollment"
+                      (input)="updateEnrollment(index, $event)"
+                    />
+                  </div>
+                  @if (studentEnrollments().length > 1) {
+                    <button
+                      class="btn btn-outline-danger remove-student"
+                      type="button"
+                      [attr.aria-label]="'Quitar matrícula ' + (index + 1)"
+                      (click)="removeStudent(index)"
+                    >
+                      ×
+                    </button>
+                  }
+                </div>
+              }
+
+              <div class="registration-field mb-0">
+                <label class="form-label" for="guardianRelationship">Parentesco</label>
+                <select
+                  id="guardianRelationship"
+                  class="form-select"
+                  [value]="relationship()"
+                  (change)="updateRelationship($event)"
+                >
+                  <option value="Madre">Madre</option>
+                  <option value="Padre">Padre</option>
+                  <option value="Tutor legal">Tutor legal</option>
+                  <option value="Abuela">Abuela</option>
+                  <option value="Abuelo">Abuelo</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="registration-section">
+              <div class="section-heading">
+                <div>
+                  <small>Paso 2</small>
+                  <strong>Tus datos</strong>
+                </div>
+              </div>
+
+              <div class="registration-field">
+                <label class="form-label" for="guardianFullName">Nombre completo</label>
+                <input
+                  id="guardianFullName"
+                  class="form-control"
+                  type="text"
+                  maxlength="150"
+                  autocomplete="name"
+                  placeholder="Nombre y apellidos"
+                  [value]="fullName()"
+                  (input)="updateFullName($event)"
+                />
+              </div>
+
+              <div class="contact-grid">
+                <div class="registration-field">
+                  <label class="form-label" for="guardianPhone">Teléfono</label>
+                  <input
+                    id="guardianPhone"
+                    class="form-control"
+                    type="tel"
+                    maxlength="30"
+                    autocomplete="tel"
+                    inputmode="tel"
+                    placeholder="Teléfono de contacto"
+                    [value]="phone()"
+                    (input)="updatePhone($event)"
+                  />
+                </div>
+                <div class="registration-field">
+                  <label class="form-label" for="guardianEmail">Correo</label>
+                  <input
+                    id="guardianEmail"
+                    class="form-control"
+                    type="email"
+                    maxlength="150"
+                    autocomplete="email"
+                    inputmode="email"
+                    placeholder="correo@ejemplo.com"
+                    [value]="email()"
+                    (input)="updateEmail($event)"
+                  />
+                </div>
+              </div>
+              <p class="field-note">Captura al menos teléfono o correo.</p>
+            </div>
+
+            <div class="registration-section">
+              <div class="section-heading">
+                <div>
+                  <small>Paso 3</small>
+                  <strong>Contraseña</strong>
+                </div>
+              </div>
+
+              <div class="contact-grid">
+                <div class="registration-field">
+                  <label class="form-label" for="guardianNewPassword">Contraseña</label>
+                  <input
+                    id="guardianNewPassword"
+                    class="form-control"
+                    type="password"
+                    minlength="8"
+                    maxlength="72"
+                    autocomplete="new-password"
+                    [value]="password()"
+                    (input)="updatePassword($event)"
+                  />
+                </div>
+                <div class="registration-field">
+                  <label class="form-label" for="guardianConfirmPassword">Confirmar</label>
+                  <input
+                    id="guardianConfirmPassword"
+                    class="form-control"
+                    type="password"
+                    minlength="8"
+                    maxlength="72"
+                    autocomplete="new-password"
+                    [value]="passwordConfirmation()"
+                    (input)="updatePasswordConfirmation($event)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              class="btn btn-primary registration-submit"
+              type="submit"
+              [disabled]="submitting()"
+            >
+              @if (submitting()) {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                Validando y creando cuenta...
+              } @else {
+                Registrarme como tutor
+              }
+            </button>
+          </form>
+        }
+      </div>
+
+      <div class="powered-by-isamar registration-credit">
+        <span class="powered-by-logo" aria-hidden="true">
+          <img src="assets/estudio-digital-isamar.png" alt="" />
+        </span>
+        <span class="powered-by-copy">
+          <small>Powered by</small>
+          <span>Estudio Digital</span>
+          <strong>ISAMAR</strong>
+        </span>
+      </div>
+    </section>
+  </main>
+</div>
