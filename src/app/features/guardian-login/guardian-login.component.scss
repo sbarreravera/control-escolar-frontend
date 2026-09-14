@@ -227,10 +227,27 @@
   box-shadow: 0 10px 24px rgb(88 86 214 / 20%);
 }
 
+.login-register {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cui-border-color);
+  color: var(--cui-secondary-color);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.login-register .btn {
+  min-height: 48px;
+  border-radius: 13px;
+  font-weight: 700;
+}
+
 .login-help {
   display: grid;
   gap: 0.25rem;
-  margin-top: 1.35rem;
+  margin-top: 1.15rem;
   padding: 0.9rem 1rem;
   border-radius: 14px;
   background: var(--cui-tertiary-bg);
