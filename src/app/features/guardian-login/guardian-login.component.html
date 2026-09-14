@@ -1,71 +1,97 @@
-<div
-  class="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary p-3"
->
-  <main class="w-100" style="max-width: 480px">
-    <div class="card shadow-sm border-0">
-      <div class="card-body p-4 p-md-5">
-        <div class="text-center mb-4">
-          <div
-            class="d-inline-flex align-items-center justify-content-center rounded-3 text-bg-primary fw-bold mb-3"
-            style="width: 48px; height: 48px"
-            aria-hidden="true"
-          >
-            CE
-          </div>
-          <h1 class="h3 mb-2">Portal de tutores</h1>
-          <p class="text-body-secondary mb-0">
-            Entra desde cualquier dispositivo con los datos de tu cuenta.
+<div class="guardian-login-shell">
+  <main class="guardian-login-layout">
+    <section class="guardian-login-hero" aria-label="Portal de tutores">
+      <div class="hero-brand">
+        <span class="hero-brand-icon" aria-hidden="true">
+          <img src="assets/control-escolar-credential.svg" alt="" />
+        </span>
+        <div>
+          <span>CONTROL ESCOLAR</span>
+          <strong>Portal de tutores</strong>
+        </div>
+      </div>
+
+      <div class="hero-copy">
+        <p class="hero-eyebrow">Siempre informado</p>
+        <h1>Tu escuela, más cerca de ti.</h1>
+        <p>
+          Consulta los movimientos de tus alumnos y los avisos de la escuela
+          desde tu teléfono, tablet o computadora.
+        </p>
+      </div>
+
+      <div class="hero-features" aria-label="Funciones del portal">
+        <span>Entradas y salidas</span>
+        <span>Avisos escolares</span>
+        <span>Acceso seguro</span>
+      </div>
+    </section>
+
+    <section class="guardian-login-panel">
+      <div class="guardian-login-card">
+        <div class="login-heading">
+          <p class="login-eyebrow">Bienvenido</p>
+          <h2>Ingresa a tu portal</h2>
+          <p>
+            Usa los datos de acceso que recibiste de tu escuela.
           </p>
         </div>
 
         @if (errorMessage(); as message) {
-          <div class="alert alert-danger" role="alert">{{ message }}</div>
+          <div class="alert alert-danger login-alert" role="alert">
+            {{ message }}
+          </div>
         }
 
         <form (submit)="$event.preventDefault(); submit()">
-          <div class="mb-3">
+          <div class="login-field">
             <label class="form-label" for="guardianSchoolCode">
               Código de escuela
             </label>
             <input
               id="guardianSchoolCode"
-              class="form-control form-control-lg"
+              class="form-control"
               type="text"
               autocomplete="organization"
+              inputmode="text"
               maxlength="50"
+              placeholder="Ej. ESC-001"
               [value]="schoolCode()"
               (input)="updateSchoolCode($event)"
             />
           </div>
 
-          <div class="mb-3">
+          <div class="login-field">
             <label class="form-label" for="guardianUsername">Usuario</label>
             <input
               id="guardianUsername"
-              class="form-control form-control-lg"
+              class="form-control"
               type="text"
               autocomplete="username"
+              autocapitalize="none"
               maxlength="100"
+              placeholder="Tu usuario"
               [value]="username()"
               (input)="updateUsername($event)"
             />
           </div>
 
-          <div class="mb-4">
+          <div class="login-field">
             <label class="form-label" for="guardianPassword">Contraseña</label>
             <input
               id="guardianPassword"
-              class="form-control form-control-lg"
+              class="form-control"
               type="password"
               autocomplete="current-password"
               maxlength="72"
+              placeholder="Tu contraseña"
               [value]="password()"
               (input)="updatePassword($event)"
             />
           </div>
 
           <button
-            class="btn btn-primary btn-lg w-100"
+            class="btn btn-primary guardian-login-submit"
             type="submit"
             [disabled]="submitting()"
           >
@@ -81,15 +107,24 @@
           </button>
         </form>
 
-        <div class="border-top mt-4 pt-4 text-center">
-          <p class="small text-body-secondary mb-1">
-            ¿Es tu primera vez o no recuerdas tu contraseña?
-          </p>
-          <p class="small mb-0">
+        <aside class="login-help">
+          <strong>¿Es tu primera vez o no recuerdas tu contraseña?</strong>
+          <span>
             Solicita a la escuela una invitación de activación o recuperación.
-          </p>
-        </div>
+          </span>
+        </aside>
       </div>
-    </div>
+
+      <div class="powered-by-isamar guardian-login-credit">
+        <span class="powered-by-logo" aria-hidden="true">
+          <img src="assets/estudio-digital-isamar.png" alt="" />
+        </span>
+        <span class="powered-by-copy">
+          <small>Powered by</small>
+          <span>Estudio Digital</span>
+          <strong>ISAMAR</strong>
+        </span>
+      </div>
+    </section>
   </main>
 </div>
