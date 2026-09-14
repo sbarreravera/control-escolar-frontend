@@ -14,7 +14,8 @@ import {
   selector: 'app-guardian-login',
   standalone: true,
   imports: [],
-  templateUrl: './guardian-login.component.html'
+  templateUrl: './guardian-login.component.html',
+  styleUrl: './guardian-login.component.scss'
 })
 export class GuardianLoginComponent {
 
