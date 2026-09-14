@@ -1,0 +1,111 @@
+:host { display: block; }
+
+.registration-shell {
+  min-height: 100dvh;
+  padding: max(.8rem, env(safe-area-inset-top)) max(.8rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(.8rem, env(safe-area-inset-left));
+  background: radial-gradient(circle at 8% 8%, rgb(88 86 214 / 14%), transparent 22rem), radial-gradient(circle at 94% 92%, rgb(59 130 246 / 9%), transparent 26rem), var(--cui-tertiary-bg);
+}
+
+.registration-layout {
+  display: grid;
+  width: min(100%, 1080px);
+  min-height: calc(100dvh - 1.6rem);
+  margin-inline: auto;
+  grid-template-columns: minmax(300px, .8fr) minmax(420px, 1.2fr);
+  gap: clamp(1rem, 3vw, 2.25rem);
+}
+
+.registration-hero {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(1.7rem, 4vw, 3rem);
+  border-radius: 30px;
+  color: #fff;
+  background: radial-gradient(circle at 85% 12%, rgb(255 255 255 / 17%), transparent 13rem), linear-gradient(145deg, #312e81, #5856d6 58%, #3b82f6 118%);
+  box-shadow: 0 24px 60px rgb(49 46 129 / 20%);
+}
+
+.registration-hero::after {
+  position: absolute;
+  right: -75px;
+  bottom: -95px;
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgb(255 255 255 / 13%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 38px rgb(255 255 255 / 4%), 0 0 0 76px rgb(255 255 255 / 3%);
+  content: '';
+}
+
+.hero-brand, .hero-copy, .hero-login { position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: .8rem; }
+.hero-brand > div { display: grid; }
+.hero-brand-icon { display: grid; width: 50px; height: 50px; overflow: hidden; border-radius: 15px; background: rgb(255 255 255 / 12%); }
+.hero-brand-icon img { width: 100%; height: 100%; object-fit: cover; }
+.hero-brand span { font-size: .62rem; font-weight: 800; letter-spacing: .15em; opacity: .72; }
+.hero-brand strong { font-size: 1rem; font-weight: 800; }
+.hero-copy { margin-block: auto; padding-block: 3rem; }
+.hero-eyebrow, .registration-eyebrow { margin: 0 0 .55rem; font-size: .68rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+.hero-eyebrow { color: rgb(255 255 255 / 72%); }
+.hero-copy h1 { margin: 0 0 1rem; font-size: clamp(2rem, 5vw, 3.45rem); font-weight: 800; line-height: 1.03; letter-spacing: -.05em; }
+.hero-copy > p:last-child { margin: 0; color: rgb(255 255 255 / 78%); line-height: 1.6; }
+.hero-login { align-self: flex-start; border: 0; border-radius: 12px; font-weight: 700; }
+
+.registration-panel { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding-block: 1.25rem; }
+.registration-card { padding: clamp(1.3rem, 4vw, 2.25rem); border: 1px solid rgb(148 163 184 / 12%); border-radius: 26px; background: rgb(var(--cui-body-bg-rgb) / 96%); box-shadow: 0 22px 58px rgb(15 23 42 / 10%); }
+.registration-heading { margin-bottom: 1.4rem; }
+.registration-eyebrow { color: var(--cui-primary); }
+.registration-heading h2, .registration-success h2 { margin: 0 0 .45rem; font-size: clamp(1.6rem, 4vw, 2rem); font-weight: 800; letter-spacing: -.035em; }
+.registration-heading > p:last-child { margin: 0; color: var(--cui-secondary-color); line-height: 1.5; }
+.registration-alert { border: 0; border-radius: 14px; }
+.registration-loading { display: flex; min-height: 280px; align-items: center; justify-content: center; gap: .75rem; color: var(--cui-secondary-color); }
+
+.school-context, .guardian-reference, .registered-school { display: grid; gap: .2rem; padding: .9rem 1rem; border-radius: 14px; background: var(--cui-tertiary-bg); }
+.school-context { margin-bottom: 1rem; }
+.school-context small, .guardian-reference small, .registered-school small { color: var(--cui-secondary-color); }
+.school-context strong { font-size: 1rem; }
+
+.registration-section { margin: 1rem 0; padding: 1rem; border: 1px solid var(--cui-border-color); border-radius: 16px; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .9rem; }
+.section-heading > div { display: grid; }
+.section-heading small { color: var(--cui-primary); font-size: .65rem; font-weight: 800; text-transform: uppercase; }
+.section-heading strong { font-size: .95rem; }
+.registration-field { margin-bottom: .85rem; }
+.registration-field .form-label { margin-bottom: .35rem; font-size: .78rem; font-weight: 700; }
+.registration-field .form-control, .registration-field .form-select, .student-row .form-control { min-height: 50px; border-radius: 13px; }
+.registration-field .form-control:focus, .registration-field .form-select:focus, .student-row .form-control:focus { border-color: rgb(88 86 214 / 70%); box-shadow: 0 0 0 4px rgb(88 86 214 / 11%); }
+.student-row { display: flex; align-items: flex-end; gap: .55rem; margin-bottom: .75rem; }
+.student-row .form-label { margin-bottom: .35rem; font-size: .78rem; font-weight: 700; }
+.remove-student { width: 50px; height: 50px; flex: 0 0 50px; border-radius: 13px; font-size: 1.3rem; }
+.contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.field-note { margin: -.35rem 0 0; color: var(--cui-secondary-color); font-size: .72rem; }
+.registration-submit { width: 100%; min-height: 54px; border: 0; border-radius: 14px; font-weight: 700; box-shadow: 0 10px 24px rgb(88 86 214 / 20%); }
+.registration-credit { margin-top: 1rem; }
+
+.registration-success { text-align: center; }
+.success-icon { display: grid; width: 56px; height: 56px; margin: 0 auto 1rem; place-items: center; border-radius: 18px; color: #fff; background: var(--cui-success); font-size: 1.8rem; font-weight: 800; }
+.guardian-reference { margin: 1.25rem 0; }
+.guardian-reference strong { color: var(--cui-primary); font-size: clamp(1.25rem, 5vw, 1.65rem); letter-spacing: .03em; overflow-wrap: anywhere; }
+.registered-school { margin-bottom: 1.25rem; }
+
+@media (max-width: 780px) {
+  .registration-layout { display: flex; min-height: auto; flex-direction: column; gap: .75rem; }
+  .registration-hero { min-height: 180px; padding: 1.15rem; border-radius: 22px; }
+  .hero-copy { padding: 1.25rem 0 .25rem; }
+  .hero-copy h1 { max-width: 350px; margin-bottom: .4rem; font-size: clamp(1.65rem, 8vw, 2.3rem); }
+  .hero-copy > p:last-child { display: none; }
+  .hero-login { display: none; }
+  .registration-panel { padding-block: 0; }
+  .registration-card { padding: 1.2rem; border-radius: 22px; }
+}
+
+@media (max-width: 520px) {
+  .registration-shell { padding: .6rem .6rem max(1rem, env(safe-area-inset-bottom)); }
+  .registration-hero { min-height: 155px; }
+  .contact-grid { grid-template-columns: 1fr; gap: 0; }
+  .registration-section { padding: .85rem; }
+  .section-heading { align-items: flex-start; }
+}
