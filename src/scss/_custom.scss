@@ -15,3 +15,51 @@
 .select-week .calendar-row.current {
   cursor: pointer;
 }
+
+// Product credit. The original Estudio Digital Isamar logo is used as-is.
+.powered-by-isamar,
+.guardian-shell::after {
+  min-height: 52px;
+  box-sizing: border-box;
+  padding: 0.6rem 0.95rem 0.6rem 4.8rem;
+  border: 1px solid rgb(148 163 184 / 18%);
+  border-radius: 16px;
+  color: var(--cui-secondary-color);
+  background:
+    url('/assets/estudio-digital-isamar.png') 0.85rem center / 3.35rem auto no-repeat,
+    rgb(var(--cui-body-bg-rgb) / 82%);
+  box-shadow: 0 8px 24px rgb(15 23 42 / 5%);
+  font-size: 0.68rem;
+  line-height: 1.25;
+}
+
+.powered-by-isamar {
+  display: grid;
+  width: fit-content;
+  align-content: center;
+  gap: 0.08rem;
+  margin: 1.25rem auto 0;
+}
+
+.powered-by-isamar strong {
+  color: var(--cui-body-color);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.guardian-shell::after {
+  display: block;
+  width: fit-content;
+  margin: 0.75rem auto max(1.25rem, env(safe-area-inset-bottom));
+  content: 'Powered by  Estudio Digital Isamar';
+  white-space: pre;
+}
+
+@media (max-width: 480px) {
+  .powered-by-isamar,
+  .guardian-shell::after {
+    min-height: 48px;
+    padding-left: 4.25rem;
+    background-size: 2.85rem auto, auto;
+  }
+}
