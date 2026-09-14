@@ -47,10 +47,11 @@
 }
 
 .powered-by-logo img {
-  width: 145%;
-  max-width: none;
-  height: 145%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  transform: scale(1.4);
+  transform-origin: center;
 }
 
 .powered-by-copy {
