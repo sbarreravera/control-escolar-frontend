@@ -1,0 +1,127 @@
+<section class="card mb-4">
+  <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <strong>Autoregistro de tutores</strong>
+      <div class="small text-body-secondary">
+        Permite que cada tutor cree su cuenta y se relacione con sus alumnos.
+      </div>
+    </div>
+    @if (settings()) {
+      <span class="badge" [class.text-bg-success]="enabled()" [class.text-bg-secondary]="!enabled()">
+        {{ enabled() ? 'Habilitado' : 'Deshabilitado' }}
+      </span>
+    }
+  </div>
+
+  <div class="card-body">
+    @if (loading()) {
+      <div class="d-flex align-items-center gap-2 text-body-secondary" role="status">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        Cargando configuración...
+      </div>
+    } @else if (settings()) {
+      @if (errorMessage(); as message) {
+        <div class="alert alert-danger" role="alert">{{ message }}</div>
+      }
+      @if (successMessage(); as message) {
+        <div class="alert alert-success" role="status">{{ message }}</div>
+      }
+
+      <div class="form-check form-switch mb-3">
+        <input
+          id="guardianSelfRegistrationEnabled"
+          class="form-check-input"
+          type="checkbox"
+          role="switch"
+          [checked]="enabled()"
+          (change)="updateEnabled($event)"
+        />
+        <label class="form-check-label fw-semibold" for="guardianSelfRegistrationEnabled">
+          Permitir que los tutores se registren por sí mismos
+        </label>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-sm-6">
+          <label class="form-label" for="guardianMinimum">Mínimo de tutores por alumno</label>
+          <input
+            id="guardianMinimum"
+            class="form-control"
+            type="number"
+            min="0"
+            max="99"
+            [value]="minimum()"
+            (input)="updateMinimum($event)"
+          />
+          <div class="form-text">
+            Sirve como política de cobertura y referencia administrativa.
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label" for="guardianMaximum">Máximo de tutores por alumno</label>
+          <input
+            id="guardianMaximum"
+            class="form-control"
+            type="number"
+            min="1"
+            max="99"
+            [value]="maximum()"
+            (input)="updateMaximum($event)"
+          />
+          <div class="form-text">
+            Este límite se aplica también a las relaciones creadas desde administración.
+          </div>
+        </div>
+      </div>
+
+      <button
+        class="btn btn-primary mb-4"
+        type="button"
+        [disabled]="saving()"
+        (click)="save()"
+      >
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          Guardando...
+        } @else {
+          Guardar configuración
+        }
+      </button>
+
+      <div class="border rounded-3 p-3 bg-body-tertiary">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+          <div>
+            <strong class="d-block">Enlace de registro de la escuela</strong>
+            <small class="text-body-secondary">
+              Compártelo con los tutores. El identificador de la escuela viaja de forma no visible para ellos.
+            </small>
+          </div>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            [disabled]="rotating()"
+            (click)="rotateToken()"
+          >
+            {{ rotating() ? 'Generando...' : 'Generar enlace nuevo' }}
+          </button>
+        </div>
+
+        <div class="input-group">
+          <input
+            class="form-control"
+            type="text"
+            readonly
+            [value]="registrationUrl()"
+            aria-label="Enlace de autoregistro de tutores"
+          />
+          <button class="btn btn-outline-primary" type="button" (click)="copyUrl()">
+            {{ copied() ? 'Copiado' : 'Copiar' }}
+          </button>
+        </div>
+        <div class="form-text">
+          Al generar un enlace nuevo, el anterior deja de identificar a esta escuela.
+        </div>
+      </div>
+    }
+  </div>
+</section>
