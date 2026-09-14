@@ -1,0 +1,332 @@
+:host {
+  display: block;
+}
+
+.guardian-login-shell {
+  min-height: 100dvh;
+  padding:
+    max(0.9rem, env(safe-area-inset-top))
+    max(0.9rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(0.9rem, env(safe-area-inset-left));
+  background:
+    radial-gradient(circle at 8% 8%, rgb(88 86 214 / 14%), transparent 22rem),
+    radial-gradient(circle at 94% 92%, rgb(59 130 246 / 9%), transparent 26rem),
+    var(--cui-tertiary-bg);
+}
+
+.guardian-login-layout {
+  display: grid;
+  width: min(100%, 980px);
+  min-height: calc(100dvh - 1.8rem);
+  margin-inline: auto;
+  grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
+  align-items: stretch;
+  gap: clamp(1rem, 3vw, 2.25rem);
+}
+
+.guardian-login-hero {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(1.8rem, 4vw, 3rem);
+  border-radius: 30px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 85% 12%, rgb(255 255 255 / 17%), transparent 13rem),
+    linear-gradient(145deg, #312e81, #5856d6 58%, #3b82f6 118%);
+  box-shadow: 0 24px 60px rgb(49 46 129 / 20%);
+}
+
+.guardian-login-hero::after {
+  position: absolute;
+  right: -75px;
+  bottom: -95px;
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgb(255 255 255 / 13%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 38px rgb(255 255 255 / 4%),
+    0 0 0 76px rgb(255 255 255 / 3%);
+  content: '';
+}
+
+.hero-brand,
+.hero-brand > div {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.hero-brand > div {
+  display: grid;
+}
+
+.hero-brand-icon {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 15px;
+  background: rgb(255 255 255 / 12%);
+  box-shadow: 0 9px 22px rgb(15 23 42 / 15%);
+}
+
+.hero-brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-brand span {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  opacity: 0.72;
+}
+
+.hero-brand strong {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  margin-block: auto;
+  padding-block: 3rem;
+}
+
+.hero-eyebrow {
+  margin: 0 0 0.7rem;
+  color: rgb(255 255 255 / 72%);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero-copy h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.03;
+  letter-spacing: -0.05em;
+}
+
+.hero-copy > p:last-child {
+  margin: 0;
+  color: rgb(255 255 255 / 78%);
+  line-height: 1.6;
+}
+
+.hero-features {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hero-features span {
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 8%);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.guardian-login-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: 1.5rem;
+}
+
+.guardian-login-card {
+  padding: clamp(1.35rem, 4vw, 2.25rem);
+  border: 1px solid rgb(148 163 184 / 12%);
+  border-radius: 26px;
+  background: rgb(var(--cui-body-bg-rgb) / 96%);
+  box-shadow: 0 22px 58px rgb(15 23 42 / 10%);
+  backdrop-filter: blur(16px);
+}
+
+.login-heading {
+  margin-bottom: 1.45rem;
+}
+
+.login-eyebrow {
+  margin: 0 0 0.55rem;
+  color: var(--cui-primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.login-heading h2 {
+  margin: 0 0 0.45rem;
+  font-size: clamp(1.65rem, 4vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.login-heading > p:last-child {
+  margin: 0;
+  color: var(--cui-secondary-color);
+  line-height: 1.5;
+}
+
+.login-alert {
+  margin-bottom: 1.15rem;
+  border: 0;
+  border-radius: 14px;
+}
+
+.login-field {
+  margin-bottom: 1rem;
+}
+
+.login-field .form-label {
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.login-field .form-control {
+  min-height: 54px;
+  border-radius: 14px;
+  font-size: 1rem;
+}
+
+.login-field .form-control:focus {
+  border-color: rgb(88 86 214 / 70%);
+  box-shadow: 0 0 0 4px rgb(88 86 214 / 11%);
+}
+
+.guardian-login-submit {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 0.25rem;
+  border: 0;
+  border-radius: 14px;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgb(88 86 214 / 20%);
+}
+
+.login-help {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 1.35rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: var(--cui-tertiary-bg);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.login-help strong {
+  font-size: 0.78rem;
+}
+
+.login-help span {
+  color: var(--cui-secondary-color);
+}
+
+.guardian-login-credit {
+  margin-top: 1rem;
+}
+
+@media (max-width: 760px) {
+  .guardian-login-shell {
+    padding:
+      max(0.7rem, env(safe-area-inset-top))
+      max(0.7rem, env(safe-area-inset-right))
+      max(1rem, env(safe-area-inset-bottom))
+      max(0.7rem, env(safe-area-inset-left));
+  }
+
+  .guardian-login-layout {
+    display: flex;
+    min-height: auto;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .guardian-login-hero {
+    min-height: 185px;
+    padding: 1.15rem;
+    border-radius: 22px;
+  }
+
+  .hero-copy {
+    padding: 1.35rem 0 0.35rem;
+  }
+
+  .hero-copy h1 {
+    max-width: 330px;
+    margin-bottom: 0.45rem;
+    font-size: clamp(1.7rem, 9vw, 2.35rem);
+  }
+
+  .hero-copy > p:last-child,
+  .hero-features {
+    display: none;
+  }
+
+  .hero-brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+
+  .guardian-login-panel {
+    padding-block: 0;
+  }
+
+  .guardian-login-card {
+    padding: 1.25rem;
+    border-radius: 22px;
+  }
+}
+
+@media (max-width: 390px) {
+  .guardian-login-hero {
+    min-height: 165px;
+  }
+
+  .hero-copy {
+    padding-top: 1rem;
+  }
+
+  .guardian-login-card {
+    padding: 1.1rem;
+  }
+
+  .login-heading {
+    margin-bottom: 1.2rem;
+  }
+
+  .login-field {
+    margin-bottom: 0.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-field .form-control {
+    scroll-behavior: auto;
+  }
+}

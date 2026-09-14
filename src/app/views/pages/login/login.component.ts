@@ -18,13 +18,10 @@ import {
   ButtonDirective,
   CardBodyComponent,
   CardComponent,
-  ColComponent,
-  ContainerComponent,
   FormControlDirective,
   FormDirective,
   InputGroupComponent,
-  InputGroupTextDirective,
-  RowComponent
+  InputGroupTextDirective
 } from '@coreui/angular';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -32,11 +29,9 @@ import { AuthService } from '../../../core/auth/auth.service';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
+  styleUrl: './login.component.scss',
   imports: [
     ReactiveFormsModule,
-    ContainerComponent,
-    RowComponent,
-    ColComponent,
     CardComponent,
     CardBodyComponent,
     FormDirective,

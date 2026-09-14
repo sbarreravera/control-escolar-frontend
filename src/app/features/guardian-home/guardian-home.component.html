@@ -2,7 +2,12 @@
   <header class="portal-topbar">
     <div class="portal-container topbar-content">
       <div class="brand-lockup">
-        <span class="brand-mark" aria-hidden="true">CE</span>
+        <span class="brand-mark" aria-hidden="true">
+          <img
+            src="assets/control-escolar-credential.svg"
+            alt=""
+          />
+        </span>
         <div>
           <strong>Control Escolar</strong>
           @if (identity(); as currentIdentity) {
@@ -15,12 +20,12 @@
 
       @if (identity()) {
         <button
-          class="btn btn-sm btn-outline-secondary"
+          class="btn btn-sm btn-outline-secondary logout-button"
           type="button"
           [disabled]="loggingOut()"
           (click)="logout()"
         >
-          {{ loggingOut() ? 'Cerrando...' : 'Cerrar sesión' }}
+          {{ loggingOut() ? 'Cerrando...' : 'Salir' }}
         </button>
       }
     </div>
@@ -37,52 +42,83 @@
       </section>
     } @else if (identity(); as currentIdentity) {
       <section class="welcome-panel">
-        <div>
-          <p class="eyebrow mb-2">Portal de tutores</p>
-          <h1 class="h2 mb-2">Hola, {{ currentIdentity.guardianName }}</h1>
-          <p class="text-body-secondary mb-0">
-            Consulta avisos, entradas y salidas registradas por la escuela.
+        <div class="welcome-copy">
+          <div class="welcome-meta">
+            <p class="eyebrow mb-0">Portal de tutores</p>
+            @if (currentIdentity.notificationsEnabled) {
+              <span class="notification-state notification-state-active">
+                <span class="status-dot" aria-hidden="true"></span>
+                Avisos activos
+              </span>
+            } @else {
+              <span class="notification-state notification-state-pending">
+                <span class="status-dot" aria-hidden="true"></span>
+                Avisos pendientes
+              </span>
+            }
+          </div>
+
+          <h1>Hola, {{ currentIdentity.guardianName }}</h1>
+          <p class="welcome-description">
+            Revisa los movimientos de tus alumnos y los avisos enviados
+            por la escuela.
           </p>
         </div>
 
-        <div class="welcome-actions">
+        <div class="welcome-actions" aria-label="Acciones rápidas">
           @if (!currentIdentity.notificationsEnabled) {
             <button
-              class="btn btn-outline-primary"
+              class="btn quick-action quick-action-light"
               type="button"
               [disabled]="enablingNotifications()"
               (click)="enableNotificationsOnThisDevice()"
             >
-              {{ enablingNotifications()
-                ? 'Activando avisos...'
-                : 'Activar avisos' }}
+              <span>Notificaciones</span>
+              <strong>
+                {{ enablingNotifications()
+                  ? 'Activando...'
+                  : 'Activar avisos' }}
+              </strong>
             </button>
           }
+
           <a
-            class="btn btn-outline-primary"
+            class="btn quick-action quick-action-light"
             href="/#/guardian/communications"
           >
-            Avisos
+            <span>Comunicaciones</span>
+            <strong>Ver avisos</strong>
           </a>
+
           <button
-            class="btn btn-primary refresh-button"
+            class="btn quick-action quick-action-primary refresh-button"
             type="button"
             [disabled]="loadingStudents() || loadingHistory()"
             (click)="loadPortalData()"
           >
-            Actualizar movimientos
+            <span>Información</span>
+            <strong>Actualizar movimientos</strong>
           </button>
         </div>
       </section>
 
-      <p class="session-expiration">
-        Usuario {{ currentIdentity.username }} · Sesión vigente hasta el
-        {{ formatExpiration(currentIdentity.sessionExpiresAt) }}
-      </p>
+      <div class="account-strip">
+        <span class="account-item">
+          <span>Usuario</span>
+          <strong>{{ currentIdentity.username }}</strong>
+        </span>
+        <span class="account-divider" aria-hidden="true"></span>
+        <span class="account-item">
+          <span>Sesión vigente</span>
+          <strong>
+            Hasta {{ formatExpiration(currentIdentity.sessionExpiresAt) }}
+          </strong>
+        </span>
+      </div>
 
       @if (notificationMessage(); as message) {
         <div
-          class="alert"
+          class="alert portal-alert"
           [class.alert-success]="!notificationMessageIsError()"
           [class.alert-warning]="notificationMessageIsError()"
           role="status"
@@ -92,7 +128,7 @@
       }
 
       @if (liveMessage()) {
-        <div class="alert alert-success" role="status">
+        <div class="alert alert-success portal-alert" role="status">
           {{ liveMessage() }}
         </div>
       }
@@ -232,7 +268,7 @@
 
                   <button
                     type="button"
-                    class="btn btn-outline-primary w-100"
+                    class="btn btn-outline-primary w-100 student-history-button"
                     (click)="viewStudentHistory(student.studentId)"
                   >
                     Ver su historial

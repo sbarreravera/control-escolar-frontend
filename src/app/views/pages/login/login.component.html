@@ -1,35 +1,80 @@
-<div
-  class="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center"
->
-  <c-container>
-    <c-row class="justify-content-center">
-      <c-col md="8" lg="5" xl="4">
-        <c-card class="p-4 shadow-sm border-0">
-          <c-card-body>
-            <form
-              cForm
-              [formGroup]="loginForm"
-              (ngSubmit)="submit()"
-              novalidate
-            >
-              <div class="text-center mb-4">
-                <h1 class="h3 mb-2">
-                  Control Escolar
-                </h1>
-                <p class="text-body-secondary mb-0">
-                  Acceso para personal autorizado
-                </p>
+<div class="login-shell">
+  <div class="login-layout">
+    <section class="login-brand-panel" aria-label="Control Escolar">
+      <div class="brand-lockup">
+        <span class="brand-icon">
+          <img
+            src="assets/control-escolar-credential.svg"
+            alt=""
+            aria-hidden="true"
+          />
+        </span>
+        <div>
+          <span class="brand-kicker">PLATAFORMA ESCOLAR</span>
+          <strong>Control Escolar</strong>
+        </div>
+      </div>
+
+      <div class="brand-message">
+        <p class="brand-eyebrow">Gestión escolar más simple</p>
+        <h1>
+          Todo lo importante de tu escuela,
+          en un solo lugar.
+        </h1>
+        <p>
+          Administra alumnos, tutores, accesos y avisos
+          desde una plataforma clara y segura.
+        </p>
+      </div>
+
+      <div class="brand-features" aria-label="Características">
+        <span>Accesos en tiempo real</span>
+        <span>Avisos a tutores</span>
+        <span>Información segura</span>
+      </div>
+    </section>
+
+    <main class="login-form-panel">
+      <div class="mobile-brand" aria-label="Control Escolar">
+        <span class="brand-icon brand-icon-mobile">
+          <img
+            src="assets/control-escolar-credential.svg"
+            alt=""
+            aria-hidden="true"
+          />
+        </span>
+        <div>
+          <span class="brand-kicker">PLATAFORMA ESCOLAR</span>
+          <strong>Control Escolar</strong>
+        </div>
+      </div>
+
+      <c-card class="login-card border-0">
+        <c-card-body>
+          <form
+            cForm
+            [formGroup]="loginForm"
+            (ngSubmit)="submit()"
+            novalidate
+          >
+            <div class="login-heading">
+              <p class="login-eyebrow">Bienvenido</p>
+              <h2>Inicia sesión</h2>
+              <p>
+                Ingresa con tu cuenta de personal autorizado.
+              </p>
+            </div>
+
+            @if (errorMessage()) {
+              <div
+                class="alert alert-danger login-alert"
+                role="alert"
+              >
+                {{ errorMessage() }}
               </div>
+            }
 
-              @if (errorMessage()) {
-                <div
-                  class="alert alert-danger"
-                  role="alert"
-                >
-                  {{ errorMessage() }}
-                </div>
-              }
-
+            <div class="form-field">
               <label
                 class="form-label"
                 for="email"
@@ -37,7 +82,7 @@
                 Correo electrónico
               </label>
 
-              <c-input-group class="mb-2">
+              <c-input-group class="login-input-group">
                 <span cInputGroupText>
                   <svg cIcon name="cilUser"></svg>
                 </span>
@@ -48,6 +93,7 @@
                   cFormControl
                   formControlName="email"
                   autocomplete="username"
+                  inputmode="email"
                   placeholder="correo@ejemplo.com"
                 />
               </c-input-group>
@@ -56,13 +102,13 @@
                 loginForm.controls.email.touched &&
                 loginForm.controls.email.invalid
               ) {
-                <p class="text-danger small mb-3">
+                <p class="field-error">
                   Ingresa un correo electrónico válido.
                 </p>
-              } @else {
-                <div class="mb-3"></div>
               }
+            </div>
 
+            <div class="form-field">
               <label
                 class="form-label"
                 for="password"
@@ -70,7 +116,7 @@
                 Contraseña
               </label>
 
-              <c-input-group class="mb-2">
+              <c-input-group class="login-input-group">
                 <span cInputGroupText>
                   <svg
                     cIcon
@@ -84,7 +130,7 @@
                   cFormControl
                   formControlName="password"
                   autocomplete="current-password"
-                  placeholder="Contraseña"
+                  placeholder="Tu contraseña"
                 />
               </c-input-group>
 
@@ -92,34 +138,42 @@
                 loginForm.controls.password.touched &&
                 loginForm.controls.password.invalid
               ) {
-                <p class="text-danger small mb-3">
+                <p class="field-error">
                   Ingresa tu contraseña.
                 </p>
-              } @else {
-                <div class="mb-3"></div>
               }
+            </div>
 
-              <button
-                cButton
-                color="primary"
-                class="w-100"
-                type="submit"
-                [disabled]="submitting()"
-              >
-                @if (submitting()) {
-                  Ingresando...
-                } @else {
-                  Iniciar sesión
-                }
-              </button>
-            </form>
-          </c-card-body>
-        </c-card>
+            <button
+              cButton
+              color="primary"
+              class="login-submit w-100"
+              type="submit"
+              [disabled]="submitting()"
+            >
+              @if (submitting()) {
+                Ingresando...
+              } @else {
+                Iniciar sesión
+              }
+            </button>
+          </form>
+        </c-card-body>
+      </c-card>
 
-        <p class="text-center text-body-secondary small mt-3">
-          Sistema de registro de entradas y salidas
-        </p>
-      </c-col>
-    </c-row>
-  </c-container>
+      <div class="powered-by-isamar login-credit" aria-label="Powered by Estudio Digital Isamar">
+        <span class="powered-by-logo">
+          <img
+            src="assets/estudio-digital-isamar.png"
+            alt="Estudio Digital Isamar"
+          />
+        </span>
+        <span class="powered-by-copy">
+          <small>Powered by</small>
+          <span>Estudio Digital</span>
+          <strong>ISAMAR</strong>
+        </span>
+      </div>
+    </main>
+  </div>
 </div>
