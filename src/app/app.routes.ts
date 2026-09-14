@@ -47,6 +47,16 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'guardian/register',
+    loadComponent: () =>
+      import(
+        './features/guardian-registration/guardian-registration.component'
+      ).then(module => module.GuardianRegistrationComponent),
+    data: {
+      title: 'Registro de tutor'
+    }
+  },
+  {
     path: 'guardian/communications',
     loadComponent: () =>
       import(
