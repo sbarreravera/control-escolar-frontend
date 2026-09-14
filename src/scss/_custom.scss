@@ -50,8 +50,6 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform: scale(1.4);
-  transform-origin: center;
 }
 
 .powered-by-copy {
@@ -83,26 +81,25 @@
   letter-spacing: 0.12em;
 }
 
-// Compact product credit at the bottom of the guardian portal.
+// Same visual credit at the bottom of the guardian portal.
 .guardian-shell::after {
   display: block;
-  width: fit-content;
-  min-width: 270px;
-  min-height: 78px;
+  width: min(calc(100% - 1.25rem), 320px);
+  min-height: 94px;
   box-sizing: border-box;
   margin: 0.75rem auto max(1.25rem, env(safe-area-inset-bottom));
-  padding: 0.85rem 1rem 0.75rem 7.5rem;
+  padding: 0.9rem 1rem 0.75rem 8.7rem;
   border: 1px solid rgb(148 163 184 / 18%);
   border-radius: 18px;
   color: var(--cui-secondary-color);
   background:
-    url('/assets/estudio-digital-isamar.png') 0.65rem center / 6.1rem auto no-repeat,
+    url('/assets/estudio-digital-isamar.png') 0.75rem center / 7.2rem auto no-repeat,
     rgb(var(--cui-body-bg-rgb) / 86%);
   box-shadow: 0 10px 28px rgb(15 23 42 / 6%);
   content: 'Powered by\A Estudio Digital\A\A ISAMAR';
   font-size: 0.68rem;
   font-weight: 600;
-  line-height: 1.05;
+  line-height: 1.08;
   white-space: pre-line;
 }
 
@@ -125,8 +122,10 @@
   }
 
   .guardian-shell::after {
-    min-width: 250px;
-    padding-left: 6.7rem;
-    background-size: 5.4rem auto, auto;
+    width: min(calc(100% - 1rem), 300px);
+    min-height: 88px;
+    padding-left: 8rem;
+    background-position: 0.65rem center, center;
+    background-size: 6.7rem auto, auto;
   }
 }
