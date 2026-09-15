@@ -18,7 +18,8 @@ describe('buildNavItems', () => {
     expect(guardians?.children?.map((item) => item.name)).toEqual([
       'Listado de tutores',
       'Carga masiva',
-      'Accesos al portal'
+      'Accesos al portal',
+      'Autoregistro'
     ]);
 
     const administration = items.find(
