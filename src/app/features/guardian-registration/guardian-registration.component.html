@@ -39,13 +39,14 @@
             <p class="registration-eyebrow">Registro completado</p>
             <h2>Tu cuenta ya está lista</h2>
             <p class="text-body-secondary">
-              Guarda tu matrícula de tutor. Éste será también tu usuario para
-              entrar al portal.
+              Guarda estos datos. Los necesitarás para volver a entrar al portal.
             </p>
 
             <div class="guardian-reference">
-              <small>Matrícula de tutor</small>
-              <strong>{{ registration.guardianReference }}</strong>
+              <small>Código de escuela</small>
+              <strong>{{ registration.schoolCode }}</strong>
+              <small class="mt-2">Matrícula de tutor / usuario</small>
+              <strong>{{ registration.username }}</strong>
             </div>
 
             <div class="registered-school">
@@ -54,7 +55,7 @@
             </div>
 
             <div class="alert alert-info" role="status">
-              La confirmación de tu registro se enviará a
+              La confirmación de tu registro y tus datos de acceso se enviará a
               <strong>{{ email() }}</strong>.
             </div>
 
