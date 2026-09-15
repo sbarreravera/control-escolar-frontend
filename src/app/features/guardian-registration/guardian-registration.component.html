@@ -54,9 +54,12 @@
               <small>{{ registration.studentEnrollmentNumbers.length }} alumno(s) vinculado(s)</small>
             </div>
 
-            <div class="alert alert-info" role="status">
-              La confirmación de tu registro y tus datos de acceso se enviará a
-              <strong>{{ email() }}</strong>.
+            <div class="alert alert-info text-start" role="status">
+              <strong>Te enviamos una confirmación a {{ email() }}.</strong>
+              <div class="mt-1">
+                Si no la encuentras en Recibidos, revisa Spam o Correo no deseado.
+                Si aparece ahí, márcala como <strong>“No es spam”</strong> para ayudar a que los próximos mensajes lleguen correctamente.
+              </div>
             </div>
 
             @if (errorMessage(); as message) {
