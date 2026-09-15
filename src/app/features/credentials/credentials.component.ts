@@ -439,13 +439,26 @@ export class CredentialsComponent implements OnInit {
   }
 
   private bulkQrFileName(credential: BulkCredential): string {
-    return [
+    const student = this.students().find(
+      item => item.id === credential.studentId
+    );
+
+    const gradeFolder = this.safeFolderPart(
+      student?.gradeName ?? 'Sin grado'
+    );
+    const groupFolder = this.safeFolderPart(
+      student?.groupName ?? 'Sin grupo'
+    );
+
+    const fileName = [
       credential.enrollmentNumber,
       this.firstWord(credential.firstName),
       this.firstWord(credential.lastName)
     ]
       .map(value => this.safeFilePart(value))
       .join('_') + '.png';
+
+    return `${gradeFolder}/${groupFolder}/${fileName}`;
   }
 
   private firstWord(value: string): string {
@@ -461,6 +474,20 @@ export class CredentialsComponent implements OnInit {
       .replace(/^_+|_+$/g, '');
 
     return safeValue || 'sin-dato';
+  }
+
+  private safeFolderPart(value: string): string {
+    const safeValue = value
+      .trim()
+      .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
+      .replace(/[. ]+$/g, '')
+      .replace(/\s+/g, ' ');
+
+    if (!safeValue || safeValue === '.' || safeValue === '..') {
+      return 'Sin asignar';
+    }
+
+    return safeValue;
   }
 
   private downloadBlob(blob: Blob, fileName: string): void {
