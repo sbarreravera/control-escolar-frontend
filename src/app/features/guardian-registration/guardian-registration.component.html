@@ -53,6 +53,11 @@
               <small>{{ registration.studentEnrollmentNumbers.length }} alumno(s) vinculado(s)</small>
             </div>
 
+            <div class="alert alert-info" role="status">
+              La confirmación de tu registro se enviará a
+              <strong>{{ email() }}</strong>.
+            </div>
+
             @if (errorMessage(); as message) {
               <div class="alert alert-warning" role="alert">{{ message }}</div>
             }
@@ -192,7 +197,7 @@
 
               <div class="contact-grid">
                 <div class="registration-field">
-                  <label class="form-label" for="guardianPhone">Teléfono</label>
+                  <label class="form-label" for="guardianPhone">Teléfono (opcional)</label>
                   <input
                     id="guardianPhone"
                     class="form-control"
@@ -206,7 +211,7 @@
                   />
                 </div>
                 <div class="registration-field">
-                  <label class="form-label" for="guardianEmail">Correo</label>
+                  <label class="form-label" for="guardianEmail">Correo electrónico *</label>
                   <input
                     id="guardianEmail"
                     class="form-control"
@@ -215,12 +220,15 @@
                     autocomplete="email"
                     inputmode="email"
                     placeholder="correo@ejemplo.com"
+                    required
                     [value]="email()"
                     (input)="updateEmail($event)"
                   />
                 </div>
               </div>
-              <p class="field-note">Captura al menos teléfono o correo.</p>
+              <p class="field-note">
+                El correo electrónico es obligatorio y se utilizará para enviarte la confirmación de tu registro.
+              </p>
             </div>
 
             <div class="registration-section">
