@@ -8,3 +8,13 @@ export interface Credential {
   deactivatedAt: string | null;
   createdAt: string;
 }
+
+export interface BulkCredential {
+  credentialId: number;
+  studentId: number;
+  enrollmentNumber: string;
+  firstName: string;
+  lastName: string;
+  qrToken: string;
+  created: boolean;
+}
