@@ -44,7 +44,7 @@ export function createZipBlob(entries: ZipFileEntry[]): Blob {
   const now = new Date();
   const { dosDate, dosTime } = toDosDateTime(now);
   const encoder = new TextEncoder();
-  const localParts: BlobPart[] = [];
+  const localParts: ArrayBuffer[] = [];
   const preparedEntries: PreparedZipEntry[] = [];
   let offset = 0;
 
@@ -75,12 +75,16 @@ export function createZipBlob(entries: ZipFileEntry[]): Blob {
       dosTime
     });
 
-    localParts.push(localHeader, nameBytes, entry.data);
+    localParts.push(
+      toArrayBuffer(localHeader),
+      toArrayBuffer(nameBytes),
+      toArrayBuffer(entry.data)
+    );
     offset += localHeader.length + nameBytes.length + entry.data.length;
   }
 
   const centralDirectoryOffset = offset;
-  const centralParts: BlobPart[] = [];
+  const centralParts: ArrayBuffer[] = [];
   let centralDirectorySize = 0;
 
   for (const entry of preparedEntries) {
@@ -105,7 +109,10 @@ export function createZipBlob(entries: ZipFileEntry[]): Blob {
     view.setUint32(38, 0, true);
     view.setUint32(42, entry.localHeaderOffset, true);
 
-    centralParts.push(centralHeader, entry.nameBytes);
+    centralParts.push(
+      toArrayBuffer(centralHeader),
+      toArrayBuffer(entry.nameBytes)
+    );
     centralDirectorySize += centralHeader.length + entry.nameBytes.length;
   }
 
@@ -121,9 +128,19 @@ export function createZipBlob(entries: ZipFileEntry[]): Blob {
   endView.setUint16(20, 0, true);
 
   return new Blob(
-    [...localParts, ...centralParts, endOfCentralDirectory],
+    [
+      ...localParts,
+      ...centralParts,
+      toArrayBuffer(endOfCentralDirectory)
+    ],
     { type: 'application/zip' }
   );
+}
+
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  return buffer;
 }
 
 function buildCrcTable(): Uint32Array {
