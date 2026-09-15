@@ -5,6 +5,7 @@ import {
 } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
+  BulkCredential,
   Credential
 } from './credential.models';
 
@@ -28,6 +29,15 @@ export class CredentialService {
   ): Observable<Credential> {
     return this.http.post<Credential>(
       `/api/v1/students/${studentId}/credentials`,
+      null
+    );
+  }
+
+  ensureActiveForSchool(
+    schoolId: number
+  ): Observable<BulkCredential[]> {
+    return this.http.post<BulkCredential[]>(
+      `/api/v1/schools/${schoolId}/credentials/ensure-active`,
       null
     );
   }
