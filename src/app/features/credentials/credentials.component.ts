@@ -22,7 +22,7 @@ import {
   RowComponent
 } from '@coreui/angular';
 import QRCode from 'qrcode';
-import { finalize } from 'rxjs';
+import { finalize, firstValueFrom } from 'rxjs';
 import {
   AuthService
 } from '../../core/auth/auth.service';
@@ -33,11 +33,17 @@ import {
   StudentService
 } from '../students/student.service';
 import {
+  BulkCredential,
   Credential
 } from './credential.models';
 import {
   CredentialService
 } from './credential.service';
+import {
+  createZipBlob,
+  dataUrlToBytes,
+  ZipFileEntry
+} from './zip-download.util';
 
 @Component({
   selector: 'app-credentials',
@@ -72,6 +78,7 @@ export class CredentialsComponent implements OnInit {
   readonly loadingStudents = signal(true);
   readonly loadingCredential = signal(false);
   readonly processing = signal(false);
+  readonly bulkProcessing = signal(false);
 
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage =
@@ -81,6 +88,10 @@ export class CredentialsComponent implements OnInit {
     () =>
       this.authService.currentUser()?.schoolName ??
       'Tu escuela'
+  );
+
+  readonly activeStudentCount = computed(
+    () => this.students().filter(student => student.active).length
   );
 
   readonly credentialForm = this.formBuilder.group({
@@ -214,6 +225,78 @@ export class CredentialsComponent implements OnInit {
       });
   }
 
+  async downloadAllQr(): Promise<void> {
+    const schoolId = this.authService.currentUser()?.schoolId;
+
+    if (schoolId === null || schoolId === undefined) {
+      this.errorMessage.set(
+        'Tu usuario no tiene una escuela asignada.'
+      );
+      return;
+    }
+
+    if (this.activeStudentCount() === 0) {
+      this.errorMessage.set(
+        'No hay alumnos activos para generar credenciales QR.'
+      );
+      return;
+    }
+
+    this.bulkProcessing.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    try {
+      const credentials = await firstValueFrom(
+        this.credentialService.ensureActiveForSchool(schoolId)
+      );
+
+      if (credentials.length === 0) {
+        this.errorMessage.set(
+          'No hay alumnos activos para generar credenciales QR.'
+        );
+        return;
+      }
+
+      const entries: ZipFileEntry[] = [];
+
+      for (const credential of credentials) {
+        const dataUrl = await this.generateQrDataUrl(
+          credential.qrToken
+        );
+        entries.push({
+          name: this.bulkQrFileName(credential),
+          data: dataUrlToBytes(dataUrl)
+        });
+      }
+
+      const zip = createZipBlob(entries);
+      const zipName =
+        `credenciales-qr-${this.safeFilePart(this.schoolName())}.zip`;
+      this.downloadBlob(zip, zipName);
+
+      const createdCount = credentials.filter(
+        credential => credential.created
+      ).length;
+
+      this.successMessage.set(
+        createdCount > 0
+          ? `Se prepararon ${credentials.length} códigos QR y se crearon ${createdCount} credenciales nuevas. La descarga ZIP comenzó automáticamente.`
+          : `Se prepararon ${credentials.length} códigos QR usando las credenciales activas existentes. La descarga ZIP comenzó automáticamente.`
+      );
+    } catch (error: unknown) {
+      if (error instanceof HttpErrorResponse) {
+        this.errorMessage.set(this.resolveErrorMessage(error));
+      } else {
+        this.errorMessage.set(
+          'No fue posible generar el archivo ZIP de credenciales QR.'
+        );
+      }
+    } finally {
+      this.bulkProcessing.set(false);
+    }
+  }
+
   regenerateCredential(): void {
     const studentId =
       this.credentialForm.controls.studentId.value;
@@ -324,18 +407,7 @@ export class CredentialsComponent implements OnInit {
     this.credential.set(credential);
     this.qrDataUrl.set(null);
 
-    void QRCode.toDataURL(
-      credential.qrToken,
-      {
-        errorCorrectionLevel: 'H',
-        width: 512,
-        margin: 4,
-        color: {
-          dark: '#000000ff',
-          light: '#ffffffff'
-        }
-      }
-    )
+    void this.generateQrDataUrl(credential.qrToken)
       .then(dataUrl => {
         if (
           this.credential()?.id === credential.id
@@ -351,6 +423,84 @@ export class CredentialsComponent implements OnInit {
       });
   }
 
+  private generateQrDataUrl(qrToken: string): Promise<string> {
+    return QRCode.toDataURL(
+      qrToken,
+      {
+        errorCorrectionLevel: 'H',
+        width: 512,
+        margin: 4,
+        color: {
+          dark: '#000000ff',
+          light: '#ffffffff'
+        }
+      }
+    );
+  }
+
+  private bulkQrFileName(credential: BulkCredential): string {
+    const student = this.students().find(
+      item => item.id === credential.studentId
+    );
+
+    const gradeFolder = this.safeFolderPart(
+      student?.gradeName ?? 'Sin grado'
+    );
+    const groupFolder = this.safeFolderPart(
+      student?.groupName ?? 'Sin grupo'
+    );
+
+    const fileName = [
+      credential.enrollmentNumber,
+      this.firstWord(credential.firstName),
+      this.firstWord(credential.lastName)
+    ]
+      .map(value => this.safeFilePart(value))
+      .join('_') + '.png';
+
+    return `${gradeFolder}/${groupFolder}/${fileName}`;
+  }
+
+  private firstWord(value: string): string {
+    return value.trim().split(/\s+/)[0] ?? '';
+  }
+
+  private safeFilePart(value: string): string {
+    const safeValue = value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^A-Za-z0-9_-]+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '');
+
+    return safeValue || 'sin-dato';
+  }
+
+  private safeFolderPart(value: string): string {
+    const safeValue = value
+      .trim()
+      .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
+      .replace(/[. ]+$/g, '')
+      .replace(/\s+/g, ' ');
+
+    if (!safeValue || safeValue === '.' || safeValue === '..') {
+      return 'Sin asignar';
+    }
+
+    return safeValue;
+  }
+
+  private downloadBlob(blob: Blob, fileName: string): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   private resolveErrorMessage(
     error: HttpErrorResponse
   ): string {
@@ -359,7 +509,7 @@ export class CredentialsComponent implements OnInit {
     }
 
     if (error.status === 403) {
-      return 'No tienes permiso para administrar la credencial de este alumno.';
+      return 'No tienes permiso para administrar las credenciales solicitadas.';
     }
 
     if (error.status === 404) {
