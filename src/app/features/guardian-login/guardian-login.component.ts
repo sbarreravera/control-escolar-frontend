@@ -52,6 +52,13 @@ export class GuardianLoginComponent {
     this.password.set((event.target as HTMLInputElement).value);
   }
 
+  openRegistration(): void {
+    const schoolCode = this.schoolCode().trim();
+    void this.router.navigate(['/guardian/register'], {
+      queryParams: schoolCode ? { schoolCode } : undefined
+    });
+  }
+
   async submit(): Promise<void> {
     const schoolCode = this.schoolCode().trim();
     const username = this.username().trim();

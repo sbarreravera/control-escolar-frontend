@@ -64,6 +64,10 @@ export function buildNavItems(
           {
             name: 'Accesos al portal',
             url: '/guardian-activation'
+          },
+          {
+            name: 'Autoregistro',
+            url: '/guardian-registration-settings'
           }
         ]
       : [])

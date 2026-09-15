@@ -107,10 +107,22 @@
           </button>
         </form>
 
+        <div class="login-register">
+          <span>¿Todavía no tienes cuenta?</span>
+          <button
+            class="btn btn-outline-primary"
+            type="button"
+            (click)="openRegistration()"
+          >
+            Registrarme como tutor
+          </button>
+        </div>
+
         <aside class="login-help">
-          <strong>¿Es tu primera vez o no recuerdas tu contraseña?</strong>
+          <strong>¿No recuerdas tu contraseña?</strong>
           <span>
-            Solicita a la escuela una invitación de activación o recuperación.
+            Solicita a la escuela una invitación de recuperación. El método
+            anterior de activación sigue disponible cuando la escuela lo use.
           </span>
         </aside>
       </div>

@@ -47,6 +47,16 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'guardian/register',
+    loadComponent: () =>
+      import(
+        './features/guardian-registration/guardian-registration.component'
+      ).then(module => module.GuardianRegistrationComponent),
+    data: {
+      title: 'Registro de tutor'
+    }
+  },
+  {
     path: 'guardian/communications',
     loadComponent: () =>
       import(
@@ -219,6 +229,24 @@ export const routes: Routes = [
         ],
         data: {
           title: 'Activación de tutores',
+          roles: [
+            'ADMIN'
+          ]
+        }
+      },
+      {
+        path: 'guardian-registration-settings',
+        loadComponent: () =>
+          import(
+            './features/guardian-registration/guardian-registration-settings.component'
+          ).then(
+            module => module.GuardianRegistrationSettingsComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Autoregistro de tutores',
           roles: [
             'ADMIN'
           ]
