@@ -30,7 +30,7 @@ export interface GuardianSelfRegistrationRequest {
   schoolCode?: string;
   fullName: string;
   phone?: string;
-  email?: string;
+  email: string;
   relationship: string;
   studentEnrollmentNumbers: string[];
   password: string;

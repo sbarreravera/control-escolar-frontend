@@ -39,18 +39,27 @@
             <p class="registration-eyebrow">Registro completado</p>
             <h2>Tu cuenta ya está lista</h2>
             <p class="text-body-secondary">
-              Guarda tu matrícula de tutor. Éste será también tu usuario para
-              entrar al portal.
+              Guarda estos datos. Los necesitarás para volver a entrar al portal.
             </p>
 
             <div class="guardian-reference">
-              <small>Matrícula de tutor</small>
-              <strong>{{ registration.guardianReference }}</strong>
+              <small>Código de escuela</small>
+              <strong>{{ registration.schoolCode }}</strong>
+              <small class="mt-2">Matrícula de tutor / usuario</small>
+              <strong>{{ registration.username }}</strong>
             </div>
 
             <div class="registered-school">
               <span>{{ registration.schoolName }}</span>
               <small>{{ registration.studentEnrollmentNumbers.length }} alumno(s) vinculado(s)</small>
+            </div>
+
+            <div class="alert alert-info text-start" role="status">
+              <strong>Te enviamos una confirmación a {{ email() }}.</strong>
+              <div class="mt-1">
+                Si no la encuentras en Recibidos, revisa Spam o Correo no deseado.
+                Si aparece ahí, márcala como <strong>“No es spam”</strong> para ayudar a que los próximos mensajes lleguen correctamente.
+              </div>
             </div>
 
             @if (errorMessage(); as message) {
@@ -192,7 +201,7 @@
 
               <div class="contact-grid">
                 <div class="registration-field">
-                  <label class="form-label" for="guardianPhone">Teléfono</label>
+                  <label class="form-label" for="guardianPhone">Teléfono (opcional)</label>
                   <input
                     id="guardianPhone"
                     class="form-control"
@@ -206,7 +215,7 @@
                   />
                 </div>
                 <div class="registration-field">
-                  <label class="form-label" for="guardianEmail">Correo</label>
+                  <label class="form-label" for="guardianEmail">Correo electrónico *</label>
                   <input
                     id="guardianEmail"
                     class="form-control"
@@ -215,12 +224,15 @@
                     autocomplete="email"
                     inputmode="email"
                     placeholder="correo@ejemplo.com"
+                    required
                     [value]="email()"
                     (input)="updateEmail($event)"
                   />
                 </div>
               </div>
-              <p class="field-note">Captura al menos teléfono o correo.</p>
+              <p class="field-note">
+                El correo electrónico es obligatorio y se utilizará para enviarte la confirmación de tu registro.
+              </p>
             </div>
 
             <div class="registration-section">

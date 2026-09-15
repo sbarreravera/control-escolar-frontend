@@ -137,17 +137,19 @@ export class GuardianRegistrationComponent implements OnInit {
       .map(value => value.trim())
       .filter(Boolean);
     const schoolCode = this.schoolCode().trim();
+    const fullName = this.fullName().trim();
+    const email = this.email().trim();
     const password = this.password();
 
-    if (!schoolCode || !this.fullName().trim() || !this.relationship()
+    if (!schoolCode || !fullName || !email || !this.relationship()
         || enrollments.length === 0 || !password) {
       this.errorMessage.set(
-        'Completa la escuela, tus datos y al menos una matrícula de alumno.'
+        'Completa la escuela, tus datos, tu correo electrónico y al menos una matrícula de alumno.'
       );
       return;
     }
-    if (!this.phone().trim() && !this.email().trim()) {
-      this.errorMessage.set('Captura al menos un teléfono o correo electrónico.');
+    if (!this.isValidEmail(email)) {
+      this.errorMessage.set('Captura un correo electrónico válido.');
       return;
     }
     if (password.length < 8) {
@@ -168,9 +170,9 @@ export class GuardianRegistrationComponent implements OnInit {
       const response = await firstValueFrom(this.registrationService.register({
         registrationToken: this.token() || undefined,
         schoolCode: this.token() ? undefined : schoolCode,
-        fullName: this.fullName().trim(),
+        fullName,
         phone: this.phone().trim() || undefined,
-        email: this.email().trim() || undefined,
+        email,
         relationship: this.relationship(),
         studentEnrollmentNumbers: enrollments,
         password
@@ -224,6 +226,10 @@ export class GuardianRegistrationComponent implements OnInit {
     void this.router.navigateByUrl(
       '/guardian/login' + (query ? `?${query}` : '')
     );
+  }
+
+  private isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
   private resolveDeviceName(): string {
