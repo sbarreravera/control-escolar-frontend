@@ -245,11 +245,28 @@ export class GuardianRegistrationComponent implements OnInit {
       const detail = typeof error.error?.detail === 'string'
         ? error.error.detail
         : null;
+
+      if (error.status === 404 &&
+          detail?.includes('Student enrollment number')) {
+        return 'La matrícula capturada no está registrada en la escuela seleccionada. Verifica la matrícula del alumno.';
+      }
       if (error.status === 404) {
-        return 'No encontramos la escuela o una de las matrículas capturadas. Verifica los datos.';
+        return 'No fue posible identificar la escuela para este registro. Verifica el enlace o selecciona nuevamente tu escuela.';
+      }
+      if (error.status === 409 &&
+          detail?.includes('Guardian account already exists')) {
+        return 'Ya existe una cuenta de tutor con estos datos en esta escuela. No necesitas registrarte otra vez: inicia sesión con tu cuenta actual o solicita recuperación de acceso al colegio.';
+      }
+      if (error.status === 409 &&
+          detail?.includes('maximum number of guardians')) {
+        return 'Este alumno ya tiene el número máximo de tutores permitido por la escuela. Si necesitas corregir o sustituir al tutor registrado, comunícate con el colegio.';
+      }
+      if (error.status === 409 &&
+          detail?.includes('Student is not active')) {
+        return 'La matrícula corresponde a un alumno que actualmente no está activo. Comunícate con el colegio.';
       }
       if (error.status === 409) {
-        return 'Uno de los alumnos ya alcanzó el número máximo de tutores permitido por su escuela. Si necesitas corregir la relación, comunícate con el colegio.';
+        return 'No fue posible crear esta relación con el alumno. Comunícate con el colegio si necesitas corregir un registro existente.';
       }
       if (error.status === 400 && detail) {
         return detail;
