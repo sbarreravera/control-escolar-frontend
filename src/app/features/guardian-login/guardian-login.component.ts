@@ -59,6 +59,13 @@ export class GuardianLoginComponent {
     });
   }
 
+  openPasswordRecovery(): void {
+    const schoolCode = this.schoolCode().trim();
+    void this.router.navigate(['/guardian/recover-password'], {
+      queryParams: schoolCode ? { schoolCode } : undefined
+    });
+  }
+
   async submit(): Promise<void> {
     const schoolCode = this.schoolCode().trim();
     const username = this.username().trim();

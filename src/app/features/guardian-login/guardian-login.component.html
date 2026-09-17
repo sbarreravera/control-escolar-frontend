@@ -121,9 +121,16 @@
         <aside class="login-help">
           <strong>¿No recuerdas tu contraseña?</strong>
           <span>
-            Solicita a la escuela una invitación de recuperación. El método
-            anterior de activación sigue disponible cuando la escuela lo use.
+            Podemos enviarte un enlace seguro al correo que registraste
+            como tutor.
           </span>
+          <button
+            class="btn btn-link p-0 text-start"
+            type="button"
+            (click)="openPasswordRecovery()"
+          >
+            Recuperar contraseña
+          </button>
         </aside>
       </div>
 
