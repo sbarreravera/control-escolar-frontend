@@ -77,6 +77,11 @@ export interface GuardianLoginRequest {
   deviceName: string | null;
 }
 
+export interface GuardianPasswordResetRequest {
+  schoolCode: string;
+  email: string;
+}
+
 export interface GuardianLoginResponse
   extends CompleteGuardianDeviceEnrollmentResponse {
 }
