@@ -69,6 +69,14 @@ export class GuardianHomeComponent implements OnInit, OnDestroy {
   readonly liveMessage = signal<string | null>(null);
   readonly notificationMessage = signal<string | null>(null);
   readonly notificationMessageIsError = signal(false);
+  readonly iosNotificationGuideUrl =
+    'https://drive.google.com/file/d/1d1iBZ9VNF-2skuBd5tIAqwiYUhqZUVJ-/view?usp=sharing';
+
+  readonly showIosNotificationGuide = computed(() =>
+    this.notificationMessageIsError() &&
+    this.firebaseMessagingService.isIosDevice() &&
+    !this.firebaseMessagingService.isStandaloneWebApp()
+  );
 
   readonly selectedStudentId = signal<number | null>(null);
   readonly selectedEventType = signal<GuardianAccessEventType | null>(null);

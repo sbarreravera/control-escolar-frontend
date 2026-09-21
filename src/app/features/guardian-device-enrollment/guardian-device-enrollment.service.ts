@@ -20,6 +20,7 @@ import {
   GuardianInvitationStatus,
   GuardianLoginRequest,
   GuardianLoginResponse,
+  GuardianPasswordResetRequest,
   RegisterCurrentGuardianDeviceRequest
 } from './guardian-device-enrollment.models';
 
@@ -69,6 +70,17 @@ export class GuardianDeviceEnrollmentService {
     return this.requestCsrfToken().pipe(
       switchMap(() => this.http.post<GuardianLoginResponse>(
         '/api/v1/guardian-auth/login',
+        request
+      ))
+    );
+  }
+
+  requestGuardianPasswordReset(
+    request: GuardianPasswordResetRequest
+  ): Observable<void> {
+    return this.requestCsrfToken().pipe(
+      switchMap(() => this.http.post<void>(
+        '/api/v1/guardian-auth/password-reset/request',
         request
       ))
     );

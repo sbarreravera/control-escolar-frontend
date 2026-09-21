@@ -37,6 +37,30 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'guardian/reset-password',
+    loadComponent: () =>
+      import(
+        './features/guardian-device-enrollment/guardian-device-enrollment.component'
+      ).then(
+        module => module.GuardianDeviceEnrollmentComponent
+      ),
+    data: {
+      title: 'Restablecer contraseña de tutor'
+    }
+  },
+  {
+    path: 'guardian/recover-password',
+    loadComponent: () =>
+      import(
+        './features/guardian-login/guardian-password-recovery.component'
+      ).then(
+        module => module.GuardianPasswordRecoveryComponent
+      ),
+    data: {
+      title: 'Recuperar contraseña de tutor'
+    }
+  },
+  {
     path: 'guardian/login',
     loadComponent: () =>
       import(

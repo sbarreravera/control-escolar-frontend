@@ -19,11 +19,15 @@ describe('GuardianHomeComponent', () => {
 
   const messagingService = {
     listenForForegroundAccessEvents: vi.fn()
-      .mockResolvedValue(vi.fn())
+      .mockResolvedValue(vi.fn()),
+    isIosDevice: vi.fn().mockReturnValue(false),
+    isStandaloneWebApp: vi.fn().mockReturnValue(false)
   };
 
   beforeEach(async () => {
     messagingService.listenForForegroundAccessEvents.mockClear();
+    messagingService.isIosDevice.mockReset().mockReturnValue(false);
+    messagingService.isStandaloneWebApp.mockReset().mockReturnValue(false);
 
     await TestBed.configureTestingModule({
       imports: [GuardianHomeComponent],
