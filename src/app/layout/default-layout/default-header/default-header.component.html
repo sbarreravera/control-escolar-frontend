@@ -31,6 +31,14 @@
     </c-header-nav>
 
     <c-header-nav class="ms-auto">
+      @if (managingSchool()) {
+        <c-nav-item class="d-none d-lg-flex align-items-center">
+          <span class="badge text-bg-primary">
+            Administrando: {{ currentUser()?.schoolName }}
+          </span>
+        </c-nav-item>
+      }
+
       <ng-container
         *ngTemplateOutlet="themeDropdown"
       />
@@ -97,6 +105,23 @@
           </small>
         </h6>
       </li>
+
+      @if (managingSchool()) {
+        <li>
+          <button
+            cDropdownItem
+            type="button"
+            (click)="changeManagedSchool()"
+          >
+            <svg
+              cIcon
+              class="me-2"
+              name="cilHome"
+            ></svg>
+            Cambiar escuela
+          </button>
+        </li>
+      }
 
       <li>
         <button

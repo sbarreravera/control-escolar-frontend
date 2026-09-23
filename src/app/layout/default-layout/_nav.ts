@@ -2,7 +2,8 @@ import { INavData } from '@coreui/angular';
 import { AppUserRole } from '../../core/auth/auth.models';
 
 export function buildNavItems(
-  role: AppUserRole
+  role: AppUserRole,
+  hasSchoolContext = false
 ): INavData[] {
   const items: INavData[] = [
     {
@@ -14,7 +15,7 @@ export function buildNavItems(
     }
   ];
 
-  if (role === 'SUPER_ADMIN') {
+  if (role === 'SUPER_ADMIN' && !hasSchoolContext) {
     return [
       ...items,
       {
@@ -31,12 +32,15 @@ export function buildNavItems(
     ];
   }
 
+  const schoolAdministrator =
+    role === 'ADMIN' || role === 'SUPER_ADMIN';
+
   const studentChildren: INavData[] = [
     {
       name: 'Listado de alumnos',
       url: '/students'
     },
-    ...(role === 'ADMIN'
+    ...(schoolAdministrator
       ? [
           {
             name: 'Carga masiva',
@@ -55,7 +59,7 @@ export function buildNavItems(
       name: 'Listado de tutores',
       url: '/guardians'
     },
-    ...(role === 'ADMIN'
+    ...(schoolAdministrator
       ? [
           {
             name: 'Carga masiva',
@@ -75,6 +79,21 @@ export function buildNavItems(
 
   const navigation: INavData[] = [
     ...items,
+    ...(role === 'SUPER_ADMIN'
+      ? [
+          {
+            title: true,
+            name: 'Plataforma'
+          },
+          {
+            name: 'Cambiar escuela',
+            url: '/schools',
+            iconComponent: {
+              name: 'cil-home'
+            }
+          }
+        ]
+      : []),
     {
       title: true,
       name: 'Operación'
@@ -88,7 +107,7 @@ export function buildNavItems(
     }
   ];
 
-  if (role === 'ADMIN') {
+  if (schoolAdministrator) {
     navigation.push({
       name: 'Avisos y comunicaciones',
       url: '/communications',
@@ -119,7 +138,7 @@ export function buildNavItems(
     }
   );
 
-  if (role === 'ADMIN') {
+  if (schoolAdministrator) {
     navigation.push({
       name: 'Administración escolar',
       iconComponent: {
