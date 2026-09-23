@@ -25,6 +25,10 @@ export const roleGuard: CanActivateFn = (
     );
   }
 
+  if (currentUser.role === 'SUPER_ADMIN') {
+    return true;
+  }
+
   const allowedRoles =
     route.data['roles'] as AppUserRole[] | undefined;
 
