@@ -4,8 +4,8 @@
   </h1>
 
   <p class="text-body-secondary mb-0">
-    {{ schoolName() }} · crea usuarios y define qué módulos
-    puede utilizar cada persona.
+    {{ schoolName() }} · administra las cuentas que pueden
+    operar el sistema de la escuela.
   </p>
 </div>
 
@@ -36,222 +36,309 @@
 } @else {
   <div class="row g-4">
     <div class="col-12 col-xl-5">
-      <section class="card h-100">
-        <div class="card-header">
-          <strong>
-            {{ editing() ? 'Editar usuario' : 'Nuevo usuario' }}
-          </strong>
-        </div>
+      @if (!archivedView()) {
+        <section class="card h-100">
+          <div class="card-header">
+            <strong>
+              {{ editing() ? 'Editar usuario' : 'Nuevo usuario' }}
+            </strong>
+          </div>
 
-        <div class="card-body">
-          <form
-            [formGroup]="userForm"
-            (ngSubmit)="saveUser()"
-            novalidate
-          >
-            <div class="mb-3">
-              <label
-                class="form-label"
-                for="schoolUserFullName"
-              >
-                Nombre completo
-              </label>
+          <div class="card-body">
+            <form
+              [formGroup]="userForm"
+              (ngSubmit)="saveUser()"
+              novalidate
+            >
+              <div class="mb-3">
+                <label
+                  class="form-label"
+                  for="schoolUserFullName"
+                >
+                  Nombre completo
+                </label>
 
-              <input
-                id="schoolUserFullName"
-                class="form-control"
-                type="text"
-                formControlName="fullName"
-                autocomplete="name"
-              />
+                <input
+                  id="schoolUserFullName"
+                  class="form-control"
+                  type="text"
+                  formControlName="fullName"
+                  autocomplete="name"
+                />
 
-              @if (
-                userForm.controls.fullName.touched &&
-                userForm.controls.fullName.invalid
-              ) {
-                <div class="text-danger small mt-1">
-                  Ingresa el nombre del usuario.
-                </div>
-              }
-            </div>
-
-            <div class="mb-3">
-              <label
-                class="form-label"
-                for="schoolUserEmail"
-              >
-                Correo electrónico
-              </label>
-
-              <input
-                id="schoolUserEmail"
-                class="form-control"
-                type="email"
-                formControlName="email"
-                autocomplete="email"
-              />
-
-              @if (
-                userForm.controls.email.touched &&
-                userForm.controls.email.invalid
-              ) {
-                <div class="text-danger small mt-1">
-                  Ingresa un correo electrónico válido.
-                </div>
-              }
-            </div>
-
-            <div class="mb-4">
-              <label
-                class="form-label"
-                for="schoolUserPassword"
-              >
-                {{ editing() ? 'Nueva contraseña' : 'Contraseña temporal' }}
-              </label>
-
-              <input
-                id="schoolUserPassword"
-                class="form-control"
-                type="password"
-                formControlName="password"
-                autocomplete="new-password"
-              />
-
-              <div class="form-text">
-                @if (editing()) {
-                  Déjala vacía para conservar la contraseña actual.
-                } @else {
-                  Debe contener entre 8 y 72 caracteres.
+                @if (
+                  userForm.controls.fullName.touched &&
+                  userForm.controls.fullName.invalid
+                ) {
+                  <div class="text-danger small mt-1">
+                    Ingresa el nombre del usuario.
+                  </div>
                 }
               </div>
 
-              @if (
-                userForm.controls.password.touched &&
-                userForm.controls.password.invalid
-              ) {
-                <div class="text-danger small mt-1">
-                  La contraseña debe contener al menos 8 caracteres.
+              <div class="mb-3">
+                <label
+                  class="form-label"
+                  for="schoolUserEmail"
+                >
+                  Correo electrónico
+                </label>
+
+                <input
+                  id="schoolUserEmail"
+                  class="form-control"
+                  type="email"
+                  formControlName="email"
+                  autocomplete="email"
+                />
+
+                @if (
+                  userForm.controls.email.touched &&
+                  userForm.controls.email.invalid
+                ) {
+                  <div class="text-danger small mt-1">
+                    Ingresa un correo electrónico válido.
+                  </div>
+                }
+              </div>
+
+              <div class="mb-4">
+                <label
+                  class="form-label"
+                  for="schoolUserPassword"
+                >
+                  {{ editing() ? 'Nueva contraseña' : 'Contraseña temporal' }}
+                </label>
+
+                <input
+                  id="schoolUserPassword"
+                  class="form-control"
+                  type="password"
+                  formControlName="password"
+                  autocomplete="new-password"
+                />
+
+                <div class="form-text">
+                  @if (editing()) {
+                    Déjala vacía para conservar la contraseña actual.
+                  } @else {
+                    Debe contener entre 8 y 72 caracteres.
+                  }
+                </div>
+
+                @if (
+                  userForm.controls.password.touched &&
+                  userForm.controls.password.invalid
+                ) {
+                  <div class="text-danger small mt-1">
+                    La contraseña debe contener al menos 8 caracteres.
+                  </div>
+                }
+              </div>
+
+              @if (editing()) {
+                <div class="form-check form-switch mb-4">
+                  <input
+                    id="schoolUserActive"
+                    class="form-check-input"
+                    type="checkbox"
+                    formControlName="active"
+                  />
+                  <label
+                    class="form-check-label"
+                    for="schoolUserActive"
+                  >
+                    Usuario activo
+                  </label>
                 </div>
               }
-            </div>
 
-            @if (editing()) {
-              <div class="form-check form-switch mb-4">
-                <input
-                  id="schoolUserActive"
-                  class="form-check-input"
-                  type="checkbox"
-                  formControlName="active"
-                />
-                <label
-                  class="form-check-label"
-                  for="schoolUserActive"
-                >
-                  Usuario activo
-                </label>
-              </div>
-            }
-
-            <div class="border-top pt-4">
-              <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
-                <div>
+              <div class="border-top pt-4">
+                <div class="mb-3">
                   <h2 class="h6 mb-1">
                     Módulos permitidos
                   </h2>
                   <p class="text-body-secondary small mb-0">
-                    La lista se obtiene automáticamente de los
-                    módulos disponibles en el sistema.
+                    Los módulos disponibles se obtienen
+                    automáticamente del sistema.
                   </p>
+                </div>
+
+                <div class="d-grid gap-2">
+                  @for (
+                    module of modules();
+                    track module.key
+                  ) {
+                    <label
+                      class="border rounded p-3 d-flex gap-3"
+                      [class.border-primary]="hasModule(module.key)"
+                      [class.bg-body-secondary]="hasModule(module.key)"
+                    >
+                      <input
+                        class="form-check-input flex-shrink-0 mt-1"
+                        type="checkbox"
+                        [checked]="hasModule(module.key)"
+                        (change)="
+                          toggleModule(
+                            module.key,
+                            $any($event.target).checked
+                          )
+                        "
+                      />
+
+                      <span class="flex-grow-1">
+                        <span class="d-flex flex-wrap align-items-center gap-2">
+                          <strong>
+                            {{ module.name }}
+                          </strong>
+
+                          @if (module.defaultGranted) {
+                            <span class="badge text-bg-primary">
+                              Predeterminado
+                            </span>
+                          }
+                        </span>
+
+                        @if (module.description) {
+                          <small class="d-block text-body-secondary mt-1">
+                            {{ module.description }}
+                          </small>
+                        }
+                      </span>
+                    </label>
+                  }
                 </div>
               </div>
 
-              <div class="d-grid gap-2">
-                @for (
-                  module of modules();
-                  track module.key
-                ) {
-                  <label
-                    class="border rounded p-3 d-flex gap-3"
-                    [class.border-primary]="hasModule(module.key)"
-                    [class.bg-body-secondary]="hasModule(module.key)"
+              <div class="d-grid d-sm-flex gap-2 mt-4">
+                @if (editing()) {
+                  <button
+                    class="btn btn-outline-secondary flex-fill"
+                    type="button"
+                    [disabled]="submitting()"
+                    (click)="cancelEdit()"
                   >
-                    <input
-                      class="form-check-input flex-shrink-0 mt-1"
-                      type="checkbox"
-                      [checked]="hasModule(module.key)"
-                      (change)="
-                        toggleModule(
-                          module.key,
-                          $any($event.target).checked
-                        )
-                      "
-                    />
-
-                    <span class="flex-grow-1">
-                      <span class="d-flex flex-wrap align-items-center gap-2">
-                        <strong>
-                          {{ module.name }}
-                        </strong>
-
-                        @if (module.defaultGranted) {
-                          <span class="badge text-bg-primary">
-                            Predeterminado
-                          </span>
-                        }
-                      </span>
-
-                      @if (module.description) {
-                        <small class="d-block text-body-secondary mt-1">
-                          {{ module.description }}
-                        </small>
-                      }
-                    </span>
-                  </label>
+                    Cancelar
+                  </button>
                 }
-              </div>
-            </div>
 
-            <div class="d-grid d-sm-flex gap-2 mt-4">
-              @if (editing()) {
                 <button
-                  class="btn btn-outline-secondary flex-fill"
-                  type="button"
+                  class="btn btn-primary flex-fill"
+                  type="submit"
                   [disabled]="submitting()"
-                  (click)="cancelEdit()"
                 >
-                  Cancelar
+                  @if (submitting()) {
+                    Guardando...
+                  } @else if (editing()) {
+                    Guardar cambios
+                  } @else {
+                    Crear usuario
+                  }
                 </button>
-              }
+              </div>
+            </form>
+          </div>
+        </section>
+      } @else {
+        <section class="card border-secondary">
+          <div class="card-header">
+            <strong>Usuarios eliminados</strong>
+          </div>
 
-              <button
-                class="btn btn-primary flex-fill"
-                type="submit"
-                [disabled]="submitting()"
-              >
-                @if (submitting()) {
-                  Guardando...
-                } @else if (editing()) {
-                  Guardar cambios
-                } @else {
-                  Crear usuario
-                }
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
+          <div class="card-body">
+            <p class="mb-3">
+              Los usuarios eliminados se conservan por motivos
+              de auditoría. Sus datos y los registros históricos
+              asociados a entradas y salidas no se borran.
+            </p>
+
+            <p class="text-body-secondary mb-0">
+              Si restauras una cuenta, deberás asignarle una nueva
+              contraseña temporal. Sus permisos anteriores se
+              conservarán.
+            </p>
+          </div>
+        </section>
+      }
     </div>
 
     <div class="col-12 col-xl-7">
       <section class="card">
-        <div class="card-header">
-          <strong>Usuarios de la escuela</strong>
+        <div class="card-header p-0">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 px-3 pt-3">
+            <strong>Usuarios de la escuela</strong>
+
+            <div class="btn-group" role="group">
+              <button
+                class="btn btn-sm"
+                type="button"
+                [class.btn-primary]="activeTab() === 'ACTIVE'"
+                [class.btn-outline-primary]="activeTab() !== 'ACTIVE'"
+                (click)="setTab('ACTIVE')"
+              >
+                Usuarios activos
+              </button>
+
+              <button
+                class="btn btn-sm"
+                type="button"
+                [class.btn-primary]="activeTab() === 'ARCHIVED'"
+                [class.btn-outline-primary]="activeTab() !== 'ARCHIVED'"
+                (click)="setTab('ARCHIVED')"
+              >
+                Usuarios eliminados
+              </button>
+            </div>
+          </div>
+
+          <div class="p-3">
+            <div class="input-group">
+              <input
+                class="form-control"
+                type="search"
+                [value]="searchTerm()"
+                [placeholder]="
+                  archivedView()
+                    ? 'Buscar usuario eliminado por nombre o correo'
+                    : 'Buscar usuario por nombre o correo'
+                "
+                (input)="searchTerm.set($any($event.target).value)"
+                (keyup.enter)="searchUsers()"
+              />
+
+              @if (searchTerm()) {
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  (click)="clearSearch()"
+                >
+                  Limpiar
+                </button>
+              }
+
+              <button
+                class="btn btn-outline-primary"
+                type="button"
+                (click)="searchUsers()"
+              >
+                Buscar
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="card-body">
-          @if (users().length === 0) {
+          @if (loadingUsers()) {
             <div class="text-center text-body-secondary py-4">
-              No hay usuarios registrados.
+              Cargando usuarios...
+            </div>
+          } @else if (users().length === 0) {
+            <div class="text-center text-body-secondary py-4">
+              @if (archivedView()) {
+                No se encontraron usuarios eliminados.
+              } @else {
+                No se encontraron usuarios activos.
+              }
             </div>
           } @else {
             <div class="table-responsive">
@@ -287,10 +374,27 @@
                         >
                           {{ roleLabel(user) }}
                         </span>
+
+                        @if (user.archivedAt) {
+                          <small class="d-block text-body-secondary mt-2">
+                            Eliminado:
+                            {{ user.archivedAt | date: 'dd/MM/yyyy HH:mm' }}
+                          </small>
+
+                          @if (user.archivedByUserName) {
+                            <small class="d-block text-body-secondary">
+                              Por: {{ user.archivedByUserName }}
+                            </small>
+                          }
+                        }
                       </td>
 
                       <td>
-                        @if (user.active) {
+                        @if (user.archivedAt) {
+                          <span class="badge text-bg-dark">
+                            Eliminado
+                          </span>
+                        } @else if (user.active) {
                           <span class="badge text-bg-success">
                             Activo
                           </span>
@@ -319,18 +423,43 @@
                       </td>
 
                       <td class="text-end">
-                        @if (user.editable) {
+                        @if (!archivedView()) {
+                          @if (user.editable) {
+                            <div class="d-flex flex-column flex-sm-row justify-content-end gap-2">
+                              <button
+                                class="btn btn-sm btn-outline-primary"
+                                type="button"
+                                [disabled]="busyUserId() === user.id"
+                                (click)="editUser(user)"
+                              >
+                                Editar
+                              </button>
+
+                              @if (user.archivable) {
+                                <button
+                                  class="btn btn-sm btn-outline-danger"
+                                  type="button"
+                                  [disabled]="busyUserId() === user.id"
+                                  (click)="requestArchive(user)"
+                                >
+                                  Eliminar usuario
+                                </button>
+                              }
+                            </div>
+                          } @else {
+                            <span class="text-body-secondary small">
+                              Acceso completo
+                            </span>
+                          }
+                        } @else if (user.restorable) {
                           <button
-                            class="btn btn-sm btn-outline-primary"
+                            class="btn btn-sm btn-outline-success"
                             type="button"
-                            (click)="editUser(user)"
+                            [disabled]="busyUserId() === user.id"
+                            (click)="requestRestore(user)"
                           >
-                            Editar
+                            Restaurar usuario
                           </button>
-                        } @else {
-                          <span class="text-body-secondary small">
-                            Acceso completo
-                          </span>
                         }
                       </td>
                     </tr>
@@ -341,6 +470,188 @@
           }
         </div>
       </section>
+    </div>
+  </div>
+}
+
+@if (archiveCandidate(); as user) {
+  <div
+    class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
+    style="z-index: 2100; background: rgba(0, 0, 0, 0.45)"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="archiveUserTitle"
+  >
+    <div
+      class="card shadow-lg w-100"
+      style="max-width: 560px"
+    >
+      <div class="card-header">
+        <strong id="archiveUserTitle">
+          Eliminar usuario
+        </strong>
+      </div>
+
+      <div class="card-body">
+        <p>
+          ¿Deseas eliminar a
+          <strong>{{ user.fullName }}</strong>?
+        </p>
+
+        <div class="alert alert-warning mb-0">
+          Por motivos de auditoría, este usuario no será
+          eliminado de la base de datos. Perderá el acceso al
+          sistema y dejará de aparecer entre los usuarios activos,
+          pero sus datos y los registros históricos de entradas y
+          salidas se conservarán.
+        </div>
+      </div>
+
+      <div class="card-footer d-flex justify-content-end gap-2">
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          [disabled]="busyUserId() === user.id"
+          (click)="cancelArchive()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          class="btn btn-danger"
+          type="button"
+          [disabled]="busyUserId() === user.id"
+          (click)="confirmArchive()"
+        >
+          @if (busyUserId() === user.id) {
+            Eliminando...
+          } @else {
+            Eliminar usuario
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (restoreCandidate(); as user) {
+  <div
+    class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
+    style="z-index: 2100; background: rgba(0, 0, 0, 0.45)"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="restoreUserTitle"
+  >
+    <div
+      class="card shadow-lg w-100"
+      style="max-width: 560px"
+    >
+      <div class="card-header">
+        <strong id="restoreUserTitle">
+          Restaurar usuario
+        </strong>
+      </div>
+
+      <form
+        [formGroup]="restoreForm"
+        (ngSubmit)="confirmRestore()"
+      >
+        <div class="card-body">
+          <p>
+            Restaurarás a
+            <strong>{{ user.fullName }}</strong>.
+            Sus permisos anteriores se conservarán.
+          </p>
+
+          <div class="alert alert-info">
+            Por seguridad debes asignarle una nueva contraseña
+            temporal. No es necesario conocer la contraseña que
+            utilizaba antes de ser eliminado.
+          </div>
+
+          <div class="mb-3">
+            <label
+              class="form-label"
+              for="restorePassword"
+            >
+              Nueva contraseña temporal
+            </label>
+
+            <input
+              id="restorePassword"
+              class="form-control"
+              type="password"
+              formControlName="password"
+              autocomplete="new-password"
+            />
+
+            @if (
+              restoreForm.controls.password.touched &&
+              restoreForm.controls.password.invalid
+            ) {
+              <div class="text-danger small mt-1">
+                La contraseña debe contener entre 8 y 72 caracteres.
+              </div>
+            }
+          </div>
+
+          <div>
+            <label
+              class="form-label"
+              for="restorePasswordConfirm"
+            >
+              Confirmar contraseña
+            </label>
+
+            <input
+              id="restorePasswordConfirm"
+              class="form-control"
+              type="password"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+            />
+
+            @if (
+              restoreForm.controls.confirmPassword.touched &&
+              restoreForm.controls.confirmPassword.hasError('mismatch')
+            ) {
+              <div class="text-danger small mt-1">
+                Las contraseñas no coinciden.
+              </div>
+            } @else if (
+              restoreForm.controls.confirmPassword.touched &&
+              restoreForm.controls.confirmPassword.invalid
+            ) {
+              <div class="text-danger small mt-1">
+                Confirma la nueva contraseña temporal.
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="card-footer d-flex justify-content-end gap-2">
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            [disabled]="busyUserId() === user.id"
+            (click)="cancelRestore()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="btn btn-success"
+            type="submit"
+            [disabled]="busyUserId() === user.id"
+          >
+            @if (busyUserId() === user.id) {
+              Restaurando...
+            } @else {
+              Restaurar usuario
+            }
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 }

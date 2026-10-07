@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   CreateSchoolUserRequest,
+  RestoreSchoolUserRequest,
   SchoolModuleDefinition,
   SchoolUser,
   UpdateSchoolUserRequest
@@ -21,9 +22,15 @@ export class SchoolUserService {
     );
   }
 
-  findAll(schoolId: number): Observable<SchoolUser[]> {
+  findAll(
+    schoolId: number,
+    archived = false,
+    search = ''
+  ): Observable<SchoolUser[]> {
     const params = new HttpParams()
-      .set('schoolId', schoolId);
+      .set('schoolId', schoolId)
+      .set('archived', archived)
+      .set('search', search.trim());
 
     return this.http.get<SchoolUser[]>(
       '/api/v1/school-users',
@@ -48,6 +55,23 @@ export class SchoolUserService {
   ): Observable<SchoolUser> {
     return this.http.put<SchoolUser>(
       `/api/v1/school-users/${userId}`,
+      request
+    );
+  }
+
+  archive(userId: number): Observable<SchoolUser> {
+    return this.http.post<SchoolUser>(
+      `/api/v1/school-users/${userId}/archive`,
+      null
+    );
+  }
+
+  restore(
+    userId: number,
+    request: RestoreSchoolUserRequest
+  ): Observable<SchoolUser> {
+    return this.http.post<SchoolUser>(
+      `/api/v1/school-users/${userId}/restore`,
       request
     );
   }
