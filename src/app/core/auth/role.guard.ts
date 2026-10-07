@@ -29,6 +29,16 @@ export const roleGuard: CanActivateFn = (
     route.data['roles'] as AppUserRole[] | undefined;
 
   if (currentUser.role === 'SUPER_ADMIN') {
+    const requiresSchoolContext =
+      route.data['schoolContext'] === true;
+
+    if (
+      requiresSchoolContext &&
+      currentUser.schoolId === null
+    ) {
+      return router.createUrlTree(['/schools']);
+    }
+
     if (allowedRoles?.includes('SUPER_ADMIN')) {
       return true;
     }
