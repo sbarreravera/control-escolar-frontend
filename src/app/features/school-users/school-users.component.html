@@ -1,0 +1,346 @@
+<div class="mb-4">
+  <h1 class="h3 mb-1">
+    Usuarios del sistema
+  </h1>
+
+  <p class="text-body-secondary mb-0">
+    {{ schoolName() }} · crea usuarios y define qué módulos
+    puede utilizar cada persona.
+  </p>
+</div>
+
+@if (errorMessage()) {
+  <div
+    class="alert alert-danger"
+    role="alert"
+  >
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (successMessage()) {
+  <div
+    class="alert alert-success"
+    role="status"
+  >
+    {{ successMessage() }}
+  </div>
+}
+
+@if (loading()) {
+  <div class="card">
+    <div class="card-body py-5 text-center text-body-secondary">
+      Cargando usuarios y permisos...
+    </div>
+  </div>
+} @else {
+  <div class="row g-4">
+    <div class="col-12 col-xl-5">
+      <section class="card h-100">
+        <div class="card-header">
+          <strong>
+            {{ editing() ? 'Editar usuario' : 'Nuevo usuario' }}
+          </strong>
+        </div>
+
+        <div class="card-body">
+          <form
+            [formGroup]="userForm"
+            (ngSubmit)="saveUser()"
+            novalidate
+          >
+            <div class="mb-3">
+              <label
+                class="form-label"
+                for="schoolUserFullName"
+              >
+                Nombre completo
+              </label>
+
+              <input
+                id="schoolUserFullName"
+                class="form-control"
+                type="text"
+                formControlName="fullName"
+                autocomplete="name"
+              />
+
+              @if (
+                userForm.controls.fullName.touched &&
+                userForm.controls.fullName.invalid
+              ) {
+                <div class="text-danger small mt-1">
+                  Ingresa el nombre del usuario.
+                </div>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label
+                class="form-label"
+                for="schoolUserEmail"
+              >
+                Correo electrónico
+              </label>
+
+              <input
+                id="schoolUserEmail"
+                class="form-control"
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+              />
+
+              @if (
+                userForm.controls.email.touched &&
+                userForm.controls.email.invalid
+              ) {
+                <div class="text-danger small mt-1">
+                  Ingresa un correo electrónico válido.
+                </div>
+              }
+            </div>
+
+            <div class="mb-4">
+              <label
+                class="form-label"
+                for="schoolUserPassword"
+              >
+                {{ editing() ? 'Nueva contraseña' : 'Contraseña temporal' }}
+              </label>
+
+              <input
+                id="schoolUserPassword"
+                class="form-control"
+                type="password"
+                formControlName="password"
+                autocomplete="new-password"
+              />
+
+              <div class="form-text">
+                @if (editing()) {
+                  Déjala vacía para conservar la contraseña actual.
+                } @else {
+                  Debe contener entre 8 y 72 caracteres.
+                }
+              </div>
+
+              @if (
+                userForm.controls.password.touched &&
+                userForm.controls.password.invalid
+              ) {
+                <div class="text-danger small mt-1">
+                  La contraseña debe contener al menos 8 caracteres.
+                </div>
+              }
+            </div>
+
+            @if (editing()) {
+              <div class="form-check form-switch mb-4">
+                <input
+                  id="schoolUserActive"
+                  class="form-check-input"
+                  type="checkbox"
+                  formControlName="active"
+                />
+                <label
+                  class="form-check-label"
+                  for="schoolUserActive"
+                >
+                  Usuario activo
+                </label>
+              </div>
+            }
+
+            <div class="border-top pt-4">
+              <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                <div>
+                  <h2 class="h6 mb-1">
+                    Módulos permitidos
+                  </h2>
+                  <p class="text-body-secondary small mb-0">
+                    La lista se obtiene automáticamente de los
+                    módulos disponibles en el sistema.
+                  </p>
+                </div>
+              </div>
+
+              <div class="d-grid gap-2">
+                @for (
+                  module of modules();
+                  track module.key
+                ) {
+                  <label
+                    class="border rounded p-3 d-flex gap-3"
+                    [class.border-primary]="hasModule(module.key)"
+                    [class.bg-body-secondary]="hasModule(module.key)"
+                  >
+                    <input
+                      class="form-check-input flex-shrink-0 mt-1"
+                      type="checkbox"
+                      [checked]="hasModule(module.key)"
+                      (change)="
+                        toggleModule(
+                          module.key,
+                          $any($event.target).checked
+                        )
+                      "
+                    />
+
+                    <span class="flex-grow-1">
+                      <span class="d-flex flex-wrap align-items-center gap-2">
+                        <strong>
+                          {{ module.name }}
+                        </strong>
+
+                        @if (module.defaultGranted) {
+                          <span class="badge text-bg-primary">
+                            Predeterminado
+                          </span>
+                        }
+                      </span>
+
+                      @if (module.description) {
+                        <small class="d-block text-body-secondary mt-1">
+                          {{ module.description }}
+                        </small>
+                      }
+                    </span>
+                  </label>
+                }
+              </div>
+            </div>
+
+            <div class="d-grid d-sm-flex gap-2 mt-4">
+              @if (editing()) {
+                <button
+                  class="btn btn-outline-secondary flex-fill"
+                  type="button"
+                  [disabled]="submitting()"
+                  (click)="cancelEdit()"
+                >
+                  Cancelar
+                </button>
+              }
+
+              <button
+                class="btn btn-primary flex-fill"
+                type="submit"
+                [disabled]="submitting()"
+              >
+                @if (submitting()) {
+                  Guardando...
+                } @else if (editing()) {
+                  Guardar cambios
+                } @else {
+                  Crear usuario
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12 col-xl-7">
+      <section class="card">
+        <div class="card-header">
+          <strong>Usuarios de la escuela</strong>
+        </div>
+
+        <div class="card-body">
+          @if (users().length === 0) {
+            <div class="text-center text-body-secondary py-4">
+              No hay usuarios registrados.
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    <th>Accesos</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  @for (
+                    user of users();
+                    track user.id
+                  ) {
+                    <tr>
+                      <td>
+                        <strong class="d-block">
+                          {{ user.fullName }}
+                        </strong>
+
+                        <small class="text-body-secondary d-block">
+                          {{ user.email }}
+                        </small>
+
+                        <span
+                          class="badge mt-1"
+                          [class.text-bg-primary]="user.role === 'ADMIN'"
+                          [class.text-bg-secondary]="user.role !== 'ADMIN'"
+                        >
+                          {{ roleLabel(user) }}
+                        </span>
+                      </td>
+
+                      <td>
+                        @if (user.active) {
+                          <span class="badge text-bg-success">
+                            Activo
+                          </span>
+                        } @else {
+                          <span class="badge text-bg-secondary">
+                            Inactivo
+                          </span>
+                        }
+                      </td>
+
+                      <td style="min-width: 220px">
+                        <div class="d-flex flex-wrap gap-1">
+                          @for (
+                            moduleKey of user.moduleKeys;
+                            track moduleKey
+                          ) {
+                            <span class="badge text-bg-light border">
+                              {{ moduleName(moduleKey) }}
+                            </span>
+                          } @empty {
+                            <span class="text-body-secondary small">
+                              Sin módulos
+                            </span>
+                          }
+                        </div>
+                      </td>
+
+                      <td class="text-end">
+                        @if (user.editable) {
+                          <button
+                            class="btn btn-sm btn-outline-primary"
+                            type="button"
+                            (click)="editUser(user)"
+                          >
+                            Editar
+                          </button>
+                        } @else {
+                          <span class="text-body-secondary small">
+                            Acceso completo
+                          </span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+}
