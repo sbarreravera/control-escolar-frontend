@@ -92,7 +92,7 @@ export class LoginComponent {
           void this.router.navigateByUrl(
             returnUrl?.startsWith('/')
               ? returnUrl
-              : '/dashboard'
+              : this.authService.defaultRoute()
           );
         },
         error: (error: HttpErrorResponse) => {
