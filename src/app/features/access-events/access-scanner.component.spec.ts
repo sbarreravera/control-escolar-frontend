@@ -45,7 +45,10 @@ describe('AccessScannerComponent', () => {
     schoolName: 'Escuela de prueba',
     fullName: 'Administrador de prueba',
     email: 'admin@control-escolar.test',
-    role: 'ADMIN'
+    role: 'ADMIN',
+    moduleKeys: [
+      'ACCESS_SCANNER'
+    ]
   };
 
   const accessEventServiceMock = {
@@ -68,6 +71,8 @@ describe('AccessScannerComponent', () => {
     occurredAt: '2026-09-05T08:00:00',
     deviceName: 'Recepción web',
     notes: null,
+    recordedByUserId: 1,
+    recordedByUserName: 'Administrador de prueba',
     notificationsQueued: 1
   };
 
