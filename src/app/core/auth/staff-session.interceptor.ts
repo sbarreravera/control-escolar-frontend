@@ -66,10 +66,6 @@ function shouldHandleStaffSessionExpiration(
   requestUrl: string,
   authService: AuthService
 ): boolean {
-  if (requestUrl.includes('/api/v1/auth/me')) {
-    return true;
-  }
-
   if (!authService.authenticated()) {
     return false;
   }
