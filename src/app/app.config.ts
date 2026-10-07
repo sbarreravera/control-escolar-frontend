@@ -1,4 +1,8 @@
-import { provideHttpClient, withXsrfConfiguration } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptors,
+  withXsrfConfiguration
+} from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import {
@@ -11,6 +15,9 @@ import {
 } from '@angular/router';
 import { IconSetService } from '@coreui/icons-angular';
 import { routes } from './app.routes';
+import {
+  staffSessionInterceptor
+} from './core/auth/staff-session.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -31,7 +38,10 @@ export const appConfig: ApplicationConfig = {
       withXsrfConfiguration({
         cookieName: 'XSRF-TOKEN',
         headerName: 'X-XSRF-TOKEN'
-      })
+      }),
+      withInterceptors([
+        staffSessionInterceptor
+      ])
     ),
     IconSetService,
     provideAnimationsAsync()
