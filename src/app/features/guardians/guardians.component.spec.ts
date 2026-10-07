@@ -32,7 +32,10 @@ describe('GuardiansComponent', () => {
       schoolName: 'Colegio San Felipe',
       fullName: 'Administrador de prueba',
       email: 'admin@colegiosanfelipe.test',
-      role: 'ADMIN'
+      role: 'ADMIN',
+    moduleKeys: [
+      'GUARDIANS'
+    ]
     });
 
   const authServiceMock = {
