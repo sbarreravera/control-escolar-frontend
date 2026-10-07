@@ -17,6 +17,11 @@ export interface SchoolUser {
   active: boolean;
   moduleKeys: string[];
   editable: boolean;
+  archivable: boolean;
+  restorable: boolean;
+  archivedAt: string | null;
+  archivedByUserId: number | null;
+  archivedByUserName: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,4 +40,8 @@ export interface UpdateSchoolUserRequest {
   active: boolean;
   password: string | null;
   moduleKeys: string[];
+}
+
+export interface RestoreSchoolUserRequest {
+  password: string;
 }
