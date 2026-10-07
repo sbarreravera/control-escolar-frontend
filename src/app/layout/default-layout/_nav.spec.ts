@@ -49,13 +49,30 @@ describe('buildNavItems', () => {
     ]);
   });
 
-  it('keeps the super admin navigation focused on schools', () => {
+  it('keeps the super admin navigation focused on schools without context', () => {
     const items = buildNavItems('SUPER_ADMIN');
 
     expect(items.map((item) => item.name)).toEqual([
       'Inicio',
       'Administración',
       'Escuelas'
+    ]);
+  });
+
+  it('exposes school administration when the super admin selects a school', () => {
+    const items = buildNavItems('SUPER_ADMIN', true);
+
+    expect(items.some((item) => item.name === 'Cambiar escuela')).toBe(true);
+    expect(items.some((item) => item.name === 'Registrar entrada/salida')).toBe(true);
+    expect(items.some((item) => item.name === 'Avisos y comunicaciones')).toBe(true);
+    expect(items.some((item) => item.name === 'Administración escolar')).toBe(true);
+
+    const guardians = items.find((item) => item.name === 'Tutores');
+    expect(guardians?.children?.map((item) => item.name)).toEqual([
+      'Listado de tutores',
+      'Carga masiva',
+      'Accesos al portal',
+      'Autoregistro'
     ]);
   });
 });

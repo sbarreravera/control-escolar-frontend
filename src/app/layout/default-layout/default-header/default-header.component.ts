@@ -72,6 +72,12 @@ export class DefaultHeaderComponent extends HeaderComponent {
 
   readonly loggingOut = signal(false);
 
+  readonly managingSchool = computed(() => {
+    const currentUser = this.currentUser();
+    return currentUser?.role === 'SUPER_ADMIN' &&
+      currentUser.schoolId !== null;
+  });
+
   readonly colorModes = [
     {
       name: 'light',
@@ -115,6 +121,11 @@ export class DefaultHeaderComponent extends HeaderComponent {
 
   constructor() {
     super();
+  }
+
+  changeManagedSchool(): void {
+    this.authService.clearManagedSchool();
+    void this.router.navigate(['/schools']);
   }
 
   logout(): void {

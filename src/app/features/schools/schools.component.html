@@ -4,7 +4,7 @@
   </h1>
 
   <p class="text-body-secondary mb-0">
-    Registra cada escuela junto con su primer administrador.
+    Registra escuelas y entra a administrarlas sin utilizar las credenciales de sus usuarios.
   </p>
 </div>
 
@@ -231,6 +231,7 @@
                   <th>Escuela</th>
                   <th>Código</th>
                   <th>Estado</th>
+                  <th class="text-end">Acciones</th>
                 </tr>
               </thead>
 
@@ -266,6 +267,25 @@
                           Inactiva
                         </span>
                       }
+                    </td>
+
+                    <td class="text-end">
+                      <button
+                        cButton
+                        color="primary"
+                        size="sm"
+                        type="button"
+                        [disabled]="!school.active"
+                        (click)="manageSchool(school)"
+                      >
+                        @if (
+                          currentUser()?.schoolId === school.id
+                        ) {
+                          Administrando
+                        } @else {
+                          Administrar escuela
+                        }
+                      </button>
                     </td>
                   </tr>
                 }

@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   inject
 } from '@angular/core';
 import {
@@ -57,9 +58,16 @@ export class DefaultLayoutComponent {
   private readonly authService = inject(AuthService);
 
   private readonly currentUser =
-    this.authService.currentUser();
+    this.authService.currentUser;
 
-  readonly navItems = this.currentUser
-    ? buildNavItems(this.currentUser.role)
-    : [];
+  readonly navItems = computed(() => {
+    const currentUser = this.currentUser();
+
+    return currentUser
+      ? buildNavItems(
+          currentUser.role,
+          currentUser.schoolId !== null
+        )
+      : [];
+  });
 }

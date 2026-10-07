@@ -1,4 +1,4 @@
-@if (currentUser()?.role === 'SUPER_ADMIN') {
+@if (platformOverview()) {
   <div class="mb-4">
     <h1 class="h3 mb-1">
       Bienvenido, {{ currentUser()?.fullName }}
@@ -49,6 +49,18 @@
     </c-col>
   </c-row>
 } @else {
+  @if (currentUser()?.role === 'SUPER_ADMIN') {
+    <div class="alert alert-primary d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <span>
+        Estás administrando <strong>{{ currentUser()?.schoolName }}</strong>
+        con tu cuenta de administrador de plataforma.
+      </span>
+      <a cButton color="primary" variant="outline" size="sm" routerLink="/schools">
+        Cambiar escuela
+      </a>
+    </div>
+  }
+
   <div class="dashboard-heading mb-4">
     <div>
       <p class="dashboard-eyebrow mb-1">Resumen de hoy</p>
@@ -358,7 +370,10 @@
             <strong>Credenciales QR</strong>
             <span>Revisar credenciales activas</span>
           </a>
-          @if (currentUser()?.role === 'ADMIN') {
+          @if (
+            currentUser()?.role === 'ADMIN' ||
+            currentUser()?.role === 'SUPER_ADMIN'
+          ) {
             <a routerLink="/guardian-activation" class="quick-action">
               <strong>Activación de tutores</strong>
               <span>Dar seguimiento al acceso de padres</span>

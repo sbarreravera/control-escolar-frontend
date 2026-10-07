@@ -48,6 +48,11 @@ export class DashboardComponent implements OnInit {
   readonly loadingSummary = signal(false);
   readonly summaryError = signal(false);
 
+  readonly platformOverview = computed(() =>
+    this.currentUser()?.role === 'SUPER_ADMIN' &&
+    this.currentUser()?.schoolId === null
+  );
+
   readonly roleLabel = computed(() => {
     switch (this.currentUser()?.role) {
       case 'SUPER_ADMIN':
@@ -112,7 +117,7 @@ export class DashboardComponent implements OnInit {
   ).format(new Date());
 
   ngOnInit(): void {
-    if (this.currentUser()?.role === 'SUPER_ADMIN') {
+    if (this.platformOverview()) {
       this.loadSchoolCount();
       return;
     }

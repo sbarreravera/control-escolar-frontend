@@ -10,6 +10,7 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
+import { Router } from '@angular/router';
 import {
   ButtonDirective,
   CardBodyComponent,
@@ -21,6 +22,7 @@ import {
   RowComponent
 } from '@coreui/angular';
 import { finalize } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
 import {
   CreateSchoolRequest,
   School
@@ -46,12 +48,15 @@ export class SchoolsComponent implements OnInit {
 
   private readonly formBuilder = inject(FormBuilder);
   private readonly schoolService = inject(SchoolService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly schools = signal<School[]>([]);
   readonly loading = signal(true);
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
+  readonly currentUser = this.authService.currentUser;
 
   readonly schoolForm = this.formBuilder.nonNullable.group({
     name: [
@@ -117,6 +122,19 @@ export class SchoolsComponent implements OnInit {
           );
         }
       });
+  }
+
+  manageSchool(school: School): void {
+    if (!school.active) {
+      return;
+    }
+
+    this.authService.selectManagedSchool(
+      school.id,
+      school.name
+    );
+
+    void this.router.navigate(['/dashboard']);
   }
 
   createSchool(): void {
