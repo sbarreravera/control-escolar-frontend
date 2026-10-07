@@ -22,7 +22,10 @@ describe('GuardianActivationComponent', () => {
     schoolName: 'Escuela de Prueba',
     fullName: 'Persona de Prueba 2',
     email: 'guardian.1@example.test',
-    role: 'ADMIN'
+    role: 'ADMIN',
+  moduleKeys: [
+    'GUARDIAN_ACCESS'
+  ]
   });
 
   beforeEach(async () => {
