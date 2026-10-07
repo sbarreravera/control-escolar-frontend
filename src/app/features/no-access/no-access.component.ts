@@ -1,11 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-no-access',
   standalone: true,
-  imports: [RouterLink],
+  imports: [],
   template: `
     <div class="container py-5">
       <div
@@ -23,13 +23,13 @@ import { AuthService } from '../../core/auth/auth.service';
             de la escuela que asigne los accesos necesarios.
           </p>
 
-          <a
+          <button
             class="btn btn-outline-primary"
-            routerLink="/login"
+            type="button"
             (click)="logout()"
           >
             Cerrar sesión
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -38,11 +38,16 @@ import { AuthService } from '../../core/auth/auth.service';
 export class NoAccessComponent {
 
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   logout(): void {
     this.authService.logout().subscribe({
+      next: () => {
+        void this.router.navigate(['/login']);
+      },
       error: () => {
         this.authService.clearLocalSession();
+        void this.router.navigate(['/login']);
       }
     });
   }
