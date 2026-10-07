@@ -27,7 +27,10 @@ describe('GuardianImportComponent', () => {
     schoolName: 'Colegio San Felipe de Jesús',
     fullName: 'Laura Cruz Reyes',
     email: 'prefectura@colegio.test',
-    role: 'ADMIN'
+    role: 'ADMIN',
+  moduleKeys: [
+    'GUARDIANS'
+  ]
   });
 
   const authServiceMock = {

@@ -120,6 +120,64 @@ export class AuthService {
     });
   }
 
+  hasModule(moduleKey: string): boolean {
+    const currentUser = this.currentUserState();
+
+    if (!currentUser) {
+      return false;
+    }
+
+    if (
+      currentUser.role === 'ADMIN' ||
+      currentUser.role === 'SUPER_ADMIN'
+    ) {
+      return true;
+    }
+
+    return currentUser.moduleKeys.includes(moduleKey);
+  }
+
+  defaultRoute(): string {
+    const currentUser = this.currentUserState();
+
+    if (!currentUser) {
+      return '/login';
+    }
+
+    if (
+      currentUser.role === 'SUPER_ADMIN' &&
+      currentUser.schoolId === null
+    ) {
+      return '/dashboard';
+    }
+
+    if (
+      currentUser.role === 'ADMIN' ||
+      currentUser.role === 'SUPER_ADMIN'
+    ) {
+      return '/dashboard';
+    }
+
+    const routes: Array<[string, string]> = [
+      ['DASHBOARD', '/dashboard'],
+      ['ACCESS_SCANNER', '/access-scanner'],
+      ['STUDENTS', '/students'],
+      ['CREDENTIALS', '/credentials'],
+      ['GUARDIANS', '/guardians'],
+      ['GUARDIAN_ACCESS', '/guardian-activation'],
+      [
+        'GUARDIAN_REGISTRATION',
+        '/guardian-registration-settings'
+      ],
+      ['COMMUNICATIONS', '/communications'],
+      ['ACADEMIC_STRUCTURE', '/academic-cycles']
+    ];
+
+    return routes.find(([moduleKey]) =>
+      currentUser.moduleKeys.includes(moduleKey)
+    )?.[1] ?? '/no-access';
+  }
+
   clearManagedSchool(): void {
     this.clearStoredManagedSchool();
 

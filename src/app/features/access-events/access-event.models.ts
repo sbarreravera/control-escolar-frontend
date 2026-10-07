@@ -25,5 +25,7 @@ export interface AccessEvent {
   occurredAt: string;
   deviceName: string | null;
   notes: string | null;
+  recordedByUserId: number;
+  recordedByUserName: string;
   notificationsQueued: number;
 }

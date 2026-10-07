@@ -10,6 +10,7 @@ export interface AuthenticatedUser {
   fullName: string;
   email: string;
   role: AppUserRole;
+  moduleKeys: string[];
 }
 
 export interface CsrfTokenResponse {

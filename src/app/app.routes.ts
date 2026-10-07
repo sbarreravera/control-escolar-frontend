@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { moduleGuard } from './core/auth/module.guard';
 import { roleGuard } from './core/auth/role.guard';
 import {
   scanModeGuard
@@ -119,7 +120,14 @@ export const routes: Routes = [
         path: 'dashboard',
         loadChildren: () =>
           import('./views/dashboard/routes')
-            .then(module => module.routes)
+            .then(module => module.routes),
+        canActivate: [
+          moduleGuard
+        ],
+        data: {
+          title: 'Inicio',
+          moduleKey: 'DASHBOARD'
+        }
       },
       {
         path: 'schools',
@@ -145,13 +153,11 @@ export const routes: Routes = [
             module => module.AcademicCyclesComponent
           ),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Ciclos escolares',
-          roles: [
-            'ADMIN'
-          ]
+          moduleKey: 'ACADEMIC_STRUCTURE'
         }
       },
       {
@@ -163,13 +169,11 @@ export const routes: Routes = [
             module => module.SchoolGroupsComponent
           ),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Grados y grupos',
-          roles: [
-            'ADMIN'
-          ]
+          moduleKey: 'ACADEMIC_STRUCTURE'
         }
       },
       {
@@ -178,14 +182,11 @@ export const routes: Routes = [
           import('./features/students/students.component')
             .then(module => module.StudentsComponent),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Alumnos',
-          roles: [
-            'ADMIN',
-            'OPERATOR'
-          ]
+          moduleKey: 'STUDENTS'
         }
       },
       {
@@ -197,13 +198,11 @@ export const routes: Routes = [
             module => module.StudentImportComponent
           ),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Carga inicial',
-          roles: [
-            'ADMIN'
-          ]
+          moduleKey: 'STUDENTS'
         }
       },
       {
@@ -212,14 +211,11 @@ export const routes: Routes = [
           import('./features/guardians/guardians.component')
             .then(module => module.GuardiansComponent),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Tutores',
-          roles: [
-            'ADMIN',
-            'OPERATOR'
-          ]
+          moduleKey: 'GUARDIANS'
         }
       },
       {
@@ -231,13 +227,11 @@ export const routes: Routes = [
             module => module.GuardianImportComponent
           ),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Carga de tutores',
-          roles: [
-            'ADMIN'
-          ]
+          moduleKey: 'GUARDIANS'
         }
       },
       {
@@ -249,13 +243,11 @@ export const routes: Routes = [
             module => module.GuardianActivationComponent
           ),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Activación de tutores',
-          roles: [
-            'ADMIN'
-          ]
+          moduleKey: 'GUARDIAN_ACCESS'
         }
       },
       {
@@ -267,13 +259,11 @@ export const routes: Routes = [
             module => module.GuardianRegistrationSettingsComponent
           ),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Autoregistro de tutores',
-          roles: [
-            'ADMIN'
-          ]
+          moduleKey: 'GUARDIAN_REGISTRATION'
         }
       },
       {
@@ -283,13 +273,11 @@ export const routes: Routes = [
             './features/communications/communications.component'
           ).then(module => module.CommunicationsComponent),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Avisos y comunicaciones',
-          roles: [
-            'ADMIN'
-          ]
+          moduleKey: 'COMMUNICATIONS'
         }
       },
       {
@@ -298,14 +286,11 @@ export const routes: Routes = [
           import('./features/credentials/credentials.component')
             .then(module => module.CredentialsComponent),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Credenciales QR',
-          roles: [
-            'ADMIN',
-            'OPERATOR'
-          ]
+          moduleKey: 'CREDENTIALS'
         }
       },
       {
@@ -317,14 +302,43 @@ export const routes: Routes = [
             module => module.AccessScannerComponent
           ),
         canActivate: [
-          roleGuard
+          moduleGuard
         ],
         data: {
           title: 'Registrar acceso',
+          moduleKey: 'ACCESS_SCANNER'
+        }
+      },
+      {
+        path: 'school-users',
+        loadComponent: () =>
+          import(
+            './features/school-users/school-users.component'
+          ).then(
+            module => module.SchoolUsersComponent
+          ),
+        canActivate: [
+          roleGuard
+        ],
+        data: {
+          title: 'Usuarios del sistema',
+          schoolContext: true,
           roles: [
             'ADMIN',
-            'OPERATOR'
+            'SUPER_ADMIN'
           ]
+        }
+      },
+      {
+        path: 'no-access',
+        loadComponent: () =>
+          import(
+            './features/no-access/no-access.component'
+          ).then(
+            module => module.NoAccessComponent
+          ),
+        data: {
+          title: 'Sin accesos asignados'
         }
       }
     ]
