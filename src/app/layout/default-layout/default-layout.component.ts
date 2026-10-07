@@ -66,7 +66,8 @@ export class DefaultLayoutComponent {
     return currentUser
       ? buildNavItems(
           currentUser.role,
-          currentUser.schoolId !== null
+          currentUser.schoolId !== null,
+          currentUser.moduleKeys
         )
       : [];
   });
