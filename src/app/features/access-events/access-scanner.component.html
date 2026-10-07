@@ -406,6 +406,7 @@
                   <th>Movimiento</th>
                   <th>Método</th>
                   <th>Hora</th>
+                  <th>Registrado por</th>
                   <th class="text-center">
                     Notificaciones
                   </th>
@@ -456,6 +457,10 @@
                         event.occurredAt
                           | date: 'HH:mm:ss'
                       }}
+                    </td>
+
+                    <td>
+                      {{ event.recordedByUserName }}
                     </td>
 
                     <td class="text-center">
@@ -952,6 +957,17 @@
                         event.occurredAt
                           | date: 'HH:mm:ss'
                       }}
+                    </div>
+                  </div>
+
+                  <div class="col-6 col-md-2">
+                    <div
+                      class="text-body-secondary small"
+                    >
+                      Registrado por
+                    </div>
+                    <div class="fw-semibold">
+                      {{ event.recordedByUserName }}
                     </div>
                   </div>
 
