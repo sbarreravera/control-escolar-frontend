@@ -41,6 +41,9 @@ describe('buildNavItems', () => {
       'Autoregistro'
     ]);
 
+    expect(items.some(item => item.name === 'Prueba de códigos QR'))
+      .toBe(false);
+
     const administration = items.find(
       item => item.name === 'Administración escolar'
     );
@@ -50,7 +53,6 @@ describe('buildNavItems', () => {
     ).toEqual([
       'Ciclos escolares',
       'Grados y grupos',
-      'Prueba de códigos QR',
       'Usuarios del sistema'
     ]);
   });
@@ -98,6 +100,9 @@ describe('buildNavItems', () => {
         item => item.name === 'Administración escolar'
       )
     ).toBe(false);
+
+    expect(items.some(item => item.name === 'Prueba de códigos QR'))
+      .toBe(false);
   });
 
   it('can render additional operator school modules independently', () => {
@@ -158,7 +163,8 @@ describe('buildNavItems', () => {
     ).toEqual([
       'Inicio',
       'Administración',
-      'Escuelas'
+      'Escuelas',
+      'Prueba de códigos QR'
     ]);
   });
 
@@ -173,6 +179,9 @@ describe('buildNavItems', () => {
         item => item.name === 'Cambiar escuela'
       )
     ).toBe(true);
+
+    expect(items.some(item => item.name === 'Prueba de códigos QR'))
+      .toBe(true);
 
     expect(
       items.some(
@@ -189,7 +198,6 @@ describe('buildNavItems', () => {
     ).toEqual([
       'Ciclos escolares',
       'Grados y grupos',
-      'Prueba de códigos QR',
       'Usuarios del sistema'
     ]);
   });
