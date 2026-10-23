@@ -25,6 +25,13 @@ export function buildNavItems(
         iconComponent: {
           name: 'cil-home'
         }
+      },
+      {
+        name: 'Prueba de códigos QR',
+        url: '/qr-test',
+        iconComponent: {
+          name: 'cil-check'
+        }
       }
     ];
   }
@@ -59,6 +66,13 @@ export function buildNavItems(
         url: '/schools',
         iconComponent: {
           name: 'cil-home'
+        }
+      },
+      {
+        name: 'Prueba de códigos QR',
+        url: '/qr-test',
+        iconComponent: {
+          name: 'cil-check'
         }
       }
     );
@@ -193,11 +207,6 @@ export function buildNavItems(
   }
 
   if (schoolAdministrator) {
-    administrationChildren.push({
-      name: 'Prueba de códigos QR',
-      url: '/qr-test'
-    });
-
     administrationChildren.push({
       name: 'Usuarios del sistema',
       url: '/school-users'

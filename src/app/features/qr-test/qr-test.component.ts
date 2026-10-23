@@ -6,6 +6,7 @@ import {
   ElementRef,
   inject,
   OnDestroy,
+  OnInit,
   signal,
   ViewChild
 } from '@angular/core';
@@ -14,6 +15,8 @@ import { BrowserQRCodeReader, IScannerControls } from '@zxing/browser';
 import { finalize } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { School } from '../schools/school.models';
+import { SchoolService } from '../schools/school.service';
 import { QrTestResponse, QrTestService, QrTestStatus } from './qr-test.service';
 
 @Component({
@@ -22,7 +25,7 @@ import { QrTestResponse, QrTestService, QrTestStatus } from './qr-test.service';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './qr-test.component.html'
 })
-export class QrTestComponent implements AfterViewInit, OnDestroy {
+export class QrTestComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('scannerVideo')
   private scannerVideo?: ElementRef<HTMLVideoElement>;
 
@@ -31,12 +34,17 @@ export class QrTestComponent implements AfterViewInit, OnDestroy {
 
   private readonly auth = inject(AuthService);
   private readonly qrTest = inject(QrTestService);
+  private readonly schoolService = inject(SchoolService);
   private readonly reader = new BrowserQRCodeReader();
   private scannerControls?: IScannerControls;
   private captured = false;
   private destroyed = false;
 
-  readonly schoolName = this.auth.currentUser()?.schoolName ?? 'Escuela';
+  readonly schools = signal<School[]>([]);
+  readonly loadingSchools = signal(false);
+  readonly schoolControl = new FormControl<number | null>(
+    this.auth.currentUser()?.schoolId ?? null
+  );
   readonly mode = signal<'usb' | 'camera'>('usb');
   readonly cameraActive = signal(false);
   readonly startingCamera = signal(false);
@@ -49,7 +57,39 @@ export class QrTestComponent implements AfterViewInit, OnDestroy {
     validators: [Validators.required, Validators.maxLength(100)]
   });
 
+  ngOnInit(): void {
+    this.loadingSchools.set(true);
+    this.schoolService.findAll()
+      .pipe(finalize(() => this.loadingSchools.set(false)))
+      .subscribe({
+        next: schools => {
+          if (this.destroyed) {
+            return;
+          }
+          this.schools.set(schools);
+          if (!schools.some(school => school.id === this.schoolControl.value)) {
+            this.schoolControl.setValue(null);
+          }
+        },
+        error: () => {
+          if (!this.destroyed) {
+            this.errorMessage.set('No fue posible cargar las escuelas.');
+            this.schoolControl.setValue(null);
+          }
+        }
+      });
+  }
+
   ngAfterViewInit(): void {
+    this.focusInput();
+  }
+
+  onSchoolChange(): void {
+    this.stopCamera();
+    this.mode.set('usb');
+    this.result.set(null);
+    this.errorMessage.set(null);
+    this.qrTokenControl.reset();
     this.focusInput();
   }
 
@@ -89,6 +129,11 @@ export class QrTestComponent implements AfterViewInit, OnDestroy {
 
   async startCamera(): Promise<void> {
     if (this.mode() !== 'camera' || this.startingCamera()) {
+      return;
+    }
+
+    if (!this.schools().some(school => school.id === this.schoolControl.value)) {
+      this.errorMessage.set('Selecciona una escuela antes de activar la cámara.');
       return;
     }
 
@@ -169,8 +214,9 @@ export class QrTestComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const schoolId = this.auth.currentUser()?.schoolId;
-    if (schoolId === null || schoolId === undefined) {
+    const schoolId = this.schoolControl.value;
+    if (schoolId === null ||
+        !this.schools().some(school => school.id === schoolId)) {
       this.errorMessage.set('Selecciona una escuela para hacer la prueba.');
       return;
     }
