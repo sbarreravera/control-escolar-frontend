@@ -294,6 +294,18 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'qr-test',
+        loadComponent: () =>
+          import('./features/qr-test/qr-test.component')
+            .then(module => module.QrTestComponent),
+        canActivate: [roleGuard],
+        data: {
+          title: 'Prueba de QR',
+          schoolContext: true,
+          roles: ['ADMIN', 'SUPER_ADMIN']
+        }
+      },
+      {
         path: 'access-scanner',
         loadComponent: () =>
           import(
