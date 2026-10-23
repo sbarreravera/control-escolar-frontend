@@ -1,0 +1,134 @@
+<div class="container-fluid px-0 mx-auto" style="max-width: 1100px">
+  <header class="mb-4">
+    <h1 class="h2 mb-1">Prueba de códigos QR</h1>
+    <p class="text-body-secondary">
+      Verifica credenciales de {{ schoolName }} sin registrar entradas o salidas.
+    </p>
+  </header>
+
+  <div class="alert alert-info" role="note">
+    <strong>Modo de prueba:</strong> las lecturas no generan asistencia,
+    movimientos de acceso ni notificaciones a los tutores.
+  </div>
+
+  <section class="card mb-4">
+    <div class="card-header">
+      <strong>Selecciona cómo leer el QR</strong>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <button type="button" class="btn"
+          [class.btn-primary]="mode() === 'usb'"
+          [class.btn-outline-primary]="mode() !== 'usb'"
+          (click)="selectMode('usb')">
+          Lector USB / ingreso manual
+        </button>
+        <button type="button" class="btn"
+          [class.btn-primary]="mode() === 'camera'"
+          [class.btn-outline-primary]="mode() !== 'camera'"
+          (click)="selectMode('camera')">
+          Cámara
+        </button>
+      </div>
+
+      @if (mode() === 'usb') {
+        <form (ngSubmit)="submitUsbToken()">
+          <label for="qrToken" class="form-label">
+            Escanea o escribe el código QR
+          </label>
+          <div class="input-group">
+            <input
+              #qrInput
+              id="qrToken"
+              type="text"
+              class="form-control"
+              autocomplete="off"
+              spellcheck="false"
+              [formControl]="qrTokenControl"
+              placeholder="Espera la lectura del lector..."
+              maxlength="100"
+              aria-label="Código QR"
+            />
+            <button class="btn btn-primary" type="submit"
+              [disabled]="processing() || qrTokenControl.invalid">
+              Verificar
+            </button>
+          </div>
+          <div class="form-text">
+            El lector USB puede enviar Enter automáticamente.
+          </div>
+        </form>
+      }
+
+      <div [hidden]="mode() !== 'camera'">
+        <video
+          #scannerVideo
+          class="d-block rounded bg-dark mx-auto w-100 mb-3"
+          style="max-width: 620px; min-height: 240px"
+          autoplay
+          muted
+          playsinline
+          aria-label="Vista de cámara para leer QR"
+        ></video>
+        <div class="text-center d-flex gap-2 justify-content-center">
+          <button type="button" class="btn btn-primary"
+            [disabled]="startingCamera() || cameraActive() || processing()"
+            (click)="startCamera()">
+            {{ startingCamera() ? 'Activando...' : 'Leer otro QR' }}
+          </button>
+          <button type="button" class="btn btn-outline-secondary"
+            (click)="stopCamera()">
+            Detener cámara
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  @if (processing()) {
+    <p class="text-body-secondary" role="status">Validando credencial...</p>
+  }
+
+  @if (errorMessage(); as message) {
+    <div class="alert alert-danger" role="alert">{{ message }}</div>
+  }
+
+  @if (result(); as data) {
+    <section
+      class="card border-2"
+      [class.border-success]="data.valid"
+      [class.border-warning]="!data.valid"
+      aria-live="polite"
+    >
+      <div class="card-header">
+        <strong [class.text-success]="data.valid"
+          [class.text-warning]="!data.valid">
+          {{ statusLabel(data.status) }}
+        </strong>
+      </div>
+      <div class="card-body">
+        <h2 class="h4">{{ data.studentName }}</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Matrícula</dt>
+          <dd class="col-sm-8">{{ data.enrollmentNumber }}</dd>
+          <dt class="col-sm-4">Escuela</dt>
+          <dd class="col-sm-8">{{ data.schoolName }}</dd>
+          <dt class="col-sm-4">Grado y grupo</dt>
+          <dd class="col-sm-8">
+            {{ data.gradeName || 'Sin grado' }}
+            {{ data.groupName || 'Sin grupo' }}
+          </dd>
+          <dt class="col-sm-4">Vencimiento</dt>
+          <dd class="col-sm-8">
+            {{ data.credentialExpiresAt
+              ? (data.credentialExpiresAt | date: 'mediumDate')
+              : 'Sin fecha de vencimiento' }}
+          </dd>
+        </dl>
+        <p class="mb-0 text-body-secondary small mt-3">
+          Consulta informativa. No se registró ningún movimiento.
+        </p>
+      </div>
+    </section>
+  }
+</div>
