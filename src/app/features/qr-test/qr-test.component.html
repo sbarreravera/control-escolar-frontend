@@ -2,7 +2,7 @@
   <header class="mb-4">
     <h1 class="h2 mb-1">Prueba de códigos QR</h1>
     <p class="text-body-secondary">
-      Verifica credenciales de cualquier escuela sin registrar entradas o salidas.
+      Verifica credenciales de {{ schoolName }} sin registrar entradas o salidas.
     </p>
   </header>
 
@@ -13,28 +13,7 @@
 
   <section class="card mb-4">
     <div class="card-header">
-      <strong>1. Escuela a verificar</strong>
-    </div>
-    <div class="card-body">
-      <label for="qrSchool" class="form-label">Selecciona una escuela</label>
-      <select id="qrSchool" class="form-select"
-        [formControl]="schoolControl"
-        [attr.disabled]="processing() || loadingSchools() ? '' : null"
-        (change)="onSchoolChange()">
-        <option [ngValue]="null">Selecciona una escuela...</option>
-        @for (school of schools(); track school.id) {
-          <option [ngValue]="school.id">{{ school.name }}</option>
-        }
-      </select>
-      <div class="form-text">
-        Esta selección solo se utiliza para consultar las credenciales; no modifica la escuela administrada.
-      </div>
-    </div>
-  </section>
-
-  <section class="card mb-4">
-    <div class="card-header">
-      <strong>2. Selecciona cómo leer el QR</strong>
+      <strong>Selecciona cómo leer el QR</strong>
     </div>
     <div class="card-body">
       <div class="d-flex flex-wrap gap-2 mb-3">
@@ -47,7 +26,6 @@
         <button type="button" class="btn"
           [class.btn-primary]="mode() === 'camera'"
           [class.btn-outline-primary]="mode() !== 'camera'"
-          [disabled]="loadingSchools() || schoolControl.value === null || processing()"
           (click)="selectMode('camera')">
           Cámara
         </button>
@@ -72,7 +50,7 @@
               aria-label="Código QR"
             />
             <button class="btn btn-primary" type="submit"
-              [disabled]="processing() || qrTokenControl.invalid || schoolControl.value === null || loadingSchools()">
+              [disabled]="processing() || qrTokenControl.invalid">
               Verificar
             </button>
           </div>
