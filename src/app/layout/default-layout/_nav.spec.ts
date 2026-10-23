@@ -50,6 +50,7 @@ describe('buildNavItems', () => {
     ).toEqual([
       'Ciclos escolares',
       'Grados y grupos',
+      'Prueba de códigos QR',
       'Usuarios del sistema'
     ]);
   });
@@ -188,6 +189,7 @@ describe('buildNavItems', () => {
     ).toEqual([
       'Ciclos escolares',
       'Grados y grupos',
+      'Prueba de códigos QR',
       'Usuarios del sistema'
     ]);
   });
