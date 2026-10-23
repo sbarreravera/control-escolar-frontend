@@ -301,7 +301,8 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: {
           title: 'Prueba de QR',
-          roles: ['SUPER_ADMIN']
+          schoolContext: true,
+          roles: ['ADMIN', 'SUPER_ADMIN']
         }
       },
       {
