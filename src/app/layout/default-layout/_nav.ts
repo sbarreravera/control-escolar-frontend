@@ -194,6 +194,11 @@ export function buildNavItems(
 
   if (schoolAdministrator) {
     administrationChildren.push({
+      name: 'Prueba de códigos QR',
+      url: '/qr-test'
+    });
+
+    administrationChildren.push({
       name: 'Usuarios del sistema',
       url: '/school-users'
     });
