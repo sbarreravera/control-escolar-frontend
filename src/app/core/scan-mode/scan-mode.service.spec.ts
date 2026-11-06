@@ -65,6 +65,15 @@ describe('ScanModeService', () => {
     });
   });
 
+  it('should store and restore dedicated multilector secure mode', () => {
+    service.activate('ENTRY', 'SERIAL');
+    expect(service.configuration()?.captureMethod).toBe('SERIAL');
+
+    const restored = new ScanModeService();
+    expect(restored.active()).toBe(true);
+    expect(restored.configuration()?.captureMethod).toBe('SERIAL');
+  });
+
   it('should deactivate and remove persisted state', () => {
     service.activate('ENTRY', 'CAMERA');
     service.deactivate();
