@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { signal } from '@angular/core';
-import { of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { of, Subject } from 'rxjs';
 import { vi } from 'vitest';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -33,7 +32,6 @@ describe('MultiSerialScannerComponent', () => {
     disconnectAll: vi.fn(async () => readerState.set([]))
   };
   const scan = vi.fn();
-  const login = vi.fn();
   const currentUser = () => ({
     id: 7, schoolId: 44, schoolName: 'Secundaria 44',
     fullName: 'Operador prueba', email: 'operador@example.test',
@@ -55,9 +53,7 @@ describe('MultiSerialScannerComponent', () => {
     serialMock.connect.mockReset();
     serialMock.disconnectAll.mockClear();
     scan.mockReset();
-    login.mockReset();
     scan.mockReturnValue(of(event));
-    login.mockReturnValue(of(currentUser()));
 
     serialMock.connect.mockImplementation(
       async (
@@ -79,7 +75,7 @@ describe('MultiSerialScannerComponent', () => {
       imports: [MultiSerialScannerComponent],
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: { currentUser, login } },
+        { provide: AuthService, useValue: { currentUser } },
         { provide: MultiSerialReadersService, useValue: serialMock },
         { provide: AccessEventService, useValue: { scan } }
       ]
@@ -147,41 +143,51 @@ describe('MultiSerialScannerComponent', () => {
     expect(beforeUnload.defaultPrevented).toBe(true);
   });
 
-  it('requires password to stop a locked session', async () => {
+  it('finishes an active session without a password or authentication call', async () => {
     component.readerForm.controls.name.setValue('Puerta 1');
     await component.addReader();
     component.start();
 
     expect(scanMode.active()).toBe(true);
-    component.requestUnlock();
-    component.password.setValue('password-demo');
+    component.finishSession();
 
-    await component.unlock();
+    expect(scanMode.active()).toBe(false);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/access-scanner');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[type="password"]')).toBeNull();
+  });
 
-    expect(login).toHaveBeenCalledWith('operador@example.test', 'password-demo');
-    expect(serialMock.disconnectAll).toHaveBeenCalled();
+  it('can recover immediately with no readers connected', () => {
+    scanMode.activate('ENTRY', 'SERIAL');
+    expect(component.connectedCount()).toBe(0);
+    component.finishSession();
+
     expect(scanMode.active()).toBe(false);
     expect(router.navigateByUrl).toHaveBeenCalledWith('/access-scanner');
   });
 
-  it('shows a failed password verification inside the unlock dialog', async () => {
-    component.readerForm.controls.name.setValue('Puerta 1');
+  it('does not leave or lose an in-flight QR registration', async () => {
+    const outstanding = new Subject<AccessEvent>();
+    scan.mockReturnValueOnce(outstanding.asObservable());
+
+    component.readerForm.controls.name.setValue('Entrada principal');
     await component.addReader();
     component.start();
-    component.requestUnlock();
+    callbacks.get(1)?.('QR_PENDING', 1);
 
-    login.mockReturnValueOnce(throwError(() =>
-      new HttpErrorResponse({ status: 401 })
-    ));
-    component.password.setValue('incorrect-password');
-    await component.unlock();
-    fixture.detectChanges();
-
+    expect(component.queue.pending()).toBe(1);
+    component.finishSession();
     expect(scanMode.active()).toBe(true);
-    expect(component.errorMessage()).toContain('Contraseña incorrecta');
-    const dialog = fixture.nativeElement.querySelector('[aria-labelledby="serialUnlockTitle"]');
-    expect(dialog?.textContent).toContain('Contraseña incorrecta');
+    expect(component.errorMessage()).toContain('lecturas pendientes');
     expect(router.navigateByUrl).not.toHaveBeenCalled();
+
+    outstanding.next(event);
+    outstanding.complete();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    component.finishSession();
+    expect(scanMode.active()).toBe(false);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/access-scanner');
   });
 
   it('allows page navigation without an unnecessary warning when no readers remain', () => {
