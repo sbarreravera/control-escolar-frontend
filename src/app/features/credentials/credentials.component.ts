@@ -62,6 +62,8 @@ import {
 })
 export class CredentialsComponent implements OnInit {
 
+  private credentialRequestId = 0;
+
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly studentService = inject(StudentService);
@@ -69,6 +71,110 @@ export class CredentialsComponent implements OnInit {
     inject(CredentialService);
 
   readonly students = signal<Student[]>([]);
+
+  readonly filterForm = this.formBuilder.nonNullable.group({
+    search: [''],
+    academicCycleId: [0],
+    schoolGroupId: [0],
+    active: ['all' as 'all' | 'active' | 'inactive']
+  });
+
+  private readonly appliedFilters = signal(
+    this.filterForm.getRawValue()
+  );
+
+  readonly academicCycleOptions = computed(() => {
+    const cycles = new Map<number, string>();
+
+    for (const student of this.students()) {
+      if (student.academicCycleId !== null) {
+        cycles.set(
+          student.academicCycleId,
+          student.academicCycleName ?? 'Sin nombre'
+        );
+      }
+    }
+
+    return [...cycles.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) =>
+        a.name.localeCompare(b.name, 'es', { numeric: true })
+      );
+  });
+
+  readonly schoolGroupOptions = computed(() => {
+    const cycleId = this.appliedFilters().academicCycleId;
+
+    if (!cycleId) {
+      return [];
+    }
+
+    const groups = new Map<number, {
+      id: number;
+      gradeName: string;
+      groupName: string;
+    }>();
+
+    for (const student of this.students()) {
+      if (
+        student.academicCycleId === cycleId &&
+        student.schoolGroupId !== null
+      ) {
+        groups.set(student.schoolGroupId, {
+          id: student.schoolGroupId,
+          gradeName: student.gradeName ?? 'Sin grado',
+          groupName: student.groupName ?? 'Sin grupo'
+        });
+      }
+    }
+
+    return [...groups.values()].sort((a, b) =>
+      a.gradeName.localeCompare(b.gradeName, 'es', { numeric: true }) ||
+      a.groupName.localeCompare(b.groupName, 'es', { numeric: true })
+    );
+  });
+
+  readonly filteredStudents = computed(() => {
+    const filters = this.appliedFilters();
+    const search = this.normalizeSearch(filters.search);
+
+    return this.students().filter(student => {
+      if (
+        filters.academicCycleId > 0 &&
+        student.academicCycleId !== filters.academicCycleId
+      ) {
+        return false;
+      }
+
+      if (
+        filters.schoolGroupId > 0 &&
+        student.schoolGroupId !== filters.schoolGroupId
+      ) {
+        return false;
+      }
+
+      if (
+        filters.active !== 'all' &&
+        student.active !== (filters.active === 'active')
+      ) {
+        return false;
+      }
+
+      if (!search) {
+        return true;
+      }
+
+      const name = `${student.firstName} ${student.lastName}`;
+      const surnameFirst = `${student.lastName} ${student.firstName}`;
+
+      return [
+        student.enrollmentNumber,
+        name,
+        surnameFirst
+      ].some(value => this.normalizeSearch(value).includes(search));
+    });
+  });
+
   readonly selectedStudent =
     signal<Student | null>(null);
   readonly credential =
@@ -107,6 +213,77 @@ export class CredentialsComponent implements OnInit {
     this.loadStudents();
   }
 
+  onSearchInput(): void {
+    this.applyFilters();
+  }
+
+  clearSearch(): void {
+    this.filterForm.controls.search.setValue('');
+    this.applyFilters();
+  }
+
+  onCycleFilterChange(): void {
+    this.filterForm.controls.schoolGroupId.setValue(0);
+    this.applyFilters();
+  }
+
+  onGroupFilterChange(): void {
+    this.applyFilters();
+  }
+
+  onActiveFilterChange(): void {
+    this.applyFilters();
+  }
+
+  hasFilters(): boolean {
+    const filters = this.appliedFilters();
+    return !!filters.search.trim() ||
+      filters.academicCycleId !== 0 ||
+      filters.schoolGroupId !== 0 ||
+      filters.active !== 'all';
+  }
+
+  clearFilters(): void {
+    this.filterForm.reset({
+      search: '',
+      academicCycleId: 0,
+      schoolGroupId: 0,
+      active: 'all'
+    });
+    this.applyFilters();
+  }
+
+  private applyFilters(): void {
+    this.appliedFilters.set(this.filterForm.getRawValue());
+
+    const studentId = this.credentialForm.controls.studentId.value;
+    if (
+      studentId !== null &&
+      !this.filteredStudents().some(student => student.id === studentId)
+    ) {
+      this.clearSelectedStudent();
+    }
+  }
+
+  private clearSelectedStudent(): void {
+    this.credentialRequestId++;
+    this.credentialForm.reset({ studentId: null });
+    this.selectedStudent.set(null);
+    this.credential.set(null);
+    this.qrDataUrl.set(null);
+    this.loadingCredential.set(false);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+  }
+
+  private normalizeSearch(value: string): string {
+    return value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLocaleLowerCase('es-MX')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   loadStudents(): void {
     const schoolId =
       this.authService.currentUser()?.schoolId;
@@ -142,6 +319,7 @@ export class CredentialsComponent implements OnInit {
   }
 
   loadActiveCredential(): void {
+    const requestId = ++this.credentialRequestId;
     const studentId =
       this.credentialForm.controls.studentId.value;
 
@@ -157,6 +335,7 @@ export class CredentialsComponent implements OnInit {
     this.selectedStudent.set(student ?? null);
 
     if (studentId === null) {
+      this.loadingCredential.set(false);
       return;
     }
 
@@ -165,20 +344,26 @@ export class CredentialsComponent implements OnInit {
     this.credentialService
       .findActive(studentId)
       .pipe(
-        finalize(
-          () => this.loadingCredential.set(false)
-        )
+        finalize(() => {
+          if (requestId === this.credentialRequestId) {
+            this.loadingCredential.set(false);
+          }
+        })
       )
       .subscribe({
         next: credential => {
           if (
-            this.credentialForm.controls.studentId.value ===
-            studentId
+            requestId === this.credentialRequestId &&
+            this.credentialForm.controls.studentId.value === studentId
           ) {
             this.showCredential(credential);
           }
         },
         error: (error: HttpErrorResponse) => {
+          if (requestId !== this.credentialRequestId) {
+            return;
+          }
+
           if (error.status === 404) {
             this.credential.set(null);
             this.qrDataUrl.set(null);
