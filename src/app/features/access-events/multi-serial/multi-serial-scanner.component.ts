@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   ElementRef,
+  HostListener,
   inject,
   OnDestroy,
   signal,
@@ -219,6 +220,16 @@ export class MultiSerialScannerComponent implements OnDestroy {
 
   eventLabel(eventType: AccessEventType): string {
     return eventType === 'ENTRY' ? 'Entrada' : 'Salida';
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    // Warn before browser refresh/close: unsent HTTP requests cannot
+    // be persisted safely or replayed without risking duplicate events.
+    if (this.sessionActive() || this.queue.pending() > 0) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
   }
 
   ngOnDestroy(): void {
