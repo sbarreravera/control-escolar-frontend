@@ -76,6 +76,16 @@ export function buildNavItems(
     });
   }
 
+  if (canAccess('ACCESS_MONITOR')) {
+    operationItems.push({
+      name: 'Monitor de accesos',
+      url: '/access-monitor',
+      iconComponent: {
+        name: 'cil-list'
+      }
+    });
+  }
+
   if (canAccess('COMMUNICATIONS')) {
     operationItems.push({
       name: 'Avisos y comunicaciones',
