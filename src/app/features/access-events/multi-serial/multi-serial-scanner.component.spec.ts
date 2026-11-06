@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { signal } from '@angular/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { vi } from 'vitest';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -15,6 +16,7 @@ describe('MultiSerialScannerComponent', () => {
   let fixture: ComponentFixture<MultiSerialScannerComponent>;
   let component: MultiSerialScannerComponent;
   let scanMode: ScanModeService;
+  let router: Router;
 
   const callbacks = new Map<number, (token: string, id: number) => void>();
   const readerState = signal<Array<{
@@ -86,6 +88,8 @@ describe('MultiSerialScannerComponent', () => {
     fixture = TestBed.createComponent(MultiSerialScannerComponent);
     component = fixture.componentInstance;
     scanMode = TestBed.inject(ScanModeService);
+    router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
     fixture.detectChanges();
   });
 
@@ -157,5 +161,36 @@ describe('MultiSerialScannerComponent', () => {
     expect(login).toHaveBeenCalledWith('operador@example.test', 'password-demo');
     expect(serialMock.disconnectAll).toHaveBeenCalled();
     expect(scanMode.active()).toBe(false);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/access-scanner');
+  });
+
+  it('shows a failed password verification inside the unlock dialog', async () => {
+    component.readerForm.controls.name.setValue('Puerta 1');
+    await component.addReader();
+    component.start();
+    component.requestUnlock();
+
+    login.mockReturnValueOnce(throwError(() =>
+      new HttpErrorResponse({ status: 401 })
+    ));
+    component.password.setValue('incorrect-password');
+    await component.unlock();
+    fixture.detectChanges();
+
+    expect(scanMode.active()).toBe(true);
+    expect(component.errorMessage()).toContain('Contraseña incorrecta');
+    const dialog = fixture.nativeElement.querySelector('[aria-labelledby="serialUnlockTitle"]');
+    expect(dialog?.textContent).toContain('Contraseña incorrecta');
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('allows page navigation without an unnecessary warning when no readers remain', () => {
+    scanMode.activate('ENTRY', 'SERIAL');
+    expect(component.connectedCount()).toBe(0);
+    expect(component.queue.pending()).toBe(0);
+
+    const beforeUnload = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+    component.onBeforeUnload(beforeUnload);
+    expect(beforeUnload.defaultPrevented).toBe(false);
   });
 });
