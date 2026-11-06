@@ -1,0 +1,219 @@
+<div class="monitor-heading mb-4">
+  <div>
+    <h1 class="h3 mb-1">Monitor de accesos</h1>
+    <p class="text-body-secondary mb-0">
+      Consulta las entradas y salidas de {{ schoolName() }} por día.
+    </p>
+  </div>
+  <span class="badge rounded-pill text-bg-secondary">
+    Solo consulta
+  </span>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <strong>Movimientos registrados</strong>
+    <span class="badge rounded-pill text-bg-light text-body">
+      {{ totalElements() }} {{ totalElements() === 1 ? 'registro' : 'registros' }}
+    </span>
+  </div>
+
+  <div class="card-body">
+    <form class="monitor-filters mb-3" [formGroup]="filterForm" (submit)="$event.preventDefault()">
+      <div class="filter-field date-field">
+        <label for="accessMonitorDate" class="form-label">Fecha</label>
+        <div class="input-group">
+          <button class="btn btn-outline-secondary" type="button"
+            aria-label="Día anterior" (click)="moveDay(-1)">
+            &lsaquo;
+          </button>
+          <input id="accessMonitorDate" type="date" class="form-control"
+            formControlName="date" (change)="onDateChange()" />
+          <button class="btn btn-outline-secondary" type="button"
+            aria-label="Día siguiente" (click)="moveDay(1)">
+            &rsaquo;
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-field search-field">
+        <label for="accessMonitorSearch" class="form-label">Buscar alumno</label>
+        <input id="accessMonitorSearch" type="search" class="form-control"
+          formControlName="search" autocomplete="off"
+          placeholder="Nombre, apellidos o matrícula"
+          (input)="onSearchInput()" />
+      </div>
+
+      <div class="filter-field">
+        <label for="accessMonitorCycle" class="form-label">Ciclo escolar</label>
+        <select id="accessMonitorCycle" class="form-select"
+          formControlName="academicCycleId"
+          [attr.disabled]="loadingFilters() ? '' : null"
+          (change)="onCycleChange()">
+          <option [ngValue]="0">Todos los ciclos</option>
+          @for (cycle of filters().cycles; track cycle.id) {
+            <option [ngValue]="cycle.id">
+              {{ cycle.name }}{{ cycle.active ? '' : ' (inactivo)' }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="accessMonitorGroup" class="form-label">Grado y grupo</label>
+        <select id="accessMonitorGroup" class="form-select"
+          formControlName="schoolGroupId"
+          [attr.disabled]="selectedCycleId() === 0 || loadingFilters() ? '' : null"
+          (change)="onFilterChange()">
+          <option [ngValue]="0">
+            {{ selectedCycleId() === 0 ? 'Selecciona primero un ciclo' : 'Todos los grupos' }}
+          </option>
+          @for (group of availableGroups(); track group.id) {
+            <option [ngValue]="group.id">
+              {{ group.gradeName }} · {{ group.groupName }}
+              {{ group.active ? '' : ' (inactivo)' }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="accessMonitorEvent" class="form-label">Movimiento</label>
+        <select id="accessMonitorEvent" class="form-select"
+          formControlName="eventType" (change)="onFilterChange()">
+          <option value="all">Entradas y salidas</option>
+          <option value="ENTRY">Solo entradas</option>
+          <option value="EXIT">Solo salidas</option>
+        </select>
+      </div>
+
+      <div class="filter-field filter-actions">
+        <label class="form-label" for="clearAccessFilters">Filtros</label>
+        <button id="clearAccessFilters" class="btn btn-outline-secondary"
+          type="button" [disabled]="!hasFilters()"
+          (click)="clearFilters()">
+          Limpiar filtros
+        </button>
+      </div>
+    </form>
+
+    @if (filterErrorMessage()) {
+      <div class="alert alert-warning" role="alert">
+        No se cargaron las opciones de ciclo y grupo.
+        {{ filterErrorMessage() }}
+      </div>
+    }
+
+    <div class="monitor-toolbar mb-3">
+      <p class="text-body-secondary small mb-0">
+        Los horarios corresponden a la zona de Ciudad de México.
+        El ciclo, grado y grupo muestran la asignación actual del alumno.
+        Esta consulta no genera notificaciones.
+      </p>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-outline-secondary btn-sm"
+          (click)="chooseToday()">Hoy</button>
+        <button type="button" class="btn btn-primary btn-sm"
+          [disabled]="loading()" (click)="loadPage(0)">
+          {{ loading() ? 'Actualizando...' : 'Actualizar registros' }}
+        </button>
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger" role="alert">{{ errorMessage() }}</div>
+    }
+
+    @if (loading()) {
+      <div class="monitor-state" role="status">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        Cargando accesos...
+      </div>
+    } @else if (items().length === 0 && !errorMessage()) {
+      <div class="monitor-state" role="status">
+        No hay movimientos registrados que coincidan con los filtros y la fecha seleccionada.
+      </div>
+    } @else if (items().length > 0) {
+      <div class="table-responsive monitor-table-wrap">
+        <table class="table table-hover align-middle mb-0 monitor-table">
+          <thead>
+            <tr>
+              <th scope="col">Hora</th>
+              <th scope="col">Alumno</th>
+              <th scope="col">Matrícula</th>
+              <th scope="col">Ciclo actual</th>
+              <th scope="col">Grado y grupo actual</th>
+              <th scope="col">Movimiento</th>
+              <th scope="col">Captura</th>
+              <th scope="col">Lector / dispositivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item.id) {
+              <tr>
+                <td class="time-cell">{{ formatTime(item.occurredAt) }}</td>
+                <td><strong>{{ item.studentName }}</strong></td>
+                <td><code>{{ item.enrollmentNumber }}</code></td>
+                <td>{{ item.academicCycleName || 'Sin ciclo' }}</td>
+                <td>{{ item.gradeName || '—' }} {{ item.groupName || '' }}</td>
+                <td>
+                  <span class="badge"
+                    [class.text-bg-success]="item.eventType === 'ENTRY'"
+                    [class.text-bg-primary]="item.eventType === 'EXIT'">
+                    {{ eventLabel(item.eventType) }}
+                  </span>
+                </td>
+                <td>{{ captureLabel(item.captureMethod) }}</td>
+                <td>{{ item.deviceName || 'Sin identificar' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <div class="monitor-footer mt-3">
+      <span class="text-body-secondary small" aria-live="polite">
+        Mostrando {{ fromRecord() }}–{{ toRecord() }}
+        de {{ totalElements() }} movimientos
+      </span>
+
+      @if (totalPages() > 1) {
+        <nav aria-label="Páginas del monitor">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="page() === 0 || loading()">
+              <button class="page-link" type="button"
+                [disabled]="page() === 0 || loading()"
+                (click)="goToPage(page() - 1)">Anterior</button>
+            </li>
+            @for (p of pageNumbers(); track p) {
+              <li class="page-item" [class.active]="p === page()">
+                <button class="page-link" type="button"
+                  [attr.aria-current]="p === page() ? 'page' : null"
+                  [disabled]="loading()"
+                  (click)="goToPage(p)">{{ p + 1 }}</button>
+              </li>
+            }
+            <li class="page-item"
+              [class.disabled]="page() >= totalPages() - 1 || loading()">
+              <button class="page-link" type="button"
+                [disabled]="page() >= totalPages() - 1 || loading()"
+                (click)="goToPage(page() + 1)">Siguiente</button>
+            </li>
+          </ul>
+        </nav>
+      }
+
+      <div class="page-size">
+        <label for="accessMonitorPageSize">Filas por página</label>
+        <select id="accessMonitorPageSize" class="form-select form-select-sm"
+          [value]="pageSize()" (change)="changePageSize($event)">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
