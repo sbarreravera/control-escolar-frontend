@@ -159,6 +159,12 @@ export class MultiSerialScannerComponent implements OnDestroy {
     // Disarm the lock synchronously before the router guard runs.
     this.mode.deactivate();
 
+    // Returning to the normal scanner must also leave fullscreen.
+    if (typeof document !== 'undefined' &&
+        document.fullscreenElement && document.exitFullscreen) {
+      void document.exitFullscreen().catch(() => undefined);
+    }
+
     // ngOnDestroy closes all serial ports after navigation. Never wait for a
     // USB disconnect to navigate: a physically unplugged port may hang.
     void this.router.navigateByUrl('/access-scanner').then(navigated => {
