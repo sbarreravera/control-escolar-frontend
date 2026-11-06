@@ -72,13 +72,13 @@
     </section>
   } @else {
     <div class="alert alert-info" role="status">
-      Modo seguro activo. Los lectores reciben códigos de manera independiente,
-      y los registros se envían a Spring Boot de uno en uno.
-      Para modificar los dispositivos o salir, verifica tu contraseña.
+      Sesión multilector activa. Los lectores reciben códigos independientemente
+      y los movimientos se envían a Spring Boot de uno en uno.
+      Pulsa «Finalizar sesión» para salir sin contraseña, cuando no haya lecturas pendientes.
       @if (connectedCount() === 0) {
         <strong>
-          No hay lectores conectados. Desbloquea y vuelve a configurar los puertos;
-          no se restauran automáticamente tras actualizar la página.
+          No hay lectores conectados. Pulsa «Finalizar sesión» para regresar
+          y configurar nuevamente los puertos; no se restauran al recargar la página.
         </strong>
       }
     </div>
@@ -96,7 +96,7 @@
         <p class="mb-0 text-body-secondary">
           No hay lectores conectados.
           @if (sessionActive()) {
-            Es necesario desbloquear y configurar nuevamente los dispositivos.
+            Finaliza esta sesión para configurar nuevamente los dispositivos.
           } @else {
             Agrega tu primer puerto COM para comenzar.
           }
@@ -138,9 +138,10 @@
       <div class="card-body text-center p-4">
         <h2 class="h4">2. Iniciar registro multilector</h2>
         <p class="text-body-secondary">
-          Al iniciar se bloqueará la navegación. Las lecturas de todos los puertos
-          se registrarán mediante el flujo habitual, con las notificaciones a tutores.
-          Para terminar necesitarás tu contraseña.
+          Al iniciar, las lecturas de todos los puertos se registrarán
+          mediante el flujo habitual, con notificaciones a tutores.
+          Para salir pulsa «Finalizar sesión», sin contraseña.
+          Si hay lecturas pendientes, deberán resolverse primero.
         </p>
         <button type="button" class="btn btn-primary btn-lg"
           [disabled]="!supported || connectedCount() === 0 || connecting()"
@@ -157,9 +158,9 @@
             @if (queue.processing()) { · Procesando movimiento... }
           </div>
         </div>
-        <button class="btn btn-outline-secondary" type="button" (click)="requestUnlock()"
-          [disabled]="unlockRequested() || unlocking()">
-          Finalizar / desbloquear
+        <button class="btn btn-outline-secondary" type="button" (click)="finishSession()"
+          [disabled]="finishing()">
+          {{ finishing() ? 'Finalizando...' : 'Finalizar sesión' }}
         </button>
       </div>
     </section>
@@ -234,41 +235,4 @@
       </table>
     </div>
   </section>
-
-  @if (sessionActive() && unlockRequested()) {
-    <div class="unlock-overlay" role="dialog" aria-modal="true"
-      aria-labelledby="serialUnlockTitle">
-      <section class="card shadow-lg unlock-panel">
-        <div class="card-body p-4">
-          <h2 class="h4" id="serialUnlockTitle">Desbloquear multilector</h2>
-          <p class="text-body-secondary">
-            Se suspenderán nuevas lecturas mientras ingresas tu contraseña.
-            @if (queue.pending() > 0) {
-              Hay {{ queue.pending() }} registro(s) pendientes;
-              espera a que termine la cola antes de salir.
-            }
-          </p>
-          @if (errorMessage(); as unlockError) {
-            <div class="alert alert-danger" role="alert" aria-live="assertive">
-              {{ unlockError }}
-            </div>
-          }
-          <form (ngSubmit)="unlock()" class="d-grid gap-3">
-            <input #unlockPasswordInput id="serialPassword" type="password"
-              class="form-control" placeholder="Contraseña del usuario"
-              aria-label="Contraseña" autocomplete="current-password"
-              [formControl]="password" />
-            <button class="btn btn-primary" type="submit"
-              [disabled]="unlocking() || queue.pending() > 0">
-              {{ unlocking() ? 'Verificando...' : 'Confirmar y finalizar' }}
-            </button>
-            <button class="btn btn-outline-secondary" type="button"
-              [disabled]="unlocking()" (click)="cancelUnlock()">
-              Continuar escaneando
-            </button>
-          </form>
-        </div>
-      </section>
-    </div>
-  }
 </div>

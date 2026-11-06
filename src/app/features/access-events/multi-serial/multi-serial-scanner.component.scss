@@ -32,18 +32,3 @@
   font-variant-numeric: tabular-nums;
 }
 
-.unlock-overlay {
-  align-items: center;
-  background: rgba(14, 22, 34, 0.87);
-  display: flex;
-  inset: 0;
-  justify-content: center;
-  padding: 1rem;
-  position: fixed;
-  z-index: 3000;
-}
-
-.unlock-panel {
-  max-width: 28rem;
-  width: 100%;
-}

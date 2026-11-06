@@ -54,8 +54,13 @@ entradas/salidas.
   implica que esos movimientos no se procesarán y exige confirmación.
 - Los resultados recientes muestran lector, tipo de movimiento, alumno
   y notificaciones encoladas; **no se muestran tokens QR**.
-- El modo seguro bloquea otras rutas hasta autenticar nuevamente la
-  contraseña y terminar de procesar pendientes.
+- El modo multilector bloquea la navegación mientras se usa y se termina
+  con **Finalizar sesión**, sin contraseña, cuando ya no quedan lecturas pendientes.
+  Si quedan envíos pendientes, deberán procesarse o descartarse explícitamente
+  desde el panel; nunca se descartan automáticamente al finalizar.
+- La selección USB-COM no se guarda al recargar. El bloqueo SERIAL antiguo se
+  elimina automáticamente al abrir nuevamente la aplicación; los modos cámara
+  y teclado mantienen su protección y desbloqueo originales.
 
 ## Reconexión
 
@@ -63,8 +68,8 @@ entradas/salidas.
 - No se asignan automáticamente los dispositivos tras una recarga del
   navegador porque dos JOWVDY idénticos podrían intercambiar de COM,
   ocasionando entradas y salidas equivocadas.
-- Desbloquea, desconecta los puertos, conecta los lectores de nuevo y
-  verifica las funciones antes de empezar otra sesión.
+- Pulsa **Finalizar sesión**, conecta los lectores de nuevo y verifica las
+  funciones antes de empezar otra sesión.
 - Evita recargar o cerrar la pestaña mientras hay solicitudes pendientes.
 
 ## Prueba manual obligatoria antes de producción
@@ -76,7 +81,8 @@ entradas/salidas.
 - Repetir QR para comprobar deduplicación; probar QR inválido/inactivo.
 - Desconectar y reconectar físicamente un lector.
 - Simular pérdida de red y revisar pausa, cola y recuperación.
-- Revisar bloqueo y desbloqueo por contraseña.
+- Revisar salida sin contraseña, incluso con 0 lectores, y que se impida
+  finalizar si hay lecturas pendientes.
 - Validar que el escáner anterior USB-HID y cámara no cambia.
 
 **Compatibilidad:** Web Serial requiere HTTPS y navegadores compatibles.

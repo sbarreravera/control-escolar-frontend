@@ -1,14 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   computed,
-  ElementRef,
   HostListener,
   inject,
   OnDestroy,
   signal,
-  ViewChild
 } from '@angular/core';
 import {
   FormBuilder,
@@ -16,7 +13,6 @@ import {
   Validators
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ScanModeService } from '../../../core/scan-mode/scan-mode.service';
@@ -33,9 +29,6 @@ import { MultiSerialReadersService } from './multi-serial-readers.service';
   styleUrl: './multi-serial-scanner.component.scss'
 })
 export class MultiSerialScannerComponent implements OnDestroy {
-  @ViewChild('unlockPasswordInput')
-  private unlockPasswordInput?: ElementRef<HTMLInputElement>;
-
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly mode = inject(ScanModeService);
@@ -56,12 +49,10 @@ export class MultiSerialScannerComponent implements OnDestroy {
     name: ['Lector 1', [Validators.required, Validators.maxLength(100)]],
     eventType: this.fb.nonNullable.control<AccessEventType>('ENTRY')
   });
-  readonly password = this.fb.nonNullable.control('', Validators.required);
 
   readonly connecting = signal(false);
   readonly disconnecting = signal(false);
-  readonly unlocking = signal(false);
-  readonly unlockRequested = signal(false);
+  readonly finishing = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
 
@@ -138,82 +129,57 @@ export class MultiSerialScannerComponent implements OnDestroy {
     // Existing lock/guard is reused; each port stores its OWN entry/exit role.
     // The legacy eventType property is irrelevant in SERIAL mode.
     this.mode.activate('ENTRY', 'SERIAL');
-    this.unlockRequested.set(false);
     if (typeof document !== 'undefined' && document.documentElement.requestFullscreen) {
       void document.documentElement.requestFullscreen().catch(() => undefined);
     }
   }
 
-  requestUnlock(): void {
-    if (!this.sessionActive()) {
+  /**
+   * Finish multilector scanning immediately without a password.
+   * Existing CAMERA/USB secure unlock remains unchanged.
+   * Pending or in-flight POSTs must finish (or be explicitly discarded)
+   * to avoid losing registrations or sending duplicate notifications.
+   */
+  finishSession(): void {
+    if (!this.sessionActive() || this.finishing()) {
       return;
     }
-    this.unlockRequested.set(true);
-    this.password.reset();
-    this.errorMessage.set(null);
-    setTimeout(() => this.unlockPasswordInput?.nativeElement.focus());
-  }
 
-  cancelUnlock(): void {
-    this.unlockRequested.set(false);
-    this.password.reset();
-    this.errorMessage.set(null);
-  }
-
-  async unlock(): Promise<void> {
-    if (!this.sessionActive() || this.unlocking()) {
-      return;
-    }
-    if (this.queue.pending() > 0) {
+    if (this.queue.pending() > 0 || this.queue.processing()) {
       this.errorMessage.set(
-        'Hay lecturas por procesar. Espera a que termine la cola antes de desbloquear.'
+        'Hay lecturas pendientes. Espera a que terminen o resuelve la cola ' +
+        'antes de finalizar; ningún registro se descarta automáticamente.'
       );
       return;
     }
 
-    const user = this.auth.currentUser();
-    if (!user || this.password.invalid) {
-      this.password.markAsTouched();
-      this.errorMessage.set('Escribe tu contraseña para desbloquear.');
-      return;
-    }
-
-    this.unlocking.set(true);
+    this.finishing.set(true);
     this.errorMessage.set(null);
-    try {
-      // Validate the current account before changing the secure lock.
-      await firstValueFrom(this.auth.login(user.email, this.password.value));
-    } catch (error: unknown) {
-      if (error instanceof HttpErrorResponse && error.status === 401) {
-        this.errorMessage.set('Contraseña incorrecta. Inténtalo nuevamente.');
-      } else if (error instanceof HttpErrorResponse && error.status === 0) {
-        this.errorMessage.set('No hay conexión con el servidor. Comprueba tu conexión e inténtalo de nuevo.');
-      } else {
-        this.errorMessage.set('No fue posible verificar la contraseña. Inténtalo nuevamente.');
-      }
-      this.password.reset();
-      this.unlocking.set(false);
-      return;
-    }
 
-    // Authentication was successful. A previously unplugged reader must
-    // never prevent the operator from leaving secure mode.
+    // Disarm the lock synchronously before the router guard runs.
     this.mode.deactivate();
-    this.unlockRequested.set(false);
-    this.password.reset();
-    try {
-      await this.serial.disconnectAll();
-    } catch {
-      // USB disconnection is best effort after successful authentication.
+
+    // Returning to the normal scanner must also leave fullscreen.
+    if (typeof document !== 'undefined' &&
+        document.fullscreenElement && document.exitFullscreen) {
+      void document.exitFullscreen().catch(() => undefined);
     }
-    this.unlocking.set(false);
-    this.errorMessage.set(null);
-    this.successMessage.set('Sesión multilector finalizada.');
-    if (typeof document !== 'undefined' && document.fullscreenElement) {
-      await document.exitFullscreen().catch(() => undefined);
-    }
-    // Explicit navigation makes a successful unlock unambiguous to users.
-    void this.router.navigateByUrl('/access-scanner');
+
+    // ngOnDestroy closes all serial ports after navigation. Never wait for a
+    // USB disconnect to navigate: a physically unplugged port may hang.
+    void this.router.navigateByUrl('/access-scanner').then(navigated => {
+      if (!navigated) {
+        this.finishing.set(false);
+        this.errorMessage.set(
+          'No se pudo volver al escáner. Los lectores pueden desconectarse desde esta pantalla.'
+        );
+      }
+    }).catch(() => {
+      this.finishing.set(false);
+      this.errorMessage.set(
+        'No se pudo navegar al escáner normal. Intenta nuevamente.'
+      );
+    });
   }
 
   resumeQueue(): void {
@@ -258,7 +224,7 @@ export class MultiSerialScannerComponent implements OnDestroy {
       return;
     }
 
-    if (!this.sessionActive() || this.unlockRequested()) {
+    if (!this.sessionActive() || this.finishing()) {
       return;
     }
 

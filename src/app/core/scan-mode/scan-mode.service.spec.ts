@@ -65,13 +65,39 @@ describe('ScanModeService', () => {
     });
   });
 
-  it('should store and restore dedicated multilector secure mode', () => {
+  it('should keep SERIAL mode active only in memory and never persist it', () => {
     service.activate('ENTRY', 'SERIAL');
+    expect(service.active()).toBe(true);
     expect(service.configuration()?.captureMethod).toBe('SERIAL');
+    expect(window.localStorage.getItem(storageKey)).toBeNull();
 
     const restored = new ScanModeService();
-    expect(restored.active()).toBe(true);
-    expect(restored.configuration()?.captureMethod).toBe('SERIAL');
+    expect(restored.active()).toBe(false);
+    expect(restored.configuration()).toBeNull();
+  });
+
+  it('should recover a stale SERIAL lock saved by a previous build', () => {
+    window.localStorage.setItem(storageKey, JSON.stringify({
+      eventType: 'ENTRY',
+      captureMethod: 'SERIAL',
+      activatedAt: '2026-11-06T18:00:00.000Z'
+    }));
+
+    const restored = new ScanModeService();
+    expect(restored.active()).toBe(false);
+    expect(restored.configuration()).toBeNull();
+    expect(window.localStorage.getItem(storageKey)).toBeNull();
+  });
+
+  it('should keep existing CAMERA and USB secure persistence unchanged', () => {
+    service.activate('ENTRY', 'CAMERA');
+    const cameraState = new ScanModeService();
+    expect(cameraState.configuration()?.captureMethod).toBe('CAMERA');
+
+    service.activate('EXIT', 'USB');
+    const usbState = new ScanModeService();
+    expect(usbState.configuration()?.eventType).toBe('EXIT');
+    expect(usbState.configuration()?.captureMethod).toBe('USB');
   });
 
   it('should deactivate and remove persisted state', () => {
