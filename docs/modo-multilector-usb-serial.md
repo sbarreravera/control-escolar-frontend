@@ -68,8 +68,8 @@ entradas/salidas.
 - No se asignan automáticamente los dispositivos tras una recarga del
   navegador porque dos JOWVDY idénticos podrían intercambiar de COM,
   ocasionando entradas y salidas equivocadas.
-- Desbloquea, desconecta los puertos, conecta los lectores de nuevo y
-  verifica las funciones antes de empezar otra sesión.
+- Pulsa **Finalizar sesión**, conecta los lectores de nuevo y verifica las
+  funciones antes de empezar otra sesión.
 - Evita recargar o cerrar la pestaña mientras hay solicitudes pendientes.
 
 ## Prueba manual obligatoria antes de producción
