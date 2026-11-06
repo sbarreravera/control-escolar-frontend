@@ -16,6 +16,10 @@ describe('buildNavItems', () => {
       )
     ).toBe(true);
 
+    expect(
+      items.some(item => item.name === 'Monitor de accesos')
+    ).toBe(true);
+
     const students = items.find(
       item => item.name === 'Alumnos'
     );
@@ -75,6 +79,10 @@ describe('buildNavItems', () => {
       items.some(
         item => item.name === 'Avisos y comunicaciones'
       )
+    ).toBe(false);
+
+    expect(
+      items.some(item => item.name === 'Monitor de accesos')
     ).toBe(false);
 
     const students = items.find(
@@ -148,6 +156,14 @@ describe('buildNavItems', () => {
       'Ciclos escolares',
       'Grados y grupos'
     ]);
+  });
+
+  it('shows the access monitor to operators with the dedicated permission', () => {
+    const items = buildNavItems('OPERATOR', true, ['ACCESS_MONITOR']);
+    expect(items.some(item => item.name === 'Monitor de accesos'))
+      .toBe(true);
+    expect(items.some(item => item.name === 'Registrar entrada/salida'))
+      .toBe(false);
   });
 
   it('keeps SUPER_ADMIN focused on schools without context', () => {
