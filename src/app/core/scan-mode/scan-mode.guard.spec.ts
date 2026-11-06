@@ -49,6 +49,23 @@ describe('scanModeGuard', () => {
     expect(result).toBe(true);
   });
 
+  it('should lock multilector mode to its own route', () => {
+    scanModeService.activate('ENTRY', 'SERIAL');
+
+    expect(executeGuard('/access-scanner/multi')).toBe(true);
+    const redirected = executeGuard('/access-scanner');
+    expect(router.serializeUrl(redirected as UrlTree))
+      .toBe('/access-scanner/multi');
+  });
+
+  it('should prevent the normal secure scanner from switching to multilector', () => {
+    scanModeService.activate('EXIT', 'USB');
+
+    const redirected = executeGuard('/access-scanner/multi');
+    expect(router.serializeUrl(redirected as UrlTree))
+      .toBe('/access-scanner');
+  });
+
   it('should redirect other routes while mode is active', () => {
     scanModeService.activate('EXIT', 'CAMERA');
 
