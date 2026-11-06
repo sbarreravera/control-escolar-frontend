@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { MultiSerialReadersService } from './multi-serial-readers.service';
 
 describe('MultiSerialReadersService', () => {
