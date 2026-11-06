@@ -19,6 +19,7 @@ import {
   IScannerControls
 } from '@zxing/browser';
 import { finalize } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 import {
   AuthService
