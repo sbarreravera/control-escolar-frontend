@@ -306,6 +306,19 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'access-monitor',
+        loadComponent: () =>
+          import('./features/access-events/access-monitor.component')
+            .then(module => module.AccessMonitorComponent),
+        canActivate: [
+          moduleGuard
+        ],
+        data: {
+          title: 'Monitor de accesos',
+          moduleKey: 'ACCESS_MONITOR'
+        }
+      },
+      {
         path: 'access-scanner',
         loadComponent: () =>
           import(
