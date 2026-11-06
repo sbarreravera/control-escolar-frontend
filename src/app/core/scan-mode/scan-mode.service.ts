@@ -10,7 +10,8 @@ export type ScanModeEventType =
 
 export type ScanModeCaptureMethod =
   | 'USB'
-  | 'CAMERA';
+  | 'CAMERA'
+  | 'SERIAL';
 
 export interface ScanModeConfiguration {
   eventType: ScanModeEventType;
@@ -130,7 +131,8 @@ export class ScanModeService {
 
     const validCaptureMethod =
       value.captureMethod === 'USB' ||
-      value.captureMethod === 'CAMERA';
+      value.captureMethod === 'CAMERA' ||
+      value.captureMethod === 'SERIAL';
 
     return (
       validEventType &&
