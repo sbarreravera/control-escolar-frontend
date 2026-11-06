@@ -217,6 +217,11 @@ export class CredentialsComponent implements OnInit {
     this.applyFilters();
   }
 
+  clearSearch(): void {
+    this.filterForm.controls.search.setValue('');
+    this.applyFilters();
+  }
+
   onCycleFilterChange(): void {
     this.filterForm.controls.schoolGroupId.setValue(0);
     this.applyFilters();
