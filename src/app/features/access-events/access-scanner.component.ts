@@ -41,7 +41,8 @@ import { AccessEventService } from './access-event.service';
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    RouterLink
   ],
   templateUrl: './access-scanner.component.html'
 })
