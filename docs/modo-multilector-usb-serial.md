@@ -81,7 +81,8 @@ entradas/salidas.
 - Repetir QR para comprobar deduplicación; probar QR inválido/inactivo.
 - Desconectar y reconectar físicamente un lector.
 - Simular pérdida de red y revisar pausa, cola y recuperación.
-- Revisar bloqueo y desbloqueo por contraseña.
+- Revisar salida sin contraseña, incluso con 0 lectores, y que se impida
+  finalizar si hay lecturas pendientes.
 - Validar que el escáner anterior USB-HID y cámara no cambia.
 
 **Compatibilidad:** Web Serial requiere HTTPS y navegadores compatibles.
