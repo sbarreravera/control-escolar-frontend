@@ -52,6 +52,13 @@ export class MultiScanQueueService {
       return;
     }
 
+    // Never retain previous students' QR values longer than the dedupe window.
+    for (const [oldKey, registeredAt] of this.recentlyRegistered) {
+      if (Date.now() - registeredAt >= this.duplicateWindowMs) {
+        this.recentlyRegistered.delete(oldKey);
+      }
+    }
+
     const key = eventType + ':' + token;
     const timestamp = this.recentlyRegistered.get(key);
     if (this.pendingKeys.has(key) ||
