@@ -10,6 +10,16 @@
       </p>
     </header>
 
+    <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <strong>¿Tienes varios lectores USB-COM?</strong>
+        Puedes registrar entradas y salidas a la vez desde esta computadora.
+      </div>
+      <a class="btn btn-outline-primary" routerLink="/access-scanner/multi">
+        Abrir modo multilector
+      </a>
+    </div>
+
     @if (successMessage(); as message) {
       <div class="alert alert-success" role="alert">
         {{ message }}
