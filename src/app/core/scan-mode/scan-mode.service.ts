@@ -50,7 +50,15 @@ export class ScanModeService {
     };
 
     this.configurationState.set(configuration);
-    this.storeConfiguration(configuration);
+
+    // USB-COM connections cannot survive a browser reload. Unlike the
+    // camera/keyboard modes, do not persist a serial-only navigation lock.
+    // This prevents an unrecoverable session when readers disconnect.
+    if (captureMethod === 'SERIAL') {
+      this.removeStoredConfiguration();
+    } else {
+      this.storeConfiguration(configuration);
+    }
   }
 
   deactivate(): void {
@@ -77,6 +85,14 @@ export class ScanModeService {
         JSON.parse(storedValue) as Partial<ScanModeConfiguration>;
 
       if (!this.isValidConfiguration(configuration)) {
+        storage.removeItem(STORAGE_KEY);
+        return null;
+      }
+
+      // Recover browser profiles from previous multilector builds that
+      // persisted SERIAL across reload even though no ports can be restored.
+      // Never clear persisted USB/CAMERA secure sessions here.
+      if (configuration.captureMethod === 'SERIAL') {
         storage.removeItem(STORAGE_KEY);
         return null;
       }
