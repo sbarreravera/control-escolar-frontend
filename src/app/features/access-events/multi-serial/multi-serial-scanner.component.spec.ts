@@ -130,6 +130,19 @@ describe('MultiSerialScannerComponent', () => {
     });
   });
 
+  it('warns before reloading while recording access events', async () => {
+    component.readerForm.controls.name.setValue('Entrada 1');
+    await component.addReader();
+    component.start();
+
+    const beforeUnload = new Event('beforeunload', {
+      cancelable: true
+    }) as BeforeUnloadEvent;
+
+    component.onBeforeUnload(beforeUnload);
+    expect(beforeUnload.defaultPrevented).toBe(true);
+  });
+
   it('requires password to stop a locked session', async () => {
     component.readerForm.controls.name.setValue('Puerta 1');
     await component.addReader();
