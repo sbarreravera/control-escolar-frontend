@@ -319,6 +319,20 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'access-scanner/multi',
+        loadComponent: () =>
+          import(
+            './features/access-events/multi-serial/multi-serial-scanner.component'
+          ).then(module => module.MultiSerialScannerComponent),
+        canActivate: [
+          moduleGuard
+        ],
+        data: {
+          title: 'Modo multilector',
+          moduleKey: 'ACCESS_SCANNER'
+        }
+      },
+      {
         path: 'access-scanner',
         loadComponent: () =>
           import(

@@ -18,9 +18,16 @@ export const scanModeGuard: CanActivateChildFn = (
     return true;
   }
 
-  if (state.url.startsWith('/access-scanner')) {
+  const serialMode =
+    scanModeService.configuration()?.captureMethod === 'SERIAL';
+
+  const allowedPath = serialMode
+    ? '/access-scanner/multi'
+    : '/access-scanner';
+
+  if (state.url.split('?')[0] === allowedPath) {
     return true;
   }
 
-  return router.createUrlTree(['/access-scanner']);
+  return router.createUrlTree([allowedPath]);
 };

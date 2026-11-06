@@ -19,6 +19,7 @@ import {
   IScannerControls
 } from '@zxing/browser';
 import { finalize } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 import {
   AuthService
@@ -40,7 +41,8 @@ import { AccessEventService } from './access-event.service';
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    RouterLink
   ],
   templateUrl: './access-scanner.component.html'
 })

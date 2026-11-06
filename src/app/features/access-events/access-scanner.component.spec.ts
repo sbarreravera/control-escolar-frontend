@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import {
   ComponentFixture,
   TestBed
@@ -96,6 +97,7 @@ describe('AccessScannerComponent', () => {
         AccessScannerComponent
       ],
       providers: [
+        provideRouter([]),
         {
           provide: AccessEventService,
           useValue: accessEventServiceMock

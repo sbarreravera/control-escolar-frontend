@@ -1,0 +1,269 @@
+<div class="container-fluid px-0 mx-auto multi-serial-page">
+  <header class="mb-4">
+    <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center">
+      <div>
+        <h1 class="h2 mb-1">Modo multilector USB Serial</h1>
+        <p class="text-body-secondary mb-0">
+          {{ schoolName() }} · Lecturas independientes de hasta 6 lectores.
+        </p>
+      </div>
+      @if (sessionActive()) {
+        <span class="badge text-bg-success fs-6">Sesión de registro activa</span>
+      } @else {
+        <a routerLink="/access-scanner" class="btn btn-outline-secondary">
+          Volver al escáner normal
+        </a>
+      }
+    </div>
+  </header>
+
+  @if (!supported) {
+    <div class="alert alert-warning" role="alert">
+      Web Serial no está disponible. Usa Chrome o Edge compatible,
+      en una página HTTPS y con lectores configurados en USB-COM.
+      No todos los dispositivos Android lo permiten.
+    </div>
+  }
+
+  @if (errorMessage(); as message) {
+    <div class="alert alert-danger" role="alert">{{ message }}</div>
+  }
+  @if (successMessage(); as message) {
+    <div class="alert alert-success" role="status">{{ message }}</div>
+  }
+
+  @if (!sessionActive()) {
+    <section class="card mb-4">
+      <div class="card-header"><strong>1. Configura y conecta cada lector</strong></div>
+      <div class="card-body">
+        <p class="text-body-secondary small">
+          Configura tus JOWVDY como USB-COM y con terminación CR o CR+LF.
+          Cierra cualquier otra terminal conectada a esos puertos.
+          En la ventana de Chrome selecciona el puerto COM del lector correspondiente.
+          Cada lector conserva su función de entrada o salida.
+        </p>
+
+        <form [formGroup]="readerForm" (ngSubmit)="addReader()" class="row g-3 align-items-end">
+          <div class="col-12 col-lg-5">
+            <label class="form-label" for="serialReaderName">Nombre o ubicación</label>
+            <input class="form-control" id="serialReaderName"
+              type="text" maxlength="100" formControlName="name"
+              placeholder="Ej. Puerta principal" />
+          </div>
+          <div class="col-12 col-lg-3">
+            <label class="form-label" for="serialReaderType">Movimiento</label>
+            <select class="form-select" id="serialReaderType" formControlName="eventType">
+              <option value="ENTRY">Entrada</option>
+              <option value="EXIT">Salida</option>
+            </select>
+          </div>
+          <div class="col-12 col-lg-4">
+            <button type="submit" class="btn btn-primary w-100"
+              [disabled]="!supported || connecting() || readerForm.invalid || readers().length >= 6">
+              {{ connecting() ? 'Conectando puerto...' : 'Agregar lector USB-COM' }}
+            </button>
+          </div>
+        </form>
+        <p class="form-text mt-2 mb-0">
+          Se solicita permiso para cada puerto serial. Usa 9600 baudios, 8N1.
+          No se guarda ningún identificador de puerto ni credencial QR.
+        </p>
+      </div>
+    </section>
+  } @else {
+    <div class="alert alert-info" role="status">
+      Modo seguro activo. Los lectores reciben códigos de manera independiente,
+      y los registros se envían a Spring Boot de uno en uno.
+      Para modificar los dispositivos o salir, verifica tu contraseña.
+      @if (connectedCount() === 0) {
+        <strong>
+          No hay lectores conectados. Desbloquea y vuelve a configurar los puertos;
+          no se restauran automáticamente tras actualizar la página.
+        </strong>
+      }
+    </div>
+  }
+
+  <section class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center gap-2">
+      <strong>Lectores configurados</strong>
+      <span class="badge text-bg-secondary">
+        {{ connectedCount() }} conectado(s)
+      </span>
+    </div>
+    <div class="card-body">
+      @if (readers().length === 0) {
+        <p class="mb-0 text-body-secondary">
+          No hay lectores conectados.
+          @if (sessionActive()) {
+            Es necesario desbloquear y configurar nuevamente los dispositivos.
+          } @else {
+            Agrega tu primer puerto COM para comenzar.
+          }
+        </p>
+      } @else {
+        <div class="reader-grid">
+          @for (reader of readers(); track reader.id) {
+            <article class="reader-card">
+              <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start">
+                <div>
+                  <h2 class="h5 mb-1">{{ reader.name }}</h2>
+                  <span class="badge"
+                    [class.text-bg-success]="reader.eventType === 'ENTRY'"
+                    [class.text-bg-warning]="reader.eventType === 'EXIT'">
+                    {{ eventLabel(reader.eventType) }}
+                  </span>
+                </div>
+                <span class="badge"
+                  [class.text-bg-success]="reader.status === 'connected'"
+                  [class.text-bg-danger]="reader.status === 'disconnected'">
+                  {{ reader.status === 'connected' ? 'Conectado' : 'Desconectado' }}
+                </span>
+              </div>
+              @if (!sessionActive()) {
+                <button type="button" class="btn btn-outline-danger btn-sm mt-3"
+                  [disabled]="disconnecting()" (click)="removeReader(reader.id)">
+                  Desconectar lector
+                </button>
+              }
+            </article>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  @if (!sessionActive()) {
+    <section class="card border-primary mb-4">
+      <div class="card-body text-center p-4">
+        <h2 class="h4">2. Iniciar registro multilector</h2>
+        <p class="text-body-secondary">
+          Al iniciar se bloqueará la navegación. Las lecturas de todos los puertos
+          se registrarán mediante el flujo habitual, con las notificaciones a tutores.
+          Para terminar necesitarás tu contraseña.
+        </p>
+        <button type="button" class="btn btn-primary btn-lg"
+          [disabled]="!supported || connectedCount() === 0 || connecting()"
+          (click)="start()">Iniciar modo multilector</button>
+      </div>
+    </section>
+  } @else {
+    <section class="card mb-4 border-primary">
+      <div class="card-body d-flex justify-content-between gap-3 align-items-center flex-wrap">
+        <div>
+          <strong>Registro en curso</strong>
+          <div class="text-body-secondary small">
+            {{ queue.pending() }} lectura(s) pendientes
+            @if (queue.processing()) { · Procesando movimiento... }
+          </div>
+        </div>
+        <button class="btn btn-outline-secondary" type="button" (click)="requestUnlock()"
+          [disabled]="unlockRequested() || unlocking()">
+          Finalizar / desbloquear
+        </button>
+      </div>
+    </section>
+  }
+
+  @if (queue.paused()) {
+    <div class="alert alert-danger" role="alert">
+      <strong>Envíos pausados.</strong>
+      Puede existir una lectura con resultado incierto.
+      Consulta el Monitor de accesos antes de repetir cualquier código QR.
+      Las lecturas pendientes permanecen en memoria en esta pantalla.
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <button type="button" class="btn btn-danger" (click)="resumeQueue()">
+          Reanudar envíos pendientes
+        </button>
+        <button type="button" class="btn btn-outline-danger" (click)="discardQueue()"
+          [disabled]="queue.processing() || queue.pending() === 0">
+          Descartar pendientes (requiere confirmación)
+        </button>
+      </div>
+    </div>
+  }
+
+  <section class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong>Resultados recientes</strong>
+      <span class="text-body-secondary small">Últimos 25 eventos de esta pantalla</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 serial-results">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Lector</th>
+            <th>Movimiento</th>
+            <th>Estado</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of queue.results(); track item.id) {
+            <tr>
+              <td>{{ item.recordedAt | date: 'HH:mm:ss' }}</td>
+              <td>{{ item.readerName }}</td>
+              <td>{{ eventLabel(item.eventType) }}</td>
+              <td>
+                <span class="badge"
+                  [class.text-bg-success]="item.status === 'registered'"
+                  [class.text-bg-danger]="item.status === 'error'"
+                  [class.text-bg-secondary]="item.status === 'ignored'">
+                  {{ item.status === 'registered' ? 'Registrado' :
+                     item.status === 'error' ? 'Error' : 'Ignorado' }}
+                </span>
+              </td>
+              <td>
+                {{ item.message }}
+                @if (item.enrollmentNumber) {
+                  <span class="text-body-secondary small">
+                    · {{ item.enrollmentNumber }}
+                  </span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center text-body-secondary py-5">
+                Aún no hay lecturas en esta sesión.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (sessionActive() && unlockRequested()) {
+    <div class="unlock-overlay" role="dialog" aria-modal="true"
+      aria-labelledby="serialUnlockTitle">
+      <section class="card shadow-lg unlock-panel">
+        <div class="card-body p-4">
+          <h2 class="h4" id="serialUnlockTitle">Desbloquear multilector</h2>
+          <p class="text-body-secondary">
+            Se suspenderán nuevas lecturas mientras ingresas tu contraseña.
+            @if (queue.pending() > 0) {
+              Hay {{ queue.pending() }} registro(s) pendientes;
+              espera a que termine la cola antes de salir.
+            }
+          </p>
+          <form (ngSubmit)="unlock()" class="d-grid gap-3">
+            <input #unlockPasswordInput id="serialPassword" type="password"
+              class="form-control" placeholder="Contraseña del usuario"
+              aria-label="Contraseña" autocomplete="current-password"
+              [formControl]="password" />
+            <button class="btn btn-primary" type="submit"
+              [disabled]="unlocking() || queue.pending() > 0">
+              {{ unlocking() ? 'Verificando...' : 'Confirmar y finalizar' }}
+            </button>
+            <button class="btn btn-outline-secondary" type="button"
+              [disabled]="unlocking()" (click)="cancelUnlock()">
+              Continuar escaneando
+            </button>
+          </form>
+        </div>
+      </section>
+    </div>
+  }
+</div>
