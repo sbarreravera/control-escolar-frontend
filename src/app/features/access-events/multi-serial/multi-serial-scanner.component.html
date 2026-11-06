@@ -248,6 +248,11 @@
               espera a que termine la cola antes de salir.
             }
           </p>
+          @if (errorMessage(); as unlockError) {
+            <div class="alert alert-danger" role="alert" aria-live="assertive">
+              {{ unlockError }}
+            </div>
+          }
           <form (ngSubmit)="unlock()" class="d-grid gap-3">
             <input #unlockPasswordInput id="serialPassword" type="password"
               class="form-control" placeholder="Contraseña del usuario"
